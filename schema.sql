@@ -28,6 +28,6 @@ CREATE TABLE IF NOT EXISTS reactions (
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   removed BIT(1) DEFAULT 0 NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (message_id) REFERENCES messages(id),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
