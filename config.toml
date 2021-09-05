@@ -1,0 +1,14 @@
+[discord]
+key = 'ODgwMjg2MTQyMDQ4NjQ5MzA3.YScEWw.iljJ2HPFiQbdg70nfbgekV43AGo'
+
+[database]
+hostname = 'localhost'
+database = 'valbot'
+
+[database.rw]
+user = 'valbot'
+password = 'k&E8tZPRcuFiwf9Y'
+
+[database.ro]
+user = 'valbot-ro'
+password = 'j#hq*4f7BBj@f#7E'
