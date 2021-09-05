@@ -8,6 +8,8 @@ authors = ["Archie Almond", "Lewis Treacy"]
 python = "^3.9"
 discord = "^1.7.3"
 mysql-connector-python = "^8.0.26"
+APScheduler = "^3.7.0"
+nest-asyncio = "^1.5.1"
 
 [tool.poetry.dev-dependencies]
 
