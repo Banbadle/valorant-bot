@@ -10,7 +10,7 @@ class Database():
             self.connection = mysql.connector.connect(
                 host=config['database']['hostname'],
                 database=config['database']['database'],
-                user=config['database']['ro']['username'],
+                user=config['database']['ro']['user'],
                 password=config['database']['ro']['password'],
             )
         except mysql.connector.Error:
@@ -25,6 +25,7 @@ class Database():
                     %s, %s, %s
                 )
             ''', (username, tag, mention_id))
+        self.connection.commit()
 
     def add_message(self, guild_id, channel_id, message_id, mention_id):
         with self.connection.cursor() as cursor:
@@ -37,6 +38,7 @@ class Database():
                     )
                 )
             ''', (guild_id, channel_id, message_id, mention_id))
+        self.connection.commit()
 
     def add_reaction(self, discord_message_id, mention_id, emoji):
         with self.connection.cursor() as cursor:
@@ -51,6 +53,7 @@ class Database():
                     ), %s
                 );
             ''', (discord_message_id, mention_id, emoji))
+        self.connection.commit()
 
     def get_reactions(self, message_id):
         with self.connection.cursor(dictionary=True) as cursor:
@@ -62,8 +65,8 @@ class Database():
                 JOIN users u
                     ON r.user_id = u.id
                 WHERE m.message_id = %s
-                    AND r.removed == 0
-            ''', (message_id))
+                    AND NOT r.removed
+            ''', (message_id,))
             return cursor.fetchall()
 
     def get_latest_message(self, guild_id):
@@ -74,5 +77,5 @@ class Database():
                 WHERE guild_id = %s
                 ORDER BY created
                 LIMIT 1;
-            ''', (guild_id))
+            ''', (guild_id,))
             return cursor.fetchone()['message_id']
