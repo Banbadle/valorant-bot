@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(255) NOT NULL,
   tag SMALLINT(255) NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE users (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
   id INT NOT NULL AUTO_INCREMENT,
   guild_id INT NOT NULL,
   channel_id INT NOT NULL,
@@ -20,13 +20,13 @@ CREATE TABLE messages (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE reactions (
+CREATE TABLE IF NOT EXISTS reactions (
   id INT NOT NULL AUTO_INCREMENT,
   message_id INT NOT NULL,
   user_id INT NOT NULL,
   emoji VARCHAR(255) NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT NOW(),
-  removed TIMESTAMP DEFAULT NULL,
+  removed BIT(1) DEFAULT 0 NOT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (message_id) REFERENCES messages(id),
   FOREIGN KEY (user_id) REFERENCES users(id)
