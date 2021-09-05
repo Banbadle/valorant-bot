@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
   social_credit INT NOT NULL DEFAULT 0,
   -- on time and not on time
   created TIMESTAMP NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE (username, tag),
+  UNIQUE (mention_id)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -17,7 +19,8 @@ CREATE TABLE IF NOT EXISTS messages (
   created_by INT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   FOREIGN KEY (created_by) REFERENCES users(id),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE (guild_id, channel_id, message_id)
 );
 
 CREATE TABLE IF NOT EXISTS reactions (
