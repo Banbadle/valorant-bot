@@ -1,13 +1,17 @@
 import mysql.connector
+import toml
 
 class Database():
     def __init__(self):
+        with open('config.toml', 'r') as f:
+            config = toml.loads(f.read())
+
         try:
             self.connection = mysql.connector.connect(
-                user='valbot',
-                password='foo',
-                host='localhost',
-                database='valbot'
+                host=config['database']['hostname'],
+                database=config['database']['database'],
+                user=config['database']['ro']['username'],
+                password=config['database']['ro']['password'],
             )
         except mysql.connector.Error:
             print('Database connection failed')

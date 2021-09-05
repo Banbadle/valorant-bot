@@ -1,0 +1,14 @@
+[discord]
+key = '<key>'
+
+[database]
+hostname = '<hostname>'
+database = '<database>'
+
+[database.rw]
+user = '<username>'
+password = '<password>'
+
+[database.ro]
+user = '<username>'
+password = '<password>'

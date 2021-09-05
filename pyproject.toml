@@ -8,6 +8,7 @@ authors = ["Archie Almond", "Lewis Treacy"]
 python = "^3.9"
 discord = "^1.7.3"
 mysql-connector-python = "^8.0.26"
+toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 
