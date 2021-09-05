@@ -13,7 +13,7 @@ class Database():
             print('Database connection failed')
 
     def add_user(self, username, tag, mention_id):
-        with cursor as self.connection.cursor():
+        with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO users (
                     username, tag, mention_id
@@ -23,7 +23,7 @@ class Database():
             ''', (username, tag, mention_id))
 
     def add_message(self, guild_id, channel_id, message_id, mention_id):
-        with cursor as self.connection.cursor():
+        with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO messages (
                     guild_id, channel_id, message_id, created_by
@@ -35,7 +35,7 @@ class Database():
             ''', (guild_id, channel_id, message_id, mention_id))
 
     def add_reaction(self, discord_message_id, mention_id, emoji):
-        with cursor as self.connection.cursor():
+        with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO reactions (
                     message_id, user_id, emoji
@@ -49,7 +49,7 @@ class Database():
             ''', (discord_message_id, mention_id, emoji))
 
     def get_reactions(self, message_id):
-        with cursor as self.connection.cursor(dictionary=True):
+        with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
                 SELECT r.emoji, u.mention_id
                 FROM messages m
@@ -58,12 +58,12 @@ class Database():
                 JOIN users u
                     ON r.user_id = u.id
                 WHERE m.message_id = %s
-                    AND r.removed == NULL
+                    AND r.removed == 0
             ''', (message_id))
             return cursor.fetchall()
 
     def get_latest_message(self, guild_id):
-        with cursor as self.connection.cursor(dictionary=True):
+        with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
                 SELECT message_id
                 FROM messages
