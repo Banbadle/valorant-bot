@@ -3,11 +3,11 @@ import datetime
 import os
 from invertibledict import InvDict
 import toml
+import random
 
 from discord.ext import commands, tasks
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 
 import asyncio
 
@@ -21,7 +21,7 @@ client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord
 
 client.messageToSession = dict()
 #client.clockMap = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"1:00","🕜":"1:30","🕑":"2:00","🕝":"2:30","🕒":"3:00","🕞":"3:30","🕓":"4:00","🕟":"4:30","🕔":"5:00","🕠":"5:30","🕕":"6:00","🕡":"6:30","🕖":"7:00","🕢":"7:30","🕗":"8:00","🕣":"8:30","🕘":"9:00","🕤":"9:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30"}
-client.clockMap = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"01:00","🕜":"01:30","🕑":"02:00","🕝":"02:30","🕒":"03:00","🕞":"03:30","🕓":"04:00","🕟":"04:30","🕔":"05:00","🕠":"05:30","🕕":"06:00","🕡":"06:30","🕖":"07:00","🕢":"07:30","🕗":"08:00","🕣":"08:30","🕘":"09:00","🕤":"09:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30"}
+client.clockMap = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"01:00","🕜":"01:30","🕑":"02:00","🕝":"02:30","🕒":"03:00","🕞":"03:30","🕓":"04:00","🕟":"04:30","🕔":"05:00","🕠":"05:30","🕕":"06:00","🕡":"06:30","🕖":"07:00","🕢":"07:30","🕗":"08:00","🕣":"08:30","🕘":"09:00","🕤":"09:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30","❌": None}
 
 
 @client.event
@@ -53,15 +53,16 @@ class ValorantSession():
         mins30 = datetime.timedelta(minutes = 30)
 
         indOffset = 0
-        timeStrList = [val for _, val in client.clockMap.items() if val != "Now"]*2
+        timeStrList = [val for key, val in client.clockMap.items() if key != "✅" and key != "❌"]
         lookupTime = firstTime.strftime("%I:%M")
+        
         for ind in range(0, len(timeStrList)):
             if lookupTime == timeStrList[ind]:
                 indOffset = ind
                 print(indOffset)
                 break
 
-        timeEmojiList = [key for key in client.clockMap if key != "✅"]*2
+        timeEmojiList = [key for key in client.clockMap if key != "✅" and key != "❌"]*2
 
         self.orderedEmojiList = ["✅"]
         timeDict = {"✅": currTime}
@@ -69,9 +70,13 @@ class ValorantSession():
         for num in range(0,24):
             nextTime = firstTime + mins30 * num
             key = timeEmojiList[num + indOffset]
-
-            timeDict[key] = nextTime
+            
             self.orderedEmojiList.append(key)
+            timeDict[key] = nextTime
+            
+            
+        self.orderedEmojiList.append("❌")
+        timeDict["❌"] = None
 
         return timeDict
 
@@ -89,9 +94,10 @@ class ValorantSession():
 
         mins5 = datetime.timedelta(minutes = 5)
         for emoji,time in self.timeDict.items():
-            if emoji == "✅":
+            if emoji == "✅" or emoji == "❌":
                 continue
             self.scheduler.add_job(checkIn, "date", args=[emoji, self], run_date=time + mins5)
+            
 
 
 async def checkIn(emoji, session):
@@ -149,8 +155,12 @@ async def updateEmbed(message):
     newFieldList = [embedDic["fields"][0]]
 
     for e in currSession.orderedEmojiList:
-        timeStr = emojiToTimeDict[e].strftime("%H:%M")
-        newFieldList.append({'inline': False, 'name': "{} ({})".format(e, timeStr), 'value': ""})
+        try:
+            timeStr = emojiToTimeDict[e].strftime("%H:%M")
+            newFieldList.append({'inline': False, 'name': "{} ({})".format(e, timeStr), 'value': ""})
+        except:
+            timeStr = "Unavailable"
+            newFieldList.append({'inline': False, 'name': "{} ({})".format(e, timeStr), 'value': ""})
 
     newFieldList[1] = {'inline': False, 'name': "{} (Now)".format("✅", timeStr), 'value': ""}
 
@@ -180,19 +190,34 @@ client.updateEmbed = updateEmbed
 @client.command()
 async def test(ctx):
     await ctx.send("hello")
+    
+# @client.command()
+# async def ecoround(ctx):
+#     txt = "The one with the rifle shoots! The one without follows him!\nWhen the one with the rifle gets killed, the one who is following picks up the rifle and shoots!"
+#     message = await ctx.reply(txt)
+
+@client.command()
+async def randommap(ctx):
+    mapList = ["Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven"]
+    await ctx.reply(random.choice(mapList))
+    
+@client.command()
+async def ligma(ctx):
+    await ctx.reply("Ligma balls, bitch!")
 
 @client.command()
 async def valorant(ctx):
 
     newEmbed = discord.Embed(title="Valorant Request", color=0xff0000)
-    # newEmbed.add_field(name="🕜 (01:30)", value="CUM\n", inline=False)
-    newEmbed.add_field(name="{} wants to play Valorant".format(ctx.author.name), value="React with :white_check_mark: if interested now, or a clock emoji if interested later \n--------------------------", inline=False)
+    # newEmbed.add_field(name=s"🕜 (01:30)", value="CUM\n", inline=False)
+    newEmbed.add_field(name="{} wants to play Valorant".format(ctx.author.name), value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later \n--------------------------", inline=False)
     agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
 
     message = await ctx.send(agentsID, embed=newEmbed)
 
     newSession = client.makeNewSession(message)
-
+    
+    await message.add_reaction("❌")
     tempEmojiList = [emoji for emoji, dt in newSession.timeDict.items()]
     for i in range(0,7):
         await message.add_reaction(tempEmojiList[i])
@@ -245,6 +270,8 @@ async def on_raw_reaction_add(payload):
 #     guild = message.guild
 #     for channel in guild.voice_channels:
 #         for user in channel.members:
+    
+
 
 @client.event
 async def on_voice_state_update(joinUser, before, after):
@@ -258,7 +285,7 @@ async def on_voice_state_update(joinUser, before, after):
                     if user == joinUser:
 
                         session = client.messageToSession[message]
-                        session.scheduler.add_job(checkIn, "date", args=["✅", session.message], run_date=datetime.datetime.now() + datetime.timedelta(minutes = 5))
+                        session.scheduler.add_job(checkIn, "date", args=["✅", session], run_date=datetime.datetime.now() + datetime.timedelta(minutes = 5))
                         session.start()
                         print("STARTING SESSION")
                         print(datetime.datetime.now())
@@ -275,17 +302,10 @@ async def on_voice_state_update(joinUser, before, after):
         if count == 0:
             for message in client.messageToSession:
                 if message.guild == guild:
-                    client.messageToSession[message].hasStarted = False
 
-
-
-# client.run(BOT_KEY)
-
-#PLAN:
-# Every 30 minutes, check message reactions for people
-# If message has associated voice chat, message all who responded but aren't there.
-# Put all players notified into a queue, remind them periodically until they join
-
+                    session = client.messageToSession[message]
+                    session.hasStarted = False
+                    session.hasEnded = True
 
 
 client.run(config['discord']['key'])
