@@ -1,16 +1,16 @@
 import discord
 import datetime
-import os
 from invertibledict import InvDict
 import toml
 import random
+import authordetails
+from bs4 import BeautifulSoup
 
 from discord.ext import commands, tasks
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import asyncio
-
 import nest_asyncio
 nest_asyncio.apply()
 
@@ -123,12 +123,13 @@ async def checkIn(emoji, session):
                         if voiceUser == reactUser:
                             userJoined = True
 
-                print("HAS JOINED: {}".format(userJoined))
+                print(f"HAS JOINED: {userJoined}")
                 if userJoined == False:
                     flakeList.append(reactUser.mention)
 
             if flakeList != []:
-                await message.reply("{}, where the fuck are you?".format(",".join(flakeList)))
+                flakeStr = ",".join(flakeList)
+                await message.reply(f"{flakeStr}, where the fuck are you?")
 
 def makeNewSession(message):
     newSession = ValorantSession(message)
@@ -145,7 +146,19 @@ def getSession(message):
         return newSession
 client.getSession = getSession
 
-async def updateEmbed(message):
+async def update_checkin_embed(message):
+    embed = message.embeds[0]
+    embedDic = embed.to_dict()
+    newFieldList = [embedDic["fields"][0]]
+    newFieldList.append({'inline': False, 'name': "__Coming Now__", 'value': "\u200b"})
+    newFieldList.append({'inline': True, 'name': "__Need More Time__", 'value': "\u200b"})
+    newFieldList.append({'inline': True, 'name': "__Not Coming__", 'value': "\u200b"})
+    
+    for react in message.reactions:
+        pass
+    
+
+async def update_request_embed(message):
     print("Getting Session")
     currSession = client.getSession(message)
     emojiToTimeDict = currSession.timeDict
@@ -157,12 +170,15 @@ async def updateEmbed(message):
     for e in currSession.orderedEmojiList:
         try:
             timeStr = emojiToTimeDict[e].strftime("%H:%M")
-            newFieldList.append({'inline': False, 'name': "{} ({})".format(e, timeStr), 'value': ""})
+            newFieldList.append({'inline': False, 'name': f"{e} ({timeStr})", 'value': ""})
         except:
-            timeStr = "Unavailable"
-            newFieldList.append({'inline': False, 'name': "{} ({})".format(e, timeStr), 'value': ""})
+            if e == "❌":
+                timeStr = "Unavailable"
+                newFieldList.append({'inline': False, 'name': f"{e} ({timeStr})", 'value': ""})
+            else: 
+                raise Exception("Error found updating embed using ValorantSession.orderedEmojiList")
 
-    newFieldList[1] = {'inline': False, 'name': "{} (Now)".format("✅", timeStr), 'value': ""}
+    newFieldList[1] = {'inline': False, 'name': "✅ (Now)", 'value': ""}
 
     print("Scanning Reactions")
     for react in message.reactions:
@@ -174,7 +190,7 @@ async def updateEmbed(message):
         async for user in react.users():
             if user != client.user:
                 field = newFieldList[ind]
-                field["value"] = "{}\n{}".format(field["value"], user.mention)
+                field["value"] = field["value"] + f"\n> {user.mention}"
 
     print("Finishing up")
     cleanNewFieldList = [field for field in newFieldList if field["value"]!=""]
@@ -185,11 +201,23 @@ async def updateEmbed(message):
     await message.edit(embed=newEmbed)
     print("---FINISHED---")
 
-client.updateEmbed = updateEmbed
+client.update_request_embed = update_request_embed
 
 @client.command()
-async def test(ctx):
-    await ctx.send("hello")
+async def fakecheckin(ctx):
+    
+    newEmbed = discord.Embed(title="__Check In__", color=0xff8800)
+    # newEmbed.add_field(name=s"🕜 (01:30)", value="CUM\n", inline=False)
+    newEmbed.add_field(name="The following people reacted to the reqeust, but do not appear to have joined:", value="PLACEHOLDER TEXT", inline=False)
+    
+    authorText, authorIcon = authordetails.get_author_pair()
+    newEmbed.set_author(name=authorText, icon_url=authorIcon) 
+    
+    message = await ctx.reply(embed=newEmbed)
+    
+    await message.add_reaction("❌")
+    await message.add_reaction("✅")
+    
     
 # @client.command()
 # async def ecoround(ctx):
@@ -198,22 +226,48 @@ async def test(ctx):
 
 @client.command()
 async def randommap(ctx):
-    mapList = ["Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven"]
+    mapList = authordetails.maps
     await ctx.reply(random.choice(mapList))
+    
+@client.command()
+async def randomagent(ctx, num="1"):
+    num = int(num)
+    try:
+        sample = authordetails.random_agents(num)
+        if num == 1:
+            await ctx.reply("> sample[0]")
+            return
+        
+        agentList = []
+        for i in range(0,num):
+            agentList.append(f"> {i + 1}: {sample[i]}")
+            
+        await ctx.reply("\n".join(agentList))
+    except:
+        await ctx.reply(f"I'm sorry {ctx.author.name}, I can't let you do that")
+
     
 @client.command()
 async def ligma(ctx):
     await ctx.reply("Ligma balls, bitch!")
+    
+def is_request(message):
+    return "Valorant Request" in message.embeds[0].title
+client.is_request = is_request
 
 @client.command()
 async def valorant(ctx):
-
-    newEmbed = discord.Embed(title="Valorant Request", color=0xff0000)
+    
+    newEmbed = discord.Embed(title="__Valorant Request__", color=0xff0000)
+    #ewEmbed = discord.Embed(color=0xff0000)
     # newEmbed.add_field(name=s"🕜 (01:30)", value="CUM\n", inline=False)
-    newEmbed.add_field(name="{} wants to play Valorant".format(ctx.author.name), value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later \n--------------------------", inline=False)
+    newEmbed.add_field(name=f"{ctx.author.name} wants to play Valorant", value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later.", inline=False)
+    newEmbed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
+    #newEmbed.set_author(name="Valorant Request", icon_url="https://cdn.valorantinfo.gg/img/sprays/VALORANT.png") 
+
     agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
 
-    message = await ctx.send(agentsID, embed=newEmbed)
+    message = await ctx.reply(agentsID, embed=newEmbed)
 
     newSession = client.makeNewSession(message)
     
@@ -226,7 +280,8 @@ async def valorant(ctx):
 async def on_raw_reaction_remove(payload):
 
     message = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-    await client.updateEmbed(message)
+    if client.is_request(message):
+        await client.update_request_embed(message)
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -248,12 +303,12 @@ async def on_raw_reaction_add(payload):
     if user == client.user:
         return
 
-    #Removes unwanted reactions (change if want a yes/no)
+    #Removes unwanted reactions
     if thisEmoji not in client.clockMap:
         await message.remove_reaction(payload.emoji, user)
         return
 
-    print("Checking Emoji's")
+    print("Checking For Multiple Emoji's")
     #Removes this reaction if another reaction has been given
     for react in message.reactions:
         async for nextUser in react.users():
@@ -262,8 +317,18 @@ async def on_raw_reaction_add(payload):
                     await message.remove_reaction(thisEmoji, user)
                     return
 
-    await client.updateEmbed(message)
+    if client.is_request(message):
+        print("Message: Request")
+        await client.update_request_embed(message)
+        
+    elif client.is_checkin(message):
+        print("Message: Check In")
+        if thisEmoji not in ["❌", "✅"]:
+            await message.remove_reaction(payload.emoji,user)
+            return
 
+        await client.update_checkin_embed(message)
+        
 # @tasks.loop(minutes=5)
 # def checkSchedule(schedule):
 #     message = schedule.message
