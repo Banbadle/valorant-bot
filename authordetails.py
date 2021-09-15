@@ -40,7 +40,7 @@ maps = ["Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven"]
     
 def get_author_pair(agentName=None):
     if agentName==None:
-        agentName = choice(list(phrases))
+        agentName = random.choice(list(phrases))
         
     text = phrases[agentName]
     icon = images[agentName]

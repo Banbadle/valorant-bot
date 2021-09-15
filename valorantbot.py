@@ -1,14 +1,14 @@
 import discord
 import datetime
-from invertibledict import InvDict
 import toml
 import random
-import authordetails
 from bs4 import BeautifulSoup
-
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+import authordetails
+import valorantranks
 
 import asyncio
 import nest_asyncio
@@ -93,11 +93,14 @@ class ValorantSession():
             self.hasStarted = True
 
         mins5 = datetime.timedelta(minutes = 5)
+        self.scheduler.add_job(checkIn, "date", args=["✅", self], run_date=datetime.datetime.now() + mins5)
+        
         for emoji,time in self.timeDict.items():
             if emoji == "✅" or emoji == "❌":
                 continue
             self.scheduler.add_job(checkIn, "date", args=[emoji, self], run_date=time + mins5)
             
+
 
 
 async def checkIn(emoji, session):
@@ -235,14 +238,13 @@ async def randomagent(ctx, num="1"):
     try:
         sample = authordetails.random_agents(num)
         if num == 1:
-            await ctx.reply("> sample[0]")
+            await ctx.reply(f"> {sample[0]}")
             return
         
-        agentList = []
-        for i in range(0,num):
-            agentList.append(f"> {i + 1}: {sample[i]}")
-            
-        await ctx.reply("\n".join(agentList))
+
+        agentStr = "\n".join([f"> {i + 1}: {sample[i]}" for i in range(0,num)])
+        await ctx.reply(agentStr)
+        
     except:
         await ctx.reply(f"I'm sorry {ctx.author.name}, I can't let you do that")
 
@@ -254,6 +256,82 @@ async def ligma(ctx):
 def is_request(message):
     return "Valorant Request" in message.embeds[0].title
 client.is_request = is_request
+
+@client.command()
+async def ranks(ctx):
+    memberList = []
+    rankList = []
+    for member in discord.utils.get(ctx.guild.roles,name="Agents").members:
+
+        memberList.append(f"> {member.name}")
+        try:
+            memberRank = valorantranks.get_player_rank(member.id)
+            
+            rankList.append(memberRank)
+        except:
+            
+            rankList.append("Unknown")
+            
+    rankNumList = [valorantranks.get_rank_num(rank) if rank != "Unknown" else -1 for rank in rankList]
+    print(rankNumList)
+    
+    zip_list = zip(rankNumList, memberList, rankList)
+    sorted_zip_list = sorted(zip_list, reverse=True)
+    
+    orderedMemberList = [m for _,m,_ in sorted_zip_list]
+    orderedRankList = [r for _,_,r in sorted_zip_list]
+    
+    memberStr = "\n".join(orderedMemberList)
+    rankStr = "\n".join(orderedRankList)
+    
+    newEmbed = discord.Embed(title="__Leaderboard__", color=0xff0000)
+    
+    newEmbed.add_field(name="__Player__", value=memberStr, inline=True)
+    newEmbed.add_field(name="__Rank__", value=rankStr, inline=True)
+    
+    message = await ctx.send(embed=newEmbed)
+   
+    
+''''FUNCTION DOESN'T WORK:
+    I think because match history loads in
+    after the page loads. If so, would need
+    selenium to make this work'''
+# @client.command()
+# async def recentrecords(ctx):
+#     memberList = []
+#     winList = []
+#     lossList = []
+#     for member in discord.utils.get(ctx.guild.roles,name="Agents").members:
+
+#         memberList.append(f"> {member.name}")
+#         # try:
+#         wins, losses = valorantranks.get_recent_win_loss(member.id)
+#         winList.append(wins)
+#         lossList.append(losses)
+
+#         # except:
+#         #     winList.append("-1")
+#         #     lossList.append("?")
+        
+#     zip_list = zip(winList, memberList, lossList)
+#     sorted_zip_list = sorted(zip_list, reverse=True)
+    
+#     orderedWinList = [w if w != "-1" else "?" for w,_,_ in sorted_zip_list]
+#     orderedMemberList = [m for _,m,_ in sorted_zip_list]
+#     orderedLossList = [o for _,_,o in sorted_zip_list]
+
+#     winStr = "\n".join(orderedWinList)
+#     memberStr = "\n".join(orderedMemberList)
+#     lossStr = "\n".join(orderedLossList)
+    
+#     newEmbed = discord.Embed(title="__Leaderboard__", color=0xff0000)
+    
+#     newEmbed.add_field(name="__Player__", value=memberStr, inline=True)
+#     newEmbed.add_field(name="__Wins__", value=winStr, inline=True)
+#     newEmbed.add_field(name="__Losses__", value=lossStr, inline=True)
+    
+#     message = await ctx.send(embed=newEmbed)
+            
 
 @client.command()
 async def valorant(ctx):
@@ -348,7 +426,6 @@ async def on_voice_state_update(joinUser, before, after):
                 async for user in react.users():
                     print(user.name)
                     if user == joinUser:
-
                         session = client.messageToSession[message]
                         session.scheduler.add_job(checkIn, "date", args=["✅", session], run_date=datetime.datetime.now() + datetime.timedelta(minutes = 5))
                         session.start()
