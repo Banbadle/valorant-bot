@@ -22,11 +22,12 @@ client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord
 client.messageToSession = dict()
 #client.clockMap = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"1:00","🕜":"1:30","🕑":"2:00","🕝":"2:30","🕒":"3:00","🕞":"3:30","🕓":"4:00","🕟":"4:30","🕔":"5:00","🕠":"5:30","🕕":"6:00","🕡":"6:30","🕖":"7:00","🕢":"7:30","🕗":"8:00","🕣":"8:30","🕘":"9:00","🕤":"9:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30"}
 client.clockMap = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"01:00","🕜":"01:30","🕑":"02:00","🕝":"02:30","🕒":"03:00","🕞":"03:30","🕓":"04:00","🕟":"04:30","🕔":"05:00","🕠":"05:30","🕕":"06:00","🕡":"06:30","🕖":"07:00","🕢":"07:30","🕗":"08:00","🕣":"08:30","🕘":"09:00","🕤":"09:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30","❌": None}
-
+client.scheduler = AsyncIOScheduler()
 
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
+    
 
 class ValorantSession():
 
@@ -38,6 +39,7 @@ class ValorantSession():
         self.hasStarted = False
         self.hasEnded = False
         self.voiceChannel = None
+        self.time = message.created_at
 
         self.timeDict = self.makeTimeDict()
         self.orderedEmojiList = list([emoji for emoji in self.timeDict])
@@ -86,6 +88,7 @@ class ValorantSession():
             print("Started Scheduler")
         except:
             print("Scheduler was already started")
+        
 
         if self.hasStarted == True:
             return
@@ -101,13 +104,12 @@ class ValorantSession():
             self.scheduler.add_job(checkIn, "date", args=[emoji, self], run_date=time + mins5)
             
 
-
-
 async def checkIn(emoji, session):
     print("CHECKING IN")
     message = session.message
 
     if session.hasStarted == False:
+        print("Session not started")
         return
 
     for react in message.reactions:
@@ -420,16 +422,17 @@ async def on_raw_reaction_add(payload):
 async def on_voice_state_update(joinUser, before, after):
     # New Person Joins Voice Chat
     if before.channel is None and after.channel is not None:
-        print(joinUser)
-        for message in client.messageToSession:
+        print(f"{joinUser} has joined a voice channel. Checking for session")
+        for message, session in client.messageToSession.items():
+            print(f"Checking session from {session.time}")
             for react in message.reactions:
+                print(f"Checking {react.emoji}")
                 async for user in react.users():
-                    print(user.name)
+                    print(f"Checking {user} == {joinUser}")
                     if user == joinUser:
+                        print(f"STARTING SESSION FROM {session.time}")
                         session = client.messageToSession[message]
-                        session.scheduler.add_job(checkIn, "date", args=["✅", session], run_date=datetime.datetime.now() + datetime.timedelta(minutes = 5))
                         session.start()
-                        print("STARTING SESSION")
                         print(datetime.datetime.now())
 
     # Someone Leaves Voice Chat
@@ -442,9 +445,10 @@ async def on_voice_state_update(joinUser, before, after):
                 count +=1
 
         if count == 0:
-            for message in client.messageToSession:
+            for message,session in client.messageToSession.items():
                 if message.guild == guild:
-
+                    
+                    print(f"Channel is now empty, ending session from {session.time}")
                     session = client.messageToSession[message]
                     session.hasStarted = False
                     session.hasEnded = True
