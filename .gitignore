@@ -1,3 +1,4 @@
 .vscode
 .editorconfig
 config.toml
+__pycache__
