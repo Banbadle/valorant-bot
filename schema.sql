@@ -4,11 +4,13 @@ CREATE TABLE IF NOT EXISTS users (
   tag SMALLINT(255) NOT NULL,
   mention_id VARCHAR(255) NOT NULL UNIQUE,
   social_credit INT NOT NULL DEFAULT 0,
+  val_username VARCHAR(255)
+  val_tag VARCHAR(255)
   -- on time and not on time
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id),
   UNIQUE (username, tag),
-  UNIQUE (mention_id)
+  UNIQUE (val_username, val_tag)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
