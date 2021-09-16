@@ -27,14 +27,15 @@ client.scheduler = AsyncIOScheduler()
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
-    
+    client.scheduler = AsyncIOScheduler()
+    client.scheduler.start()
+
 
 class ValorantSession():
 
     timeOffset = datetime.timedelta(minutes=60)
 
     def __init__(self, message=None):
-        self.scheduler = AsyncIOScheduler()
         self.message = message
         self.hasStarted = False
         self.hasEnded = False
@@ -83,25 +84,14 @@ class ValorantSession():
         return timeDict
 
     def start(self):
-        try:
-            self.scheduler.start()
-            print("Started Scheduler")
-        except:
-            print("Scheduler was already started")
-        
-
-        if self.hasStarted == True:
-            return
-        else:
-            self.hasStarted = True
 
         mins5 = datetime.timedelta(minutes = 5)
-        self.scheduler.add_job(checkIn, "date", args=["✅", self], run_date=datetime.datetime.now() + mins5)
+        client.scheduler.add_job(checkIn, "date", args=["✅", self], run_date=datetime.datetime.now() + mins5)
         
         for emoji,time in self.timeDict.items():
             if emoji == "✅" or emoji == "❌":
                 continue
-            self.scheduler.add_job(checkIn, "date", args=[emoji, self], run_date=time + mins5)
+            client.scheduler.add_job(checkIn, "date", args=[emoji, self], run_date=time + mins5)
             
 
 async def checkIn(emoji, session):
@@ -139,7 +129,9 @@ async def checkIn(emoji, session):
 def makeNewSession(message):
     newSession = ValorantSession(message)
     client.messageToSession[message] = newSession
+    newSession.start()
     return newSession
+
 client.makeNewSession = makeNewSession
 
 
@@ -424,6 +416,7 @@ async def on_voice_state_update(joinUser, before, after):
     if before.channel is None and after.channel is not None:
         print(f"{joinUser} has joined a voice channel. Checking for session")
         for message, session in client.messageToSession.items():
+            message = await message.channel.fetch_message(message.id)
             print(f"Checking session from {session.time}")
             for react in message.reactions:
                 print(f"Checking {react.emoji}")
@@ -432,7 +425,7 @@ async def on_voice_state_update(joinUser, before, after):
                     if user == joinUser:
                         print(f"STARTING SESSION FROM {session.time}")
                         session = client.messageToSession[message]
-                        session.start()
+                        session.hasStarted = True
                         print(datetime.datetime.now())
 
     # Someone Leaves Voice Chat
