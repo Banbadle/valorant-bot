@@ -11,6 +11,7 @@ mysql-connector-python = "^8.0.26"
 toml = "^0.10.2"
 APScheduler = "^3.7.0"
 nest-asyncio = "^1.5.1"
+beautifulsoup4 = "^4.10.0"
 
 [tool.poetry.dev-dependencies]
 
