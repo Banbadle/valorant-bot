@@ -10,8 +10,8 @@ class Database():
             self.connection = mysql.connector.connect(
                 host=config['database']['hostname'],
                 database=config['database']['database'],
-                user=config['database']['ro']['user'],
-                password=config['database']['ro']['password'],
+                user=config['database']['rw']['user'],
+                password=config['database']['rw']['password'],
             )
         except mysql.connector.Error:
             print('Database connection failed')
