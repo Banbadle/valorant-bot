@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS reactions (
   id INT NOT NULL AUTO_INCREMENT,
   message_id BIGINT NOT NULL, -- Discord message id
   user_id BIGINT NOT NULL, -- Discord user id
-  emoji VARCHAR(255) NOT NULL,
+  emoji CHAR(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
