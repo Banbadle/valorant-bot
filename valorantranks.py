@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
-import random
 from itertools import product
-import lxml
 
 tiers = ["Unrated", "Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Imortal", "Radiant"]
 
@@ -11,15 +9,15 @@ ranks.append(tiers[-1])
 ranks = tuple(ranks)
 
 def get_player_rank(user_id):
-    
+
     username, tag = usernametags[user_id]
-    tracker = f"https://tracker.gg/valorant/profile/riot/{username}%23{tag}/overview?playlist=competitive" 
+    tracker = f"https://tracker.gg/valorant/profile/riot/{username}%23{tag}/overview?playlist=competitive"
 
     source = requests.get(tracker).text
     soup = BeautifulSoup(source, 'html.parser')
     rankSpan = soup.find("span", {"class":"valorant-highlighted-stat__value"})
     rank = rankSpan.text
-    
+
     return rank
 
 def get_rank_num(rankText):
@@ -47,10 +45,10 @@ usernametags = {188315898698924033: ["McSalterson","EUW"],\
                 201437325257998336: ["uWuWu", "uWuWu"],\
                 231898748316286976: ["calpicco", "EUW"],\
                 140172943396306944: ["motornaik", "EUW"]}
-                                     
+
 
 def get_tracker_from_ids(username, tag):
-    return f"https://tracker.gg/valorant/profile/riot/{username}%23{tag}/overview?playlist=competitive" 
+    return f"https://tracker.gg/valorant/profile/riot/{username}%23{tag}/overview?playlist=competitive"
 
 
 # def get_recent_win_loss(user_id):
@@ -60,13 +58,13 @@ def get_tracker_from_ids(username, tag):
 #         return numstr
 
 #     username, tag = usernametags[user_id]
-#     tracker = f"https://tracker.gg/valorant/profile/riot/{username}%23{tag}/matches?playlist=competitive" 
+#     tracker = f"https://tracker.gg/valorant/profile/riot/{username}%23{tag}/matches?playlist=competitive"
 
 #     source = requests.get(tracker).text
 #     soup = BeautifulSoup(source, 'html.parser')
 #     wins = get_wins_losses_int(soup, "wins")
 #     losses = get_wins_losses_int(soup, "losses")
-    
+
 #     return [wins, losses]
 
 

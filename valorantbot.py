@@ -2,7 +2,6 @@ import discord
 import datetime
 import toml
 import random
-from bs4 import BeautifulSoup
 from discord.ext import commands
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -10,7 +9,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import authordetails
 import valorantranks
 
-import asyncio
 import nest_asyncio
 nest_asyncio.apply()
 
