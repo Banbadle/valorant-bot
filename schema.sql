@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS reactions (
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
+  UNIQUE (message_id, user_id, emoji),
   FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

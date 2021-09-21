@@ -16,7 +16,7 @@ class Database():
         except mysql.connector.Error:
             print('Database connection failed')
 
-    # Users table function
+    # Users table functions
 
     def _get_user(self, user_id):
         with self.connection.cursor(dictionary=True) as cursor:
@@ -120,7 +120,7 @@ class Database():
                     message_id, user_id, emoji
                 ) VALUES (
                     %s, %s, %s
-                );
+                ) ON DUPLICATE KEY UPDATE removed = NULL
             ''', (message_id, user_id, emoji))
         self.connection.commit()
 
