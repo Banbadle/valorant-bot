@@ -2,7 +2,8 @@
 Description=Discord valorant bot
 
 [Service]
-ExecStart=python3 /home/valbot/valbot/valorantbot.py
+WorkingDirectory=/home/valbot/valbot
+ExecStart=export PATH="$HOME/.local/bin:$PATH" poetry run python valorantbot.py
 User=valbot
 Group=valbot
 Restart=always
