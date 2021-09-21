@@ -1,0 +1,12 @@
+[Unit]
+Description=Discord valorant bot
+
+[Service]
+ExecStart=python3 /home/valbot/valbot/valorantbot.py
+User=valbot
+Group=valbot
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+Alias=valorantbot
