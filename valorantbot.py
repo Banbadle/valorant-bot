@@ -45,6 +45,10 @@ class ValorantSession():
 
         self.timeDict = self.makeTimeDict()
         self.orderedEmojiList = list([emoji for emoji in self.timeDict])
+        
+    async def get_message(self):
+        msg = await self.message.channel.fetch_message(self.message.id)
+        return msg
 
     def makeTimeDict(self):
         message = self.message
@@ -97,7 +101,7 @@ class ValorantSession():
 
 async def checkIn(emoji, session):
     print("CHECKING IN")
-    message = session.message
+    message = await session.get_message()
 
     if session.hasStarted == False:
         print("Session not started")
