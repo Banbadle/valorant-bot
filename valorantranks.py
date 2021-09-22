@@ -23,7 +23,7 @@ rank_ranges = []
 for rank_num in range(1, len(ranks)):
     mini = min(bracket[0] for bracket in rank_brackets if rank_num in bracket)
     maxi = max(bracket[-1] for bracket in rank_brackets if rank_num in bracket)+1
-    rank_ranges.append(mini, maxi)
+    rank_ranges.append((mini, maxi))
 
 rank_ranges = tuple(rank_ranges)
 
