@@ -82,23 +82,23 @@ class Database():
 
     # Reactions table functions
 
-    def get_user_reaction(self, message, user):
-        reaction = self._get_user_reaction(message.id, user.id)
+    def get_user_reaction(self, message_id, user_id):
+        reaction = self._get_user_reaction(message_id, user_id)
         if not reaction:
             return
         return reaction['emoji']
 
-    def add_reaction(self, message, user, emoji):
+    def add_reaction(self, message_id, user, emoji):
         if not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
 
-        self._add_reaction(message.id, user.id, emoji)
+        self._add_reaction(message_id, user.id, emoji)
 
-    def remove_reaction(self, message, user, emoji):
-        if not self._get_user(user.id):
+    def remove_reaction(self, message_id, user_id, emoji):
+        if not self._get_user(user_id):
             return
 
-        self._remove_reaction(message.id, user.id, emoji)
+        self._remove_reaction(message_id, user_id, emoji)
 
     def get_reactions(self, message_id):
         self._refresh_connection()

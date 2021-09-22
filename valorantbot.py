@@ -313,12 +313,11 @@ async def valorant(ctx):
 @client.event
 async def on_raw_reaction_remove(payload):
     message = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-    user = discord.utils.find(lambda m : m.id == payload.user_id, message.guild.members)
 
     if not client.is_request(message):
       return
 
-    db.remove_reaction(message, user, payload.emoji.name)
+    db.remove_reaction(message.id, payload.user_id, payload.emoji.name)
     await client.update_request_embed(message)
 
 @client.event
@@ -344,13 +343,13 @@ async def on_raw_reaction_add(payload):
         return
 
     # Check if there is already a reaction in the database
-    if db.get_user_reaction(message, user):
+    if db.get_user_reaction(message.id, user.id):
         # Remove the new reaction if there is
         await message.remove_reaction(thisEmoji, user)
         return
 
     # Add the new reaction to the database
-    db.add_reaction(message, user, thisEmoji)
+    db.add_reaction(message.id, user, thisEmoji)
 
     if client.is_request(message):
         print("Message: Request")
