@@ -3,7 +3,7 @@ Description=Discord valorant bot
 
 [Service]
 WorkingDirectory=/home/valbot/valbot
-ExecStart=/home/valbot/.local/poetry run python valorantbot.py
+ExecStart=/home/valbot/.local/bin/poetry run python valorantbot.py
 User=valbot
 Group=valbot
 Restart=always
