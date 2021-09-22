@@ -4,21 +4,30 @@ import toml
 class Database():
     def __init__(self):
         with open('config.toml', 'r') as f:
-            config = toml.loads(f.read())
+            self.config = toml.loads(f.read())
 
+        self._connect()
+
+    def _connect(self):
         try:
             self.connection = mysql.connector.connect(
-                host=config['database']['hostname'],
-                database=config['database']['database'],
-                user=config['database']['rw']['user'],
-                password=config['database']['rw']['password'],
+                host=self.config['database']['hostname'],
+                database=self.config['database']['database'],
+                user=self.config['database']['rw']['user'],
+                password=self.config['database']['rw']['password'],
             )
         except mysql.connector.Error:
             print('Database connection failed')
+        
+    def _refresh_connection(self):
+        if self.connection.is_connected():
+            return
+        self._connect()
 
     # Users table functions
 
     def _get_user(self, user_id):
+        self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
                 SELECT *
@@ -28,6 +37,7 @@ class Database():
             return cursor.fetchone()
 
     def _add_user(self, username, tag, user_id):
+        self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO users (
@@ -47,6 +57,7 @@ class Database():
         self._add_message(message.guild.id, message.channel.id, message.id, author.id)
 
     def get_latest_message(self, guild_id):
+        self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
                 SELECT id
@@ -58,6 +69,7 @@ class Database():
             return cursor.fetchone()['id']
 
     def _add_message(self, guild_id, channel_id, message_id, user_id):
+        self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO messages (
@@ -89,6 +101,7 @@ class Database():
         self._remove_reaction(message.id, user.id, emoji)
 
     def get_reactions(self, message_id):
+        self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
                 SELECT r.emoji, u.id
@@ -103,6 +116,7 @@ class Database():
             return cursor.fetchall()
 
     def _get_user_reaction(self, message_id, user_id):
+        self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
                 SELECT *
@@ -114,6 +128,7 @@ class Database():
             return cursor.fetchone()
 
     def _add_reaction(self, message_id, user_id, emoji):
+        self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO reactions (
@@ -125,6 +140,7 @@ class Database():
         self.connection.commit()
 
     def _remove_reaction(self, message_id, user_id, emoji):
+        self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 UPDATE reactions
