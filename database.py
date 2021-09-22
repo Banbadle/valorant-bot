@@ -10,72 +10,127 @@ class Database():
             self.connection = mysql.connector.connect(
                 host=config['database']['hostname'],
                 database=config['database']['database'],
-                user=config['database']['ro']['user'],
-                password=config['database']['ro']['password'],
+                user=config['database']['rw']['user'],
+                password=config['database']['rw']['password'],
             )
         except mysql.connector.Error:
             print('Database connection failed')
 
-    def add_user(self, username, tag, mention_id):
+    # Users table functions
+
+    def _get_user(self, user_id):
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT *
+                FROM users
+                WHERE id = %s
+            ''', (user_id,))
+            return cursor.fetchone()
+
+    def _add_user(self, username, tag, user_id):
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO users (
-                    username, tag, mention_id
+                    id, username, tag
                 ) VALUES (
                     %s, %s, %s
                 )
-            ''', (username, tag, mention_id))
+            ''', (user_id, username, tag))
         self.connection.commit()
 
-    def add_message(self, guild_id, channel_id, message_id, mention_id):
-        with self.connection.cursor() as cursor:
-            cursor.execute('''
-                INSERT INTO messages (
-                    guild_id, channel_id, message_id, created_by
-                ) VALUES (
-                    %s, %s, %s, (
-                        SELECT id FROM users WHERE mention_id = %s
-                    )
-                )
-            ''', (guild_id, channel_id, message_id, mention_id))
-        self.connection.commit()
+    # Messages table functions
 
-    def add_reaction(self, discord_message_id, mention_id, emoji):
-        with self.connection.cursor() as cursor:
-            cursor.execute('''
-                INSERT INTO reactions (
-                    message_id, user_id, emoji
-                ) VALUES (
-                    (
-                        SELECT id FROM messages WHERE message_id = %s
-                    ), (
-                        SELECT id FROM users WHERE mention_id = %s
-                    ), %s
-                );
-            ''', (discord_message_id, mention_id, emoji))
-        self.connection.commit()
+    def add_message(self, message, author):
+        if not self._get_user(author.id):
+            self._add_user(author.name, author.discriminator, author.id)
 
-    def get_reactions(self, message_id):
-        with self.connection.cursor(dictionary=True) as cursor:
-            cursor.execute('''
-                SELECT r.emoji, u.mention_id
-                FROM messages m
-                JOIN reactions r
-                    ON m.id = r.message_id
-                JOIN users u
-                    ON r.user_id = u.id
-                WHERE m.message_id = %s
-                    AND NOT r.removed
-            ''', (message_id,))
-            return cursor.fetchall()
+        self._add_message(message.guild.id, message.channel.id, message.id, author.id)
 
     def get_latest_message(self, guild_id):
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
-                SELECT message_id
+                SELECT id
                 FROM messages
                 WHERE guild_id = %s
                 ORDER BY created
                 LIMIT 1;
             ''', (guild_id,))
-            return cursor.fetchone()['message_id']
+            return cursor.fetchone()['id']
+
+    def _add_message(self, guild_id, channel_id, message_id, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO messages (
+                    id, guild_id, channel_id, created_by
+                ) VALUES (
+                    %s, %s, %s, %s
+                )
+            ''', (message_id, guild_id, channel_id, user_id))
+        self.connection.commit()
+
+    # Reactions table functions
+
+    def get_user_reaction(self, message, user):
+        reaction = self._get_user_reaction(message.id, user.id)
+        if not reaction:
+            return
+        return reaction['emoji']
+
+    def add_reaction(self, message, user, emoji):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._add_reaction(message.id, user.id, emoji)
+
+    def remove_reaction(self, message, user, emoji):
+        if not self._get_user(user.id):
+            return
+
+        self._remove_reaction(message.id, user.id, emoji)
+
+    def get_reactions(self, message_id):
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT r.emoji, u.id
+                FROM messages m
+                JOIN reactions r
+                    ON m.id = r.message_id
+                JOIN users u
+                    ON r.user_id = u.id
+                WHERE m.id = %s
+                    AND r.removed IS NULL
+            ''', (message_id,))
+            return cursor.fetchall()
+
+    def _get_user_reaction(self, message_id, user_id):
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT *
+                FROM reactions
+                WHERE message_id = %s
+                    AND user_id = %s
+                    AND removed IS NULL
+            ''', (message_id, user_id))
+            return cursor.fetchone()
+
+    def _add_reaction(self, message_id, user_id, emoji):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO reactions (
+                    message_id, user_id, emoji
+                ) VALUES (
+                    %s, %s, %s
+                ) ON DUPLICATE KEY UPDATE removed = NULL
+            ''', (message_id, user_id, emoji))
+        self.connection.commit()
+
+    def _remove_reaction(self, message_id, user_id, emoji):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE reactions
+                SET removed = NOW()
+                WHERE message_id = %s
+                    AND user_id = %s
+                    AND emoji = %s
+            ''', (message_id, user_id, emoji))
+        self.connection.commit()

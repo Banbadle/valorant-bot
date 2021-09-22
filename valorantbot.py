@@ -8,12 +8,15 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import authordetails
 import valorantranks
+from database import Database
 
 import nest_asyncio
 nest_asyncio.apply()
 
 with open('config.toml', 'r') as f:
     config = toml.loads(f.read())
+
+db = Database()
 
 client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
 
@@ -281,63 +284,20 @@ async def ranks(ctx):
     newEmbed.add_field(name="__Player__", value=memberStr, inline=True)
     newEmbed.add_field(name="__Rank__", value=rankStr, inline=True)
     
-    message = await ctx.send(embed=newEmbed)
-   
-    
-''''FUNCTION DOESN'T WORK:
-    I think because match history loads in
-    after the page loads. If so, would need
-    selenium to make this work'''
-# @client.command()
-# async def recentrecords(ctx):
-#     memberList = []
-#     winList = []
-#     lossList = []
-#     for member in discord.utils.get(ctx.guild.roles,name="Agents").members:
-
-#         memberList.append(f"> {member.name}")
-#         # try:
-#         wins, losses = valorantranks.get_recent_win_loss(member.id)
-#         winList.append(wins)
-#         lossList.append(losses)
-
-#         # except:
-#         #     winList.append("-1")
-#         #     lossList.append("?")
-        
-#     zip_list = zip(winList, memberList, lossList)
-#     sorted_zip_list = sorted(zip_list, reverse=True)
-    
-#     orderedWinList = [w if w != "-1" else "?" for w,_,_ in sorted_zip_list]
-#     orderedMemberList = [m for _,m,_ in sorted_zip_list]
-#     orderedLossList = [o for _,_,o in sorted_zip_list]
-
-#     winStr = "\n".join(orderedWinList)
-#     memberStr = "\n".join(orderedMemberList)
-#     lossStr = "\n".join(orderedLossList)
-    
-#     newEmbed = discord.Embed(title="__Leaderboard__", color=0xff0000)
-    
-#     newEmbed.add_field(name="__Player__", value=memberStr, inline=True)
-#     newEmbed.add_field(name="__Wins__", value=winStr, inline=True)
-#     newEmbed.add_field(name="__Losses__", value=lossStr, inline=True)
-    
-#     message = await ctx.send(embed=newEmbed)
-            
+    await ctx.send(embed=newEmbed)
 
 @client.command()
 async def valorant(ctx):
     
     newEmbed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-    #ewEmbed = discord.Embed(color=0xff0000)
-    # newEmbed.add_field(name=s"🕜 (01:30)", value="CUM\n", inline=False)
     newEmbed.add_field(name=f"{ctx.author.name} wants to play Valorant", value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later.", inline=False)
     newEmbed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
-    #newEmbed.set_author(name="Valorant Request", icon_url="https://cdn.valorantinfo.gg/img/sprays/VALORANT.png") 
 
     agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
 
     message = await ctx.reply(agentsID, embed=newEmbed)
+
+    db.add_message(message, ctx.author)
 
     newSession = client.makeNewSession(message)
     
@@ -348,10 +308,14 @@ async def valorant(ctx):
 
 @client.event
 async def on_raw_reaction_remove(payload):
-
     message = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-    if client.is_request(message):
-        await client.update_request_embed(message)
+    user = discord.utils.find(lambda m : m.id == payload.user_id, message.guild.members)
+
+    if not client.is_request(message):
+      return
+
+    db.remove_reaction(message, user, payload.emoji.name)
+    await client.update_request_embed(message)
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -359,11 +323,8 @@ async def on_raw_reaction_add(payload):
     thisEmoji = payload.emoji.name
     channel = client.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
-    #guild = discord.utils.find(lambda g: g.id == payload.guild_id, client.guilds)
     guild = message.guild
     user = discord.utils.find(lambda m : m.id == payload.user_id, guild.members)
-    # user = message.user
-    #--------------------------------------------------------------------------
 
     #Checks for reactions to ignore
     #If message was not posted by bot
@@ -378,14 +339,14 @@ async def on_raw_reaction_add(payload):
         await message.remove_reaction(payload.emoji, user)
         return
 
-    print("Checking For Multiple Emoji's")
-    #Removes this reaction if another reaction has been given
-    for react in message.reactions:
-        async for nextUser in react.users():
-            if user == nextUser:
-                if react.emoji != thisEmoji:
-                    await message.remove_reaction(thisEmoji, user)
-                    return
+    # Check if there is already a reaction in the database
+    if db.get_user_reaction(message, user):
+        # Remove the new reaction if there is
+        await message.remove_reaction(thisEmoji, user)
+        return
+
+    # Add the new reaction to the database
+    db.add_reaction(message, user, thisEmoji)
 
     if client.is_request(message):
         print("Message: Request")
@@ -398,15 +359,6 @@ async def on_raw_reaction_add(payload):
             return
 
         await client.update_checkin_embed(message)
-        
-# @tasks.loop(minutes=5)
-# def checkSchedule(schedule):
-#     message = schedule.message
-#     guild = message.guild
-#     for channel in guild.voice_channels:
-#         for user in channel.members:
-    
-
 
 @client.event
 async def on_voice_state_update(joinUser, before, after):

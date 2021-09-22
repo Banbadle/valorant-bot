@@ -1,11 +1,10 @@
 CREATE TABLE IF NOT EXISTS users (
-  id INT NOT NULL AUTO_INCREMENT,
-  username VARCHAR(255) NOT NULL,
-  tag SMALLINT(255) NOT NULL,
-  mention_id VARCHAR(255) NOT NULL UNIQUE,
+  id BIGINT NOT NULL, -- Discord user id
+  username VARCHAR(255) NOT NULL, -- Discord username
+  tag SMALLINT(255) NOT NULL, -- Discord tag
   social_credit INT NOT NULL DEFAULT 0,
-  val_username VARCHAR(255)
-  val_tag VARCHAR(255)
+  val_username VARCHAR(255), -- Valorant username
+  val_tag VARCHAR(255), -- Valorant tag
   -- on time and not on time
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id),
@@ -14,25 +13,24 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS messages (
-  id INT NOT NULL AUTO_INCREMENT,
-  guild_id INT NOT NULL,
-  channel_id INT NOT NULL,
-  message_id INT NOT NULL,
-  created_by INT NOT NULL,
+  id BIGINT NOT NULL, -- Discord message id
+  guild_id BIGINT NOT NULL, -- Discord guild id
+  channel_id BIGINT NOT NULL, -- Discord channel id
+  created_by BIGINT NOT NULL, -- Discord user id
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   FOREIGN KEY (created_by) REFERENCES users(id),
-  PRIMARY KEY (id),
-  UNIQUE (guild_id, channel_id, message_id)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS reactions (
   id INT NOT NULL AUTO_INCREMENT,
-  message_id INT NOT NULL,
-  user_id INT NOT NULL,
-  emoji VARCHAR(255) NOT NULL,
+  message_id BIGINT NOT NULL, -- Discord message id
+  user_id BIGINT NOT NULL, -- Discord user id
+  emoji CHAR(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT NOW(),
-  removed BIT(1) DEFAULT 0 NOT NULL,
+  removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
+  UNIQUE (message_id, user_id, emoji),
   FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
