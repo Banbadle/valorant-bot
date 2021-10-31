@@ -33,9 +33,6 @@ async def on_ready():
 
 
 class ValorantSession():
-
-    timeOffset = datetime.timedelta(minutes=60)
-
     def __init__(self, message=None):
         self.message = message
         self.hasStarted = False
@@ -45,14 +42,14 @@ class ValorantSession():
 
         self.timeDict = self.makeTimeDict()
         self.orderedEmojiList = list([emoji for emoji in self.timeDict])
-        
+
     async def get_message(self):
         msg = await self.message.channel.fetch_message(self.message.id)
         return msg
 
     def makeTimeDict(self):
         message = self.message
-        currTime = message.created_at + ValorantSession.timeOffset
+        currTime = message.created_at
 
         deltaMin = ((currTime.minute // 30)+1)*30 - currTime.minute
         deltaTime = datetime.timedelta(minutes= deltaMin, seconds = -currTime.second, microseconds=-currTime.microsecond)
@@ -63,7 +60,7 @@ class ValorantSession():
         indOffset = 0
         timeStrList = [val for key, val in client.clockMap.items() if key != "✅" and key != "❌"]
         lookupTime = firstTime.strftime("%I:%M")
-        
+
         for ind in range(0, len(timeStrList)):
             if lookupTime == timeStrList[ind]:
                 indOffset = ind
@@ -78,11 +75,11 @@ class ValorantSession():
         for num in range(0,24):
             nextTime = firstTime + mins30 * num
             key = timeEmojiList[num + indOffset]
-            
+
             self.orderedEmojiList.append(key)
             timeDict[key] = nextTime
-            
-            
+
+
         self.orderedEmojiList.append("❌")
         timeDict["❌"] = None
 
@@ -92,12 +89,12 @@ class ValorantSession():
 
         mins5 = datetime.timedelta(minutes = 5)
         client.scheduler.add_job(checkIn, "date", args=["✅", self], run_date=datetime.datetime.now() + mins5)
-        
+
         for emoji,time in self.timeDict.items():
             if emoji == "✅" or emoji == "❌":
                 continue
             client.scheduler.add_job(checkIn, "date", args=[emoji, self], run_date=time + mins5)
-            
+
 
 async def checkIn(emoji, session):
     print("CHECKING IN")
@@ -155,10 +152,10 @@ async def update_checkin_embed(message):
     newFieldList.append({'inline': False, 'name': "__Coming Now__", 'value': "\u200b"})
     newFieldList.append({'inline': True, 'name': "__Need More Time__", 'value': "\u200b"})
     newFieldList.append({'inline': True, 'name': "__Not Coming__", 'value': "\u200b"})
-    
+
     for react in message.reactions:
         pass
-    
+
 
 async def update_request_embed(message):
     print("Getting Session")
@@ -177,7 +174,7 @@ async def update_request_embed(message):
             if e == "❌":
                 timeStr = "Unavailable"
                 newFieldList.append({'inline': False, 'name': f"{e} ({timeStr})", 'value': ""})
-            else: 
+            else:
                 raise Exception("Error found updating embed using ValorantSession.orderedEmojiList")
 
     newFieldList[1] = {'inline': False, 'name': "✅ (Now)", 'value': ""}
@@ -207,20 +204,20 @@ client.update_request_embed = update_request_embed
 
 @client.command()
 async def fakecheckin(ctx):
-    
+
     newEmbed = discord.Embed(title="__Check In__", color=0xff8800)
     # newEmbed.add_field(name=s"🕜 (01:30)", value="CUM\n", inline=False)
     newEmbed.add_field(name="The following people reacted to the reqeust, but do not appear to have joined:", value="PLACEHOLDER TEXT", inline=False)
-    
+
     authorText, authorIcon = authordetails.get_author_pair()
-    newEmbed.set_author(name=authorText, icon_url=authorIcon) 
-    
+    newEmbed.set_author(name=authorText, icon_url=authorIcon)
+
     message = await ctx.reply(embed=newEmbed)
-    
+
     await message.add_reaction("❌")
     await message.add_reaction("✅")
-    
-    
+
+
 # @client.command()
 # async def ecoround(ctx):
 #     txt = "The one with the rifle shoots! The one without follows him!\nWhen the one with the rifle gets killed, the one who is following picks up the rifle and shoots!"
@@ -230,7 +227,7 @@ async def fakecheckin(ctx):
 async def randommap(ctx):
     mapList = authordetails.maps
     await ctx.reply(random.choice(mapList))
-    
+
 @client.command()
 async def randomagent(ctx, num="1"):
     num = int(num)
@@ -239,19 +236,19 @@ async def randomagent(ctx, num="1"):
         if num == 1:
             await ctx.reply(f"> {sample[0]}")
             return
-        
+
 
         agentStr = "\n".join([f"> {i + 1}: {sample[i]}" for i in range(0,num)])
         await ctx.reply(agentStr)
-        
+
     except:
         await ctx.reply(f"I'm sorry {ctx.author.name}, I can't let you do that")
 
-    
+
 @client.command()
 async def ligma(ctx):
     await ctx.reply("Ligma balls, bitch!")
-    
+
 def is_request(message):
     return "Valorant Request" in message.embeds[0].title
 client.is_request = is_request
@@ -265,34 +262,34 @@ async def ranks(ctx):
         memberList.append(f"> {member.name}")
         try:
             memberRank = valorantranks.get_player_rank(member.id)
-            
+
             rankList.append(memberRank)
         except:
-            
+
             rankList.append("Unknown")
-            
+
     rankNumList = [valorantranks.get_rank_num(rank) if rank != "Unknown" else -1 for rank in rankList]
     print(rankNumList)
-    
+
     zip_list = zip(rankNumList, memberList, rankList)
     sorted_zip_list = sorted(zip_list, reverse=True)
-    
+
     orderedMemberList = [m for _,m,_ in sorted_zip_list]
     orderedRankList = [r for _,_,r in sorted_zip_list]
-    
+
     memberStr = "\n".join(orderedMemberList)
     rankStr = "\n".join(orderedRankList)
-    
+
     newEmbed = discord.Embed(title="__Leaderboard__", color=0xff0000)
-    
+
     newEmbed.add_field(name="__Player__", value=memberStr, inline=True)
     newEmbed.add_field(name="__Rank__", value=rankStr, inline=True)
-    
+
     await ctx.send(embed=newEmbed)
 
 @client.command()
 async def valorant(ctx):
-    
+
     newEmbed = discord.Embed(title="__Valorant Request__", color=0xff0000)
     newEmbed.add_field(name=f"{ctx.author.name} wants to play Valorant", value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later.", inline=False)
     newEmbed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
@@ -304,7 +301,7 @@ async def valorant(ctx):
     db.add_message(message, ctx.author)
 
     newSession = client.makeNewSession(message)
-    
+
     await message.add_reaction("❌")
     tempEmojiList = [emoji for emoji, dt in newSession.timeDict.items()]
     for i in range(0,7):
@@ -355,7 +352,7 @@ async def on_raw_reaction_add(payload):
     if client.is_request(message):
         print("Message: Request")
         await client.update_request_embed(message)
-        
+
     elif client.is_checkin(message):
         print("Message: Check In")
         if thisEmoji not in ["❌", "✅"]:
@@ -394,7 +391,7 @@ async def on_voice_state_update(joinUser, before, after):
         if count == 0:
             for message,session in client.messageToSession.items():
                 if message.guild == guild:
-                    
+
                     print(f"Channel is now empty, ending session from {session.time}")
                     session = client.messageToSession[message]
                     session.hasStarted = False
