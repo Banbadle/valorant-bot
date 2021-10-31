@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   social_credit INT NOT NULL DEFAULT 0,
   val_username VARCHAR(255), -- Valorant username
   val_tag VARCHAR(255), -- Valorant tag
+  notify TINYINT(1) NOT NULL DEFAULT 0, -- Notify on message updates
   -- on time and not on time
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id),
