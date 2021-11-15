@@ -16,9 +16,9 @@ class Database():
                 user=self.config['database']['rw']['user'],
                 password=self.config['database']['rw']['password'],
             )
-        except mysql.connector.Error:
-            print('Database connection failed')
-        
+        except mysql.connector.Error as e:
+            print(f"Database connection failed: {e}")
+
     def _refresh_connection(self):
         if self.connection.is_connected():
             return
