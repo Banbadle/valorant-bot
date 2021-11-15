@@ -104,7 +104,7 @@ class Database():
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
-                SELECT r.emoji, u.id
+                SELECT r.emoji, u.id as user
                 FROM messages m
                 JOIN reactions r
                     ON m.id = r.message_id
