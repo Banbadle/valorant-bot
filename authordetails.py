@@ -1,7 +1,7 @@
 import random
 
 images = {"Astra": "https://static.wikia.nocookie.net/valorant/images/0/08/Astra_icon.png/",\
-          "Pheonix": "https://static.wikia.nocookie.net/valorant/images/1/14/Phoenix_icon.png/",\
+          "Phoenix": "https://static.wikia.nocookie.net/valorant/images/1/14/Phoenix_icon.png/",\
           "Killjoy": "https://static.wikia.nocookie.net/valorant/images/1/15/Killjoy_icon.png/",\
           "Skye": "https://static.wikia.nocookie.net/valorant/images/3/33/Skye_icon.png/",\
           "Jett": "https://static.wikia.nocookie.net/valorant/images/3/35/Jett_icon.png/",\
@@ -15,11 +15,12 @@ images = {"Astra": "https://static.wikia.nocookie.net/valorant/images/0/08/Astra
           "Omen": "https://static.wikia.nocookie.net/valorant/images/b/b0/Omen_icon.png",\
           "Reyna": "https://static.wikia.nocookie.net/valorant/images/b/b0/Reyna_icon.png",\
           "Yoru": "https://static.wikia.nocookie.net/valorant/images/d/d4/Yoru_icon.png/",\
-          "KAYO": "https://static.wikia.nocookie.net/valorant/images/f/f0/KAYO_icon.png/"}
+          "KAYO": "https://static.wikia.nocookie.net/valorant/images/f/f0/KAYO_icon.png/",
+          "Chambers": "https://static.wikia.nocookie.net/valorant/images/0/09/Chamber_icon.png"}
     
     
 phrases = {"Astra": '"My people, are you ready?"',\
-           "Pheonix": '"Come on, let\'s go"',\
+           "Phoenix": '"Come on, let\'s go"',\
            "Killjoy": '"You should run"',\
            "Skye": '"Time to hunt"',\
            "Jett": '"I hate to say it but, probably best to play as a team"',\
@@ -32,7 +33,8 @@ phrases = {"Astra": '"My people, are you ready?"',\
            "Raze": '"Too slow"',\
            "Omen": '"Make the right choice, even if it calls for sacrifice"',\
            "Reyna": '"The hunt begins"',\
-           "Yoru": '"Anyone else?"'}
+           "Yoru": '"Anyone else?"',\
+           "Chambers": '"You want to play? Lets play"'}
     
 agents = tuple(images)
 
