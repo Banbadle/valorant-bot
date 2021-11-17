@@ -180,16 +180,13 @@ async def update_request_embed(message):
     newFieldList[1] = {'inline': False, 'name': "✅ (Now)", 'value': ""}
 
     print("Scanning Reactions")
-    for react in message.reactions:
-        emoji = react.emoji
-        if emoji not in client.clockMap:
-            return
+    for reaction in db.get_reactions(message.id):
+        if reaction['emoji'] not in client.clockMap:
+            continue
 
-        ind = currSession.orderedEmojiList.index(emoji) + 1
-        async for user in react.users():
-            if user != client.user:
-                field = newFieldList[ind]
-                field["value"] = field["value"] + f"\n> {user.mention}"
+        ind = currSession.orderedEmojiList.index(reaction['emoji']) + 1
+        if reaction['user'] != client.user.id:
+            newFieldList[ind]["value"] += f"\n> <@{reaction['user']}>"
 
     print("Finishing up")
     cleanNewFieldList = [field for field in newFieldList if field["value"]!=""]
