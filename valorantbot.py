@@ -1,6 +1,7 @@
 import discord
 import datetime
 import toml
+import pytz
 import random
 from discord.ext import commands
 
@@ -49,17 +50,17 @@ class ValorantSession():
 
     def makeTimeDict(self):
         message = self.message
-        currTime = message.created_at
+        currTime = message.created_at.replace(tzinfo=pytz.utc)
 
         deltaMin = ((currTime.minute // 30)+1)*30 - currTime.minute
-        deltaTime = datetime.timedelta(minutes= deltaMin, seconds = -currTime.second, microseconds=-currTime.microsecond)
+        deltaTime = datetime.timedelta(minutes=deltaMin, seconds=-currTime.second, microseconds=-currTime.microsecond)
 
         firstTime = currTime + deltaTime
         mins30 = datetime.timedelta(minutes = 30)
 
         indOffset = 0
         timeStrList = [val for key, val in client.clockMap.items() if key != "✅" and key != "❌"]
-        lookupTime = firstTime.strftime("%I:%M")
+        lookupTime = firstTime.astimezone(pytz.timezone("Europe/London")).strftime("%I:%M")
 
         for ind in range(0, len(timeStrList)):
             if lookupTime == timeStrList[ind]:
