@@ -35,6 +35,36 @@ class Database():
                 WHERE id = %s
             ''', (user_id,))
             return cursor.fetchone()
+        
+    def update_notifications(self, user, notif_bool):
+        self._refresh_connection()
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+            
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET removed = %s
+                WHERE user_id = %s
+            ''', (notif_bool, user.id))
+            
+        self.connection.commit()
+        
+    def get_notified(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT u.id
+                FROM messages m
+                JOIN reactions r
+                    ON m.id = r.message_id
+                JOIN users u
+                    ON r.user_id = u.id
+                WHERE m.id = %s
+                    AND r.removed IS NULL
+                    AND u.notify = 1
+            ''', (message_id,))
+            return cursor.fetchall()
 
     def _add_user(self, username, tag, user_id):
         self._refresh_connection()

@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import authordetails
 import valorantranks
 from database import Database
+import notifyusers as nu
 
 import nest_asyncio
 nest_asyncio.apply()
@@ -249,6 +250,19 @@ async def randomagent(ctx, num="1"):
 async def ligma(ctx):
     await ctx.reply("Ligma balls, bitch!")
 
+@client.command()
+async def notifyme(ctx, arg="on"):
+    user = ctx.author
+    if arg=="on":
+        db.update_notifications(user, 1)
+        ctx.reply("You will now recieve notifications from KAY/O")
+    elif arg=="off":
+        db.update_notifications(user, 0)
+        ctx.reply("You will no longer recieve notifications from KAY/O")
+    else:
+        pass
+        
+
 def is_request(message):
     return "Valorant Request" in message.embeds[0].title
 client.is_request = is_request
@@ -311,6 +325,8 @@ async def valorant(ctx):
 async def on_raw_reaction_remove(payload):
     message = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
     user = discord.utils.find(lambda m : m.id == payload.user_id, message.guild.members)
+    
+    nu.notify_remove(payload.message_id)
 
     if not client.is_request(message):
       return
@@ -326,6 +342,8 @@ async def on_raw_reaction_add(payload):
     message = await channel.fetch_message(payload.message_id)
     guild = message.guild
     user = discord.utils.find(lambda m : m.id == payload.user_id, guild.members)
+    
+    nu.notify_add(payload.message_id)
 
     #Checks for reactions to ignore
     #If message was not posted by bot
