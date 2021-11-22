@@ -16,7 +16,7 @@ images = {"Astra": "https://static.wikia.nocookie.net/valorant/images/0/08/Astra
           "Reyna": "https://static.wikia.nocookie.net/valorant/images/b/b0/Reyna_icon.png",\
           "Yoru": "https://static.wikia.nocookie.net/valorant/images/d/d4/Yoru_icon.png/",\
           "KAYO": "https://static.wikia.nocookie.net/valorant/images/f/f0/KAYO_icon.png/",
-          "Chambers": "https://static.wikia.nocookie.net/valorant/images/0/09/Chamber_icon.png"}
+          "Chamber": "https://static.wikia.nocookie.net/valorant/images/0/09/Chamber_icon.png"}
     
     
 phrases = {"Astra": '"My people, are you ready?"',\
@@ -34,7 +34,7 @@ phrases = {"Astra": '"My people, are you ready?"',\
            "Omen": '"Make the right choice, even if it calls for sacrifice"',\
            "Reyna": '"The hunt begins"',\
            "Yoru": '"Anyone else?"',\
-           "Chambers": '"You want to play? Lets play"'}
+           "Chamber": '"You want to play? Lets play"'}
     
 agents = tuple(images)
 
