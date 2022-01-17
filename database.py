@@ -26,6 +26,28 @@ class Database():
 
     # Users table functions
 
+    def get_valorant_username(self, user_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT val_username, val_tag
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            return cursor.fetchone()
+
+    def set_valorant_username(self, user_id, username, tag):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET val_username = %s,
+                    val_tag = %s
+                WHERE id = %s
+            ''', (username, tag, user_id))
+        self.connection.commit()
+
     def _get_user(self, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
