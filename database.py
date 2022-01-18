@@ -86,12 +86,24 @@ class Database():
                 SELECT id
                 FROM messages
                 WHERE guild_id = %s
-                ORDER BY created
+                ORDER BY created DESC
                 LIMIT 1;
             ''', (guild_id,))
             return cursor.fetchone()['id']
 
-    def _add_message(self, guild_id, channel_id, message_id, user_id):
+    def get_message_from_trigger(self, trigger_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT id
+                FROM messages
+                WHERE trigger_msg = %s
+                ORDER BY created
+                LIMIT 1;
+            ''', (trigger_id,))
+            return cursor.fetchone()
+
+    def _add_message(self, guild_id, channel_id, message_id, user_id, trigger_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
