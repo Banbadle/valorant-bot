@@ -5,6 +5,7 @@ import os
 import toml
 import pytz
 import random
+import re
 from discord.ext import commands
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -258,14 +259,11 @@ async def ranks(ctx):
     memberList = []
     rankList = []
     for member in discord.utils.get(ctx.guild.roles,name="Agents").members:
-
         memberList.append(f"> {member.name}")
         try:
             memberRank = valorantranks.get_player_rank(member.id)
-
             rankList.append(memberRank)
         except:
-
             rankList.append("Unknown")
 
     rankNumList = [valorantranks.get_rank_num(rank) if rank != "Unknown" else -1 for rank in rankList]
@@ -306,6 +304,18 @@ async def valorant(ctx):
     tempEmojiList = [emoji for emoji, dt in newSession.timeDict.items()]
     for i in range(0,7):
         await message.add_reaction(tempEmojiList[i])
+
+@client.command()
+async def username(ctx):
+    print(ctx.message.content)
+    match = re.fullmatch(r'\?username (?P<user>[^#]*)#(?P<tag>.{3,5})', ctx.message.content)
+    print(match)
+    if not match:
+        return
+
+    db.set_valorant_username(ctx.author.id, match.group('user'), match.group('tag'))
+
+    await ctx.message.add_reaction("✅")
 
 @client.command()
 async def version(ctx):
