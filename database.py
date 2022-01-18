@@ -72,11 +72,12 @@ class Database():
 
     # Messages table functions
 
-    def add_message(self, message, author):
+    def add_message(self, message, trigger):
+        author = trigger.author
         if not self._get_user(author.id):
             self._add_user(author.name, author.discriminator, author.id)
 
-        self._add_message(message.guild.id, message.channel.id, message.id, author.id)
+        self._add_message(message.guild.id, message.channel.id, message.id, author.id, trigger.id)
 
     def get_latest_message(self, guild_id):
         self._refresh_connection()
@@ -95,11 +96,11 @@ class Database():
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO messages (
-                    id, guild_id, channel_id, created_by
+                    id, guild_id, channel_id, created_by, trigger_msg
                 ) VALUES (
-                    %s, %s, %s, %s
+                    %s, %s, %s, %s, %s
                 )
-            ''', (message_id, guild_id, channel_id, user_id))
+            ''', (message_id, guild_id, channel_id, user_id, trigger_id))
         self.connection.commit()
 
     # Reactions table functions

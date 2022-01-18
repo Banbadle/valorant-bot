@@ -296,7 +296,7 @@ async def valorant(ctx):
 
     message = await ctx.reply(agentsID, embed=newEmbed)
 
-    db.add_message(message, ctx.author)
+    db.add_message(message, ctx.message)
 
     newSession = client.makeNewSession(message)
 
