@@ -1,5 +1,7 @@
 import discord
 import datetime
+from git import Repo
+import os
 import toml
 import pytz
 import random
@@ -314,6 +316,12 @@ async def username(ctx):
     db.set_valorant_username(ctx.author.id, match.group('user'), match.group('tag'))
 
     await ctx.message.add_reaction("✅")
+
+@client.command()
+async def version(ctx):
+    repo = Repo(os.getcwd())
+    hash = repo.head.commit.binsha.hex()[:7]
+    await ctx.reply(f"`{hash}`")
 
 @client.event
 async def on_raw_reaction_remove(payload):
