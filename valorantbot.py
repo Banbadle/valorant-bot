@@ -287,7 +287,6 @@ async def ranks(ctx):
 
 @client.command()
 async def valorant(ctx):
-
     newEmbed = discord.Embed(title="__Valorant Request__", color=0xff0000)
     newEmbed.add_field(name=f"{ctx.author.name} wants to play Valorant", value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later.", inline=False)
     newEmbed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
@@ -296,7 +295,7 @@ async def valorant(ctx):
 
     message = await ctx.reply(agentsID, embed=newEmbed)
 
-    db.add_message(message, ctx.author)
+    db.add_message(message, ctx.message)
 
     newSession = client.makeNewSession(message)
 
@@ -412,5 +411,13 @@ async def on_voice_state_update(joinUser, before, after):
                     session.hasStarted = False
                     session.hasEnded = True
 
+@client.event
+async def on_message_delete(ctx):
+    msg = db.get_message_from_trigger(ctx.id)
+    if not msg:
+        return
+
+    message = await ctx.channel.fetch_message(msg['id'])
+    await message.delete()
 
 client.run(config['discord']['key'])
