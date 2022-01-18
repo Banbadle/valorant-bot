@@ -1,5 +1,7 @@
 import discord
 import datetime
+from git import Repo
+import os
 import toml
 import pytz
 import random
@@ -304,6 +306,12 @@ async def valorant(ctx):
     tempEmojiList = [emoji for emoji, dt in newSession.timeDict.items()]
     for i in range(0,7):
         await message.add_reaction(tempEmojiList[i])
+
+@client.command()
+async def version(ctx):
+    repo = Repo(os.getcwd())
+    hash = repo.head.commit.binsha.hex()[:7]
+    await ctx.reply(f"`{hash}`")
 
 @client.event
 async def on_raw_reaction_remove(payload):
