@@ -1,5 +1,3 @@
-import random
-
 images = {"Astra": "https://static.wikia.nocookie.net/valorant/images/0/08/Astra_icon.png/",\
           "Pheonix": "https://static.wikia.nocookie.net/valorant/images/1/14/Phoenix_icon.png/",\
           "Killjoy": "https://static.wikia.nocookie.net/valorant/images/1/15/Killjoy_icon.png/",\
@@ -15,7 +13,9 @@ images = {"Astra": "https://static.wikia.nocookie.net/valorant/images/0/08/Astra
           "Omen": "https://static.wikia.nocookie.net/valorant/images/b/b0/Omen_icon.png",\
           "Reyna": "https://static.wikia.nocookie.net/valorant/images/b/b0/Reyna_icon.png",\
           "Yoru": "https://static.wikia.nocookie.net/valorant/images/d/d4/Yoru_icon.png/",\
-          "KAYO": "https://static.wikia.nocookie.net/valorant/images/f/f0/KAYO_icon.png/"}
+          "KAYO": "https://static.wikia.nocookie.net/valorant/images/f/f0/KAYO_icon.png/",\
+          "Chamber": "https://static.wikia.nocookie.net/valorant/images/0/09/Chamber_icon.png",\
+          "Neon": "https://static.wikia.nocookie.net/valorant/images/d/d0/Neon_icon.png/"}
     
     
 phrases = {"Astra": '"My people, are you ready?"',\
@@ -32,19 +32,12 @@ phrases = {"Astra": '"My people, are you ready?"',\
            "Raze": '"Too slow"',\
            "Omen": '"Make the right choice, even if it calls for sacrifice"',\
            "Reyna": '"The hunt begins"',\
-           "Yoru": '"Anyone else?"'}
+           "Yoru": '"Anyone else?"',\
+           "Chamber": '"This has gone on long enough I think."',\
+           "Neon": '"Lets go. Worlds not saving itself."'}
     
-agents = tuple(images)
+agent_list = tuple(images)
 
-maps = ["Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven"]
+map_list = ["Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven"]
     
-def get_author_pair(agentName=None):
-    if agentName==None:
-        agentName = random.choice(list(phrases))
-        
-    text = phrases[agentName]
-    icon = images[agentName]
-    return [text, icon]
-        
-def random_agents(num=1):
-    return random.sample(agents, num)
+pair_list = tuple(name for name in images if name in phrases)
