@@ -1,5 +1,5 @@
 from discord.ext import commands
-import authordetails.py as ad 
+import authordetails as ad 
 import random
 import sys
 
