@@ -7,9 +7,6 @@ from itertools import product
 from database import Database
 
 db = Database()
-    
-def __init__(self, client):
-    self.client = client
 
 ranks = ('Unrated', 'Iron 1', 'Iron 2', 'Iron 3', 'Bronze 1', 'Bronze 2', 'Bronze 3', 'Silver 1', 'Silver 2', 'Silver 3', 'Gold 1', 'Gold 2', 'Gold 3', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Imortal 1', 'Imortal 2', 'Imortal 3', 'Radiant')
 rank_brackets = ((1,2,3,4,5,6,7,8,9), (7,8,9,10,11,12), (10,11,12,13,14,15), (13,14,15,16), (14,15,16,17), (15,16,17,18), (16,17,18,19,20,21), (21,22))
@@ -43,6 +40,9 @@ def get_player_rank(user_id):
     return rank
 
 class Valranks(commands.Cog):
+    
+    def __init__(self, client):
+        self.client = client
 
     @commands.Cog.listener()
     async def on_ready(self):

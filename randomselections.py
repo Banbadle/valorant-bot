@@ -3,9 +3,6 @@ import authordetails as ad
 import random
 import sys
 
-def __init__(self, client):
-    self.client = client
-
 def get_author_pair(agentName=None):
     if agentName==None:
         agentName = random.choice(ad.pair_list)
@@ -15,6 +12,9 @@ def get_author_pair(agentName=None):
     return [text, icon]
 
 class Selects(commands.Cog):
+    
+    def __init__(self, client):
+        self.client = client
 
     @commands.Cog.listener()
     async def on_ready(self):
