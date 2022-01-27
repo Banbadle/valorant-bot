@@ -11,9 +11,9 @@ nest_asyncio.apply()
 with open('config.toml', 'r') as f:
     config = toml.loads(f.read())
 
-db = Database()
-
 client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
+
+client.db = Database()
 
 @client.command()
 async def load(ctx, extension):

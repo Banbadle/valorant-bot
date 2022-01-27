@@ -5,15 +5,11 @@ import sys
 from discord.ext import commands, tasks
 from collections import defaultdict
 
-
 import authordetails
-from database import Database
 
 import nest_asyncio
 nest_asyncio.apply()
 
-
-db = Database()
 clock_map = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"01:00","🕜":"01:30","🕑":"02:00",\
              "🕝":"02:30","🕒":"03:00","🕞":"03:30","🕓":"04:00","🕟":"04:30","🕔":"05:00",\
                  "🕠":"05:30","🕕":"06:00","🕡":"06:30","🕖":"07:00","🕢":"07:30","🕗":"08:00",\
@@ -39,7 +35,7 @@ class ValorantBot(commands.Cog):
         time_str = new_time.strftime("%I:%M")
         curr_emoji = list(key for key, val in clock_map.items() if val == time_str)[0]
         
-        reaction_list = db.get_current_time_reactions(curr_emoji)
+        reaction_list = self.client.db.get_current_time_reactions(curr_emoji)
         
         msg_dict = defaultdict(list)
         for message_id, user_id in reaction_list:
@@ -66,7 +62,7 @@ class ValorantBot(commands.Cog):
             # Continue if reaction is by bot
             if react_user_id == self.client.user.id: continue
         
-            guild_id = db.get_guild_id(message_id)
+            guild_id = self.client.db.get_guild_id(message_id)
             guild = await self.client.fetch_guild(guild_id)
             
             for channel in guild.voice_channels:
@@ -82,7 +78,7 @@ class ValorantBot(commands.Cog):
                 
         if flakeList != []:
             flakeStr = ",".join(flakeList)
-            message = await self.client.get_channel(db.get_channel_id(message_id)).fetch_message(message_id)
+            message = await self.client.get_channel(self.client.db.get_channel_id(message_id)).fetch_message(message_id)
             await message.reply(f"{flakeStr}, where the fuck are you?")
 
     async def update_checkin_embed(self, message):
@@ -100,11 +96,11 @@ class ValorantBot(commands.Cog):
         print("Getting Session")
 
         message_id = message.id
-        start_time = db.get_creation_time(message_id)
+        start_time = self.client.db.get_creation_time(message_id)
         
         ordered_emoji_list, next_time = self.get_ordered_emoji_list(start_time)
         
-        author_name     = db.get_creator_name(message_id)
+        author_name     = self.client.db.get_creator_name(message_id)
         base_embed      = message.embeds[0]
         embed_dict      = base_embed.to_dict()
         new_field_list  = [embed_dict["fields"][0]]
@@ -122,7 +118,7 @@ class ValorantBot(commands.Cog):
         print("Scanning Reactions")
 
         emoji_display_order = ["✅"] + ordered_emoji_list + ["❌"]
-        for reaction in db.get_reactions(message_id):
+        for reaction in self.client.db.get_reactions(message_id):
             if reaction['emoji'] not in clock_map: continue
 
             ind = emoji_display_order.index(reaction['emoji']) + 1
@@ -155,10 +151,10 @@ class ValorantBot(commands.Cog):
 
 
     def is_request(self, message_id):
-        return db.get_message_type(message_id) == 1
+        return self.client.db.get_message_type(message_id) == 1
     
     def is_checkin(self, message_id):
-        return db.get_message_type(message_id) == 2
+        return self.client.db.get_message_type(message_id) == 2
     
     def get_blank_request_embed(self, author_name):
         new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
@@ -178,7 +174,7 @@ class ValorantBot(commands.Cog):
     
         message = await ctx.reply(agentsID, embed=new_embed)
     
-        db.add_message(message, ctx.message, 1)
+        self.client.db.add_message(message, ctx.message, 1)
     
         await message.add_reaction("❌")
         await message.add_reaction("✅")
@@ -194,7 +190,7 @@ class ValorantBot(commands.Cog):
         if not match:
             return
     
-        db.set_valorant_username(ctx.author.id, match.group('user'), match.group('tag'))
+        self.client.db.set_valorant_username(ctx.author.id, match.group('user'), match.group('tag'))
     
         await ctx.message.add_reaction("✅")
     
@@ -206,7 +202,7 @@ class ValorantBot(commands.Cog):
         if not self.is_request(message_id): return
 
         message = await self.client.get_channel(channel_id).fetch_message(message_id)
-        db.remove_reaction(message_id, payload.user_id, payload.emoji.name)
+        self.client.db.remove_reaction(message_id, payload.user_id, payload.emoji.name)
         await self.update_request_embed(message)
     
     @commands.Cog.listener()
@@ -223,7 +219,6 @@ class ValorantBot(commands.Cog):
         '''ADD CHECK IF MESSAGE IS IN DATABASE'''
     
         #If reaction was from bot
-        ''''if user == client.user:'''
         if user_id == bot_id:
             return
     
@@ -236,17 +231,16 @@ class ValorantBot(commands.Cog):
             return
     
         # Check if there is already a reaction in the database
-        if db.get_user_reaction(message_id, user_id):
+        if self.client.db.get_user_reaction(message_id, user_id):
             # Remove the new reaction if there is
             await message.remove_reaction(this_emoji, user_id)
             return
     
         # Add the new reaction to the database
-        db.add_reaction(message_id, user, this_emoji)
+        self.client.db.add_reaction(message_id, user, this_emoji)
 
         if self.is_request(message_id):
             print("Message: Request")
-            '''await client.update_request_embed(message)'''
             await self.update_request_embed(message)
 
         elif self.is_checkin(message_id):
@@ -260,12 +254,12 @@ class ValorantBot(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, user, leave, join):
 
-        if join.channel != None:    db.user_join(user, join.channel)
-        if leave.channel != None:   db.user_leave(user, leave.channel)
+        if join.channel != None:    self.client.db.user_join(user, join.channel)
+        if leave.channel != None:   self.client.db.user_leave(user, leave.channel)
             
     @commands.Cog.listener()
     async def on_message_delete(self, ctx):
-        msg = db.get_message_from_trigger(ctx.id)
+        msg = self.client.db.get_message_from_trigger(ctx.id)
         if not msg:
             return
     
