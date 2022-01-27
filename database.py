@@ -72,12 +72,12 @@ class Database():
 
     # Messages table functions
 
-    def add_message(self, message, trigger):
+    def add_message(self, message, trigger, message_type = 0):
         author = trigger.author
         if not self._get_user(author.id):
             self._add_user(author.name, author.discriminator, author.id)
 
-        self._add_message(message.guild.id, message.channel.id, message.id, author.id, trigger.id)
+        self._add_message(message.guild.id, message.channel.id, message.id, author.id, trigger.id, message_type)
 
     def get_latest_message(self, guild_id):
         self._refresh_connection()
@@ -102,18 +102,67 @@ class Database():
                 LIMIT 1;
             ''', (trigger_id,))
             return cursor.fetchone()
+        
+    def get_message_type(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT message_type
+                FROM messages
+                WHERE id = %s
+                LIMIT 1;
+            ''', (message_id,))
+            return cursor.fetchone()
 
-    def _add_message(self, guild_id, channel_id, message_id, user_id, trigger_id):
+    def _add_message(self, guild_id, channel_id, message_id, user_id, trigger_id, message_type):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO messages (
-                    id, guild_id, channel_id, created_by, trigger_msg
+                    id, guild_id, channel_id, created_by, trigger_msg, message_type
                 ) VALUES (
-                    %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s
                 )
-            ''', (message_id, guild_id, channel_id, user_id, trigger_id))
+            ''', (message_id, guild_id, channel_id, user_id, trigger_id, message_type))
         self.connection.commit()
+        
+#------------------------------------------------------------------------------
+    def get_guild(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT guild_id
+                FROM messages
+                WHERE message_id = %s
+                LIMIT 1;
+            ''', (message_id,))
+            return cursor.fetchone()
+        
+    def get_creation_time(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT created
+                FROM messages
+                WHERE id = %s
+            ''', (message_id,))
+            return cursor.fetchone()
+        
+    def get_creator_name(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT u.username
+                FROM messages m
+                JOIN reactions r
+                    ON m.id = r.message_id
+                JOIN users u
+                    ON r.user_id = u.id
+                WHERE m.id = %s
+                    AND r.removed IS NULL
+            ''', (message_id,))
+            return cursor.fetchone()
+#------------------------------------------------------------------------------
 
     # Reactions table functions
 
@@ -149,7 +198,20 @@ class Database():
                     AND r.removed IS NULL
             ''', (message_id,))
             return cursor.fetchall()
-
+  
+# -----------------------------------------------------------------------------
+    def get_users_from_reaction(self, message_id, emoji):
+        self.refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT user_id
+                FROM reactions
+                WHERE message_id = %s
+                    AND emoji = %s
+                    AND removed IS NULL
+            ''', (message_id, emoji))
+            return cursor.fetchall()
+# -----------------------------------------------------------------------------
     def _get_user_reaction(self, message_id, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
@@ -185,3 +247,40 @@ class Database():
                     AND emoji = %s
             ''', (message_id, user_id, emoji))
         self.connection.commit()
+      
+    # VoiceChannelLog table functions
+     
+    def user_join(self, user, channel):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+            
+        self._user_join(user, channel)
+    
+    def user_leave(self, user, channel):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE voicechannellog
+                SET leave_time = NOW()
+                WHERE user_id = %s
+                    AND channel_id = %s
+            ''', (user.id, channel.id))
+        self.connection.commit()
+    
+    def get_user_channel(self, user_id):
+        pass
+    
+    def _user_join(self, user, channel):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO voicechannellog (
+                    user_id, guild_id, channel_id
+                ) VALUES (
+                    %s, %s, %s
+                )
+            ''', (user.id, channel.guild.id, channel.id))
+        self.connection.commit()
+
+    
+    
