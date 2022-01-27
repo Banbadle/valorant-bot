@@ -288,8 +288,17 @@ class Database():
         self.connection.commit()
     
     def get_user_channel(self, user_id):
-        pass
-    
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT channel_id
+                FROM voicechannellog
+                WHERE user_id = %s
+                    AND leave_time IS NULL
+                LIMIT 1
+            ''', (user_id,))
+            return cursor.fetchone()
+        
     def _user_join(self, user, channel):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
