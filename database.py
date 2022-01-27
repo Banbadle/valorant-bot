@@ -105,14 +105,25 @@ class Database():
         
     def get_message_type(self, message_id):
         self._refresh_connection()
-        with self.connection.cursor(dictionary=True) as cursor:
+        with self.connection.cursor() as cursor:
             cursor.execute('''
                 SELECT message_type
                 FROM messages
                 WHERE id = %s
                 LIMIT 1;
             ''', (message_id,))
-            return cursor.fetchone()
+            return cursor.fetchone()[0]
+        
+    def get_channel_id(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT channel_id
+                FROM messages
+                WHERE id = %s
+                LIMIT 1;
+            ''', (message_id,))
+            return cursor.fetchone()[0]
 
     def _add_message(self, guild_id, channel_id, message_id, user_id, trigger_id, message_type):
         self._refresh_connection()
@@ -127,16 +138,30 @@ class Database():
         self.connection.commit()
         
 #------------------------------------------------------------------------------
-    def get_guild(self, message_id):
+    def get_current_time_reactions(self, emoji):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT r.message_id, r.user_id
+                FROM messages m
+                JOIN reactions r
+                	ON m.id = r.message_id
+                WHERE r.emoji = %s
+                	AND r.removed IS NULL
+                	AND ADDTIME(m.created, '12:30:00') > NOW();
+            ''', (emoji,))
+            return cursor.fetchall()
+
+    def get_guild_id(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 SELECT guild_id
                 FROM messages
-                WHERE message_id = %s
+                WHERE id = %s
                 LIMIT 1;
             ''', (message_id,))
-            return cursor.fetchone()
+            return cursor.fetchone()[0]
         
     def get_creation_time(self, message_id):
         self._refresh_connection()
@@ -146,22 +171,17 @@ class Database():
                 FROM messages
                 WHERE id = %s
             ''', (message_id,))
-            return cursor.fetchone()
+            return cursor.fetchone()[0]
         
     def get_creator_name(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
-                SELECT u.username
-                FROM messages m
-                JOIN reactions r
-                    ON m.id = r.message_id
-                JOIN users u
-                    ON r.user_id = u.id
-                WHERE m.id = %s
-                    AND r.removed IS NULL
+                SELECT created_by
+                FROM messages
+                WHERE id = %s
             ''', (message_id,))
-            return cursor.fetchone()
+            return cursor.fetchone()[0]
 #------------------------------------------------------------------------------
 
     # Reactions table functions
