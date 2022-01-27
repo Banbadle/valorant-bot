@@ -1,15 +1,10 @@
 import discord
 import datetime
-import os
-import toml
-import pytz
 import re
 import sys
 from discord.ext import commands, tasks
 from collections import defaultdict
 
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import authordetails
 from database import Database
