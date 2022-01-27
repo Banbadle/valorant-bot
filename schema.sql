@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS messages (
   created_by BIGINT NOT NULL, -- Discord user id
   trigger_msg BIGINT NOT NULL, -- Discord message id which triggered this message
   created TIMESTAMP NOT NULL DEFAULT NOW(),
+  message_type TINYINT(8) NOT NULL DEFAULT 1,
   FOREIGN KEY (created_by) REFERENCES users(id),
   PRIMARY KEY (id)
 );
