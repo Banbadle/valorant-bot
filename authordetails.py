@@ -1,3 +1,5 @@
+import random
+
 images = {"Astra": "https://static.wikia.nocookie.net/valorant/images/0/08/Astra_icon.png/",\
           "Pheonix": "https://static.wikia.nocookie.net/valorant/images/1/14/Phoenix_icon.png/",\
           "Killjoy": "https://static.wikia.nocookie.net/valorant/images/1/15/Killjoy_icon.png/",\
@@ -41,3 +43,11 @@ agent_list = tuple(images)
 map_list = ["Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven"]
     
 pair_list = tuple(name for name in images if name in phrases)
+
+def get_author_pair(agentName=None):
+    if agentName==None:
+        agentName = random.choice(pair_list)
+        
+    text = phrases[agentName]
+    icon = images[agentName]
+    return [text, icon]

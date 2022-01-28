@@ -3,14 +3,6 @@ import authordetails as ad
 import random
 import sys
 
-def get_author_pair(agentName=None):
-    if agentName==None:
-        agentName = random.choice(ad.pair_list)
-        
-    text = ad.phrases[agentName]
-    icon = ad.images[agentName]
-    return [text, icon]
-
 class Selects(commands.Cog):
     
     def __init__(self, client):
