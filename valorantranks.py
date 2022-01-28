@@ -3,13 +3,10 @@ from discord.ext import commands
 import sys
 from bs4 import BeautifulSoup
 import requests
-from itertools import product
-from database import Database
 
 ranks = ('Unrated', 'Iron 1', 'Iron 2', 'Iron 3', 'Bronze 1', 'Bronze 2', 'Bronze 3', 'Silver 1', 'Silver 2', 'Silver 3', 'Gold 1', 'Gold 2', 'Gold 3', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Imortal 1', 'Imortal 2', 'Imortal 3', 'Radiant')
 rank_brackets = ((1,2,3,4,5,6,7,8,9), (7,8,9,10,11,12), (10,11,12,13,14,15), (13,14,15,16), (14,15,16,17), (15,16,17,18), (16,17,18,19,20,21), (21,22))
 rank_ranges = ((1, 10), (1, 10), (1, 10), (1, 10), (1, 10), (1, 10), (1, 13), (1, 13), (1, 13), (7, 16), (7, 16), (7, 16), (10, 17), (10, 18), (10, 19), (13, 22), (14, 22), (15, 22), (16, 22), (16, 22), (16, 23), (21, 23))
-
 
 class Valranks(commands.Cog):
     
