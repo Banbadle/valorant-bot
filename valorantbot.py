@@ -4,7 +4,6 @@ import re
 import sys
 from discord.ext import commands, tasks
 from collections import defaultdict
-from random import choice
 
 import authordetails
 
@@ -16,7 +15,6 @@ clock_map = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"01:00","🕜":"01
              "🕝":"02:30","🕒":"03:00","🕞":"03:30","🕓":"04:00","🕟":"04:30","🕔":"05:00",\
                  "🕠":"05:30","🕕":"06:00","🕡":"06:30","🕖":"07:00","🕢":"07:30","🕗":"08:00",\
                      "🕣":"08:30","🕘":"09:00","🕤":"09:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30","❌": None}
-
 
 class ValorantBot(commands.Cog):
     
@@ -171,11 +169,8 @@ class ValorantBot(commands.Cog):
         
         return new_embed
 
-    def ordered_time_list(self, start_time):
-        pass
-
     @commands.command()
-    async def valorant2(self, ctx):
+    async def valorant(self, ctx):
         '''Creates a valorant request message'''
         new_embed = self.get_blank_request_embed(ctx.author.name)
     
@@ -221,7 +216,6 @@ class ValorantBot(commands.Cog):
         this_emoji  = payload.emoji.name
         channel_id  = payload.channel_id
         message_id  = payload.message_id
-        guild_id    = self.client.get_channel(channel_id).guild.id
         user_id     = payload.user_id
         bot_id      = self.client.user.id
         
