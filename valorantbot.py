@@ -4,6 +4,7 @@ import re
 import sys
 from discord.ext import commands, tasks
 from collections import defaultdict
+from random import choice
 
 import authordetails
 
@@ -85,12 +86,14 @@ class ValorantBot(commands.Cog):
             flake_list.append(react_user_id)
             
         if flake_list != []:
-            flakeStr    = ",".join([f"<@{user_id}>" for user_id in flake_list])
             channel_id  = self.client.db.get_channel_id(message_id)
             message     = await self.client.get_channel(channel_id).fetch_message(message_id)
-            await message.reply(f"{flakeStr}, where you at?")
-        
-
+            await self.post_checkin(message, flake_list)
+            
+        # for user_id in user_id_list:
+        #     if user_id in flake_list:   self.client.db.add_social_credit(-200)
+        #     else:                       self.client.db.add_social_credit(200)
+            
     async def update_checkin_embed(self, message):
         '''Updates the checkin embed of message'''
         embed = message.embeds[0]
@@ -138,20 +141,21 @@ class ValorantBot(commands.Cog):
 
         await message.edit(embed=new_embed)
 
-    @commands.command()
-    async def fakecheckin(self, ctx):
+    async def post_checkin(self, trigger_message, user_id_list):
 
         newEmbed = discord.Embed(title="__Check In__", color=0xff8800)
-        # newEmbed.add_field(name=s"🕜 (01:30)", value="CUM\n", inline=False)
-        newEmbed.add_field(name="The following people reacted to the reqeust, but do not appear to have joined:", value="PLACEHOLDER TEXT", inline=False)
+        value_string = "\n".join([f"<@{user_id}>" for user_id in user_id_list])
+        newEmbed.add_field(name="The following people reacted to the reqeust, but do not appear to have joined:", value=value_string, inline=False)
+        
+        author_text, author_icon = authordetails.get_author_pair()
+        newEmbed.set_author(name=author_text, icon_url=author_icon)
 
-        authorText, authorIcon = authordetails.get_author_pair()
-        newEmbed.set_author(name=authorText, icon_url=authorIcon)
+        checkin_message = await trigger_message.reply(embed=newEmbed)
+        
+        self.client.db.add_message(checkin_message, trigger_message, 2)
 
-        message = await ctx.reply(embed=newEmbed)
-
-        await message.add_reaction("❌")
-        await message.add_reaction("✅")
+        # await message.add_reaction("❌")
+        # await message.add_reaction("✅")
 
 
     def is_request(self, message_id):
