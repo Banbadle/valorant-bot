@@ -47,6 +47,24 @@ class Database():
                 WHERE id = %s
             ''', (username, tag, user_id))
         self.connection.commit()
+        
+    def get_social_credit(self, user_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT social_credit
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            return cursor.fetchone()
+        
+    def add_social_credit(self, user_id, num):
+        user = self._get_user(user_id)
+        if not user:
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._add_social_credit(user_id, num)
 
     def _get_user(self, user_id):
         self._refresh_connection()
@@ -68,6 +86,16 @@ class Database():
                     %s, %s, %s
                 )
             ''', (user_id, username, tag))
+        self.connection.commit()
+        
+    def _add_social_credit(self, user_id, num):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET social_credit = social_credit + %s,
+                WHERE id = %s
+            ''', (num, user_id))
         self.connection.commit()
 
     # Messages table functions
@@ -287,11 +315,23 @@ class Database():
             ''', (user.id, channel.id))
         self.connection.commit()
     
-    def get_user_channel(self, user_id):
+    def get_user_voice_channel(self, user_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 SELECT channel_id
+                FROM voicechannellog
+                WHERE user_id = %s
+                    AND leave_time IS NULL
+                LIMIT 1
+            ''', (user_id,))
+            return cursor.fetchone()
+        
+    def get_user_voice_guild(self, user_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT guild_id
                 FROM voicechannellog
                 WHERE user_id = %s
                     AND leave_time IS NULL
