@@ -7,6 +7,7 @@ from collections import defaultdict
 
 import authordetails
 
+import asyncio
 import nest_asyncio
 nest_asyncio.apply()
 
@@ -23,15 +24,34 @@ class ValorantBot(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self):
+        '''called when cog is loaded'''
         print(sys.argv[0])
+        await self.checkin_loop() # Inital pass of checkin
+            
+    def get_ordered_emoji_list(self, start_time):
+        '''returns an ordered list of emojis (corresponding to times after the given start_time), and a datetime object of the time of the first occurrence after start_time'''
+        wait_time   = 5 + 29 - ((start_time.minute - 1) % 30)
+        first_time  = start_time.replace(second=0, microsecond=0, minute=start_time.minute, hour=start_time.hour) + datetime.timedelta(minutes = wait_time - 5)
         
-    @tasks.loop()
+        emoji_list          = list(clock_map)[1:-1] * 2
+        slice_emoji         = list(key for key, val in clock_map.items() if val == first_time.strftime("%I:%M"))[0]
+        slice_index         = emoji_list.index(slice_emoji)
+        ordered_emoji_list  = emoji_list[slice_index: slice_index+24]
+        
+        return ordered_emoji_list, first_time
+    
+    @tasks.loop(minutes = 30)
     async def checkin_loop(self):
+        '''Loop to run checkin every 30 minutes'''
+        grace_period = 5
         curr_time = datetime.datetime.now()
-        wait_time = 29 - ((curr_time.minute - 1) % 30)
-        await nest_asyncio.sleep(wait_time * 60)
+        wait_time = 30 - (((curr_time.minute - 1 - grace_period) % 30) + 1)
         
-        new_time = curr_time.replace(second=0, microsecond=0, minute=curr_time.minute, hour=curr_time.hour) + datetime.timedelta(minutes = wait_time + 5)
+        print(f"current time: {curr_time}")
+        print(f"wait time until execution: {wait_time} mins")
+        await asyncio.sleep(wait_time * 60)
+        
+        new_time = curr_time.replace(second=0, microsecond=0, minute=curr_time.minute, hour=curr_time.hour) + datetime.timedelta(minutes = wait_time - grace_period)
         time_str = new_time.strftime("%I:%M")
         curr_emoji = list(key for key, val in clock_map.items() if val == time_str)[0]
         
@@ -42,46 +62,37 @@ class ValorantBot(commands.Cog):
             msg_dict[message_id].append(user_id)
 
         for message_id, user_id_list in msg_dict.items():
-            self.checkin(message_id, user_id_list)
-            
-    def get_ordered_emoji_list(self, start_time):
-        wait_time   = 29 - ((start_time.minute - 1) % 30)
-        first_time  = start_time.replace(second=0, microsecond=0, minute=start_time.minute, hour=start_time.hour) + datetime.timedelta(minutes = wait_time)
-        
-        emoji_list          = list(clock_map)[1:-1] * 2
-        slice_emoji         = list(key for key, val in clock_map.items() if val == first_time.strftime("%I:%M"))[0]
-        slice_index         = emoji_list.index(slice_emoji)
-        ordered_emoji_list  = emoji_list[slice_index: slice_index+24]
-        
-        return ordered_emoji_list, first_time
+            await self.checkin(message_id, user_id_list)
     
     async def checkin(self, message_id, user_id_list):
-        flakeList = []
+        '''checks for people who are "late" and responds if appropriate'''
+        
+        print("CHECKING IN")
+        print(message_id)
+        print(user_id_list)
+
+        guild_id = self.client.db.get_guild_id(message_id)
+        
+        flake_list = []
         
         for react_user_id in user_id_list:
             # Continue if reaction is by bot
             if react_user_id == self.client.user.id: continue
-        
-            guild_id = self.client.db.get_guild_id(message_id)
-            guild = await self.client.fetch_guild(guild_id)
             
-            for channel in guild.voice_channels:
-                for voice_user in channel.members:
-
-                    if voice_user.id == react_user_id:
-                        print(f"HAS JOINED: {react_user_id}")
-                        flakeList.append(react_user_id)
-                        break
-     
-                else: continue
-                break
-                
-        if flakeList != []:
-            flakeStr = ",".join(flakeList)
-            message = await self.client.get_channel(self.client.db.get_channel_id(message_id)).fetch_message(message_id)
-            await message.reply(f"{flakeStr}, where the fuck are you?")
+            voice_guild_id = self.client.db.get_user_voice_guild(react_user_id)
+            if (voice_guild_id == guild_id): continue
+        
+            flake_list.append(react_user_id)
+            
+        if flake_list != []:
+            flakeStr    = ",".join([f"<@{user_id}>" for user_id in flake_list])
+            channel_id  = self.client.db.get_channel_id(message_id)
+            message     = await self.client.get_channel(channel_id).fetch_message(message_id)
+            await message.reply(f"{flakeStr}, where you at?")
+        
 
     async def update_checkin_embed(self, message):
+        '''Updates the checkin embed of message'''
         embed = message.embeds[0]
         embedDic = embed.to_dict()
         newFieldList = [embedDic["fields"][0]]
@@ -93,14 +104,12 @@ class ValorantBot(commands.Cog):
             pass
     
     async def update_request_embed(self, message):
-        print("Getting Session")
-
+        '''Updates the request embed of message'''
         message_id = message.id
         start_time = self.client.db.get_creation_time(message_id)
         
         ordered_emoji_list, next_time = self.get_ordered_emoji_list(start_time)
-        
-        author_name     = self.client.db.get_creator_name(message_id)
+
         base_embed      = message.embeds[0]
         embed_dict      = base_embed.to_dict()
         new_field_list  = [embed_dict["fields"][0]]
@@ -109,13 +118,10 @@ class ValorantBot(commands.Cog):
 
         for e in ordered_emoji_list:
             time_str = next_time.strftime("%H:%M")
-
             new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
             next_time = next_time + datetime.timedelta(minutes = 30)
 
         new_field_list.append({'inline': False, 'name': "❌ (Unavailable)", 'value': ""})
-
-        print("Scanning Reactions")
 
         emoji_display_order = ["✅"] + ordered_emoji_list + ["❌"]
         for reaction in self.client.db.get_reactions(message_id):
@@ -125,14 +131,12 @@ class ValorantBot(commands.Cog):
             if reaction['user'] != self.client.user.id:
                 new_field_list[ind]["value"] += f"\n> <@{reaction['user']}>"
 
-        print("Finishing up")
         final_field_list = [field for field in new_field_list if field["value"]!=""]
 
         embed_dict["fields"] = final_field_list
         new_embed = discord.Embed.from_dict(embed_dict)
 
         await message.edit(embed=new_embed)
-        print("---FINISHED---")
 
     @commands.command()
     async def fakecheckin(self, ctx):
@@ -168,6 +172,7 @@ class ValorantBot(commands.Cog):
 
     @commands.command()
     async def valorant2(self, ctx):
+        '''Creates a valorant request message'''
         new_embed = self.get_blank_request_embed(ctx.author.name)
     
         agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
@@ -184,6 +189,7 @@ class ValorantBot(commands.Cog):
     
     @commands.command()
     async def username(self, ctx):
+        '''Sets valorant username and tag. eg: ?username FootGirl420#Euw'''
         print(ctx.message.content)
         match = re.fullmatch(r'\?username (?P<user>[^#]*)#(?P<tag>.{3,5})', ctx.message.content)
         print(match)
