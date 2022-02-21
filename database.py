@@ -200,7 +200,7 @@ class Database():
             ''', (message_id,))
             return cursor.fetchone()[0]
         
-    def get_creator_name(self, message_id):
+    def get_creator(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
