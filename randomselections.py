@@ -20,7 +20,7 @@ class Selects(commands.Cog):
     async def randomagents(self, ctx, num="1"):
         num = int(num)
         try:
-            sample = random.sample(ad.agent_list, num)
+            sample = random.sample(ad.agent_details, num)
             agentStr = "\n".join([f"> {i + 1}: " * (num!=1) + f"{sample[i]}" for i in range(0,num)])
             await ctx.reply(agentStr)
     
