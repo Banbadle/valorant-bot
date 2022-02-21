@@ -59,12 +59,11 @@ class Database():
             ''', (user_id,))
             return cursor.fetchone()
         
-    def add_social_credit(self, user_id, num):
-        user = self._get_user(user_id)
-        if not user:
+    def add_social_credit(self, user, num):
+        if not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
 
-        self._add_social_credit(user_id, num)
+        self._add_social_credit(user, num)
 
     def _get_user(self, user_id):
         self._refresh_connection()
@@ -88,14 +87,14 @@ class Database():
             ''', (user_id, username, tag))
         self.connection.commit()
         
-    def _add_social_credit(self, user_id, num):
+    def _add_social_credit(self, user, num):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 UPDATE users
                 SET social_credit = social_credit + %s,
                 WHERE id = %s
-            ''', (num, user_id))
+            ''', (num, user.id))
         self.connection.commit()
 
     # Messages table functions
