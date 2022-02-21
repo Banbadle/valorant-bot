@@ -57,7 +57,7 @@ class Database():
                 WHERE id = %s
                 LIMIT 1
             ''', (user_id,))
-            return cursor.fetchone()
+            return cursor.fetchone()['social_credit']
         
     def add_social_credit(self, user, num):
         if not self._get_user(user.id):
