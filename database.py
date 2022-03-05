@@ -302,6 +302,21 @@ class Database():
             self._add_user(user.name, user.discriminator, user.id)
 
         self._user_join(user, channel)
+        
+    def get_users_in_voice(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT r.user_id, v.channel_id
+                FROM reactions r
+                JOIN voicechannellog v
+                    ON v.user_id = r.user_id
+                WHERE v.leave_time IS NULL
+                    AND r.removed IS NULL
+                    AND r.emoji <> '❌'
+                    AND r.message_id = %s
+            ''', (message_id))
+        self.connection.commit()
 
     def user_leave(self, user, channel):
         self._refresh_connection()

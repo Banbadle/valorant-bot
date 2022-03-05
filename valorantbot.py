@@ -74,12 +74,14 @@ class ValorantBot(commands.Cog):
 
         flake_list = []
 
+        if not self.client.db.get_users_in_voice(message_id): return           #Stop if no reacted users are in a voice channel
+
         for react_user_id in user_id_list:
             # Continue if reaction is by bot
             if react_user_id == self.client.user.id: continue
 
             voice_guild_id = self.client.db.get_user_voice_guild(react_user_id)
-            if (voice_guild_id == guild_id): continue
+            if voice_guild_id: continue                                        # Do not add if user is in voice channel
 
             flake_list.append(react_user_id)
 
