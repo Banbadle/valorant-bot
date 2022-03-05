@@ -316,7 +316,7 @@ class Database():
                     AND r.emoji <> '❌'
                     AND r.message_id = %s
             ''', (message_id))
-        self.connection.commit()
+            return cursor.fetchall()
 
     def user_leave(self, user, channel):
         self._refresh_connection()
