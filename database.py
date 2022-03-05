@@ -47,7 +47,7 @@ class Database():
                 WHERE id = %s
             ''', (username, tag, user_id))
         self.connection.commit()
-        
+
     def get_social_credit(self, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
@@ -58,7 +58,7 @@ class Database():
                 LIMIT 1
             ''', (user_id,))
             return cursor.fetchone()['social_credit']
-        
+
     def add_social_credit(self, user, num):
         if not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
@@ -86,7 +86,7 @@ class Database():
                 )
             ''', (user_id, username, tag))
         self.connection.commit()
-        
+
     def _add_social_credit(self, user, num):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -129,7 +129,7 @@ class Database():
                 LIMIT 1;
             ''', (trigger_id,))
             return cursor.fetchone()
-        
+
     def get_message_type(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -140,7 +140,7 @@ class Database():
                 LIMIT 1;
             ''', (message_id,))
             return cursor.fetchone()[0]
-        
+
     def get_channel_id(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -163,7 +163,7 @@ class Database():
                 )
             ''', (message_id, guild_id, channel_id, user_id, trigger_id, message_type))
         self.connection.commit()
-        
+
 #------------------------------------------------------------------------------
     def get_current_time_reactions(self, emoji):
         self._refresh_connection()
@@ -189,7 +189,7 @@ class Database():
                 LIMIT 1;
             ''', (message_id,))
             return cursor.fetchone()[0]
-        
+
     def get_creation_time(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -199,7 +199,7 @@ class Database():
                 WHERE id = %s
             ''', (message_id,))
             return cursor.fetchone()[0]
-        
+
     def get_creator(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -245,7 +245,7 @@ class Database():
                     AND r.removed IS NULL
             ''', (message_id,))
             return cursor.fetchall()
-  
+
 # -----------------------------------------------------------------------------
     def get_users_from_reaction(self, message_id, emoji):
         self.refresh_connection()
@@ -294,15 +294,15 @@ class Database():
                     AND emoji = %s
             ''', (message_id, user_id, emoji))
         self.connection.commit()
-      
+
     # VoiceChannelLog table functions
-     
+
     def user_join(self, user, channel):
         if not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
-            
+
         self._user_join(user, channel)
-    
+
     def user_leave(self, user, channel):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -313,7 +313,7 @@ class Database():
                     AND channel_id = %s
             ''', (user.id, channel.id))
         self.connection.commit()
-    
+
     def get_user_voice_channel(self, user_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -325,7 +325,7 @@ class Database():
                 LIMIT 1
             ''', (user_id,))
             return cursor.fetchone()
-        
+
     def get_user_voice_guild(self, user_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -337,7 +337,7 @@ class Database():
                 LIMIT 1
             ''', (user_id,))
             return cursor.fetchone()
-        
+
     def _user_join(self, user, channel):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -349,6 +349,3 @@ class Database():
                 )
             ''', (user.id, channel.guild.id, channel.id))
         self.connection.commit()
-
-    
-    
