@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS messages (
   created_by BIGINT NOT NULL, -- Discord user id
   trigger_msg BIGINT NOT NULL, -- Discord message id which triggered this message
   created TIMESTAMP NOT NULL DEFAULT NOW(),
+  message_type TINYINT(8) NOT NULL DEFAULT 1,
   FOREIGN KEY (created_by) REFERENCES users(id),
   PRIMARY KEY (id)
 );
@@ -35,5 +36,16 @@ CREATE TABLE IF NOT EXISTS reactions (
   PRIMARY KEY (id),
   UNIQUE (message_id, user_id, emoji),
   FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS voicechannellog (
+  id INT NOT NULL AUTO_INCREMENT,
+  user_id BIGINT NOT NULL, -- Discord user id
+  guild_id BIGINT NOT NULL, -- Discord guild id
+  channel_id BIGINT NOT NULL, -- Discord channel id
+  join_time TIMESTAMP NOT NULL DEFAULT NOW(),
+  leave_time TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

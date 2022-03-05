@@ -1,423 +1,275 @@
 import discord
 import datetime
-from git import Repo
-import os
-import toml
-import pytz
-import random
 import re
-from discord.ext import commands
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import sys
+from discord.ext import commands, tasks
+from collections import defaultdict
 
 import authordetails
-import valorantranks
-from database import Database
 
+import asyncio
 import nest_asyncio
 nest_asyncio.apply()
 
-with open('config.toml', 'r') as f:
-    config = toml.loads(f.read())
+clock_map = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"01:00","🕜":"01:30","🕑":"02:00",\
+             "🕝":"02:30","🕒":"03:00","🕞":"03:30","🕓":"04:00","🕟":"04:30","🕔":"05:00",\
+                 "🕠":"05:30","🕕":"06:00","🕡":"06:30","🕖":"07:00","🕢":"07:30","🕗":"08:00",\
+                     "🕣":"08:30","🕘":"09:00","🕤":"09:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30","❌": None}
 
-db = Database()
+class ValorantBot(commands.Cog):
+    
+    def __init__(self, client):
+        self.client = client
+        
+    @commands.Cog.listener()
+    async def on_ready(self):
+        '''called when cog is loaded'''
+        print(sys.argv[0])
+        await self.checkin_loop() # Inital pass of checkin
+            
+    def get_ordered_emoji_list(self, start_time):
+        '''returns an ordered list of emojis (corresponding to times after the given start_time), and a datetime object of the time of the first occurrence after start_time'''
+        wait_time   = 5 + 29 - ((start_time.minute - 1) % 30)
+        first_time  = start_time.replace(second=0, microsecond=0, minute=start_time.minute, hour=start_time.hour) + datetime.timedelta(minutes = wait_time - 5)
+        
+        emoji_list          = list(clock_map)[1:-1] * 2
+        slice_emoji         = list(key for key, val in clock_map.items() if val == first_time.strftime("%I:%M"))[0]
+        slice_index         = emoji_list.index(slice_emoji)
+        ordered_emoji_list  = emoji_list[slice_index: slice_index+24]
+        
+        return ordered_emoji_list, first_time
+    
+    @tasks.loop(minutes = 30)
+    async def checkin_loop(self):
+        '''Loop to run checkin every 30 minutes'''
+        grace_period = 5
+        curr_time = datetime.datetime.now()
+        wait_time = 30 - (((curr_time.minute - 1 - grace_period) % 30) + 1)
+        
+        print(f"current time: {curr_time}")
+        print(f"wait time until execution: {wait_time} mins")
+        await asyncio.sleep(wait_time * 60)
+        
+        new_time = curr_time.replace(second=0, microsecond=0, minute=curr_time.minute, hour=curr_time.hour) + datetime.timedelta(minutes = wait_time - grace_period)
+        time_str = new_time.strftime("%I:%M")
+        curr_emoji = list(key for key, val in clock_map.items() if val == time_str)[0]
+        
+        reaction_list = self.client.db.get_current_time_reactions(curr_emoji)
+        
+        msg_dict = defaultdict(list)
+        for message_id, user_id in reaction_list:
+            msg_dict[message_id].append(user_id)
 
-client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
+        for message_id, user_id_list in msg_dict.items():
+            await self.checkin(message_id, user_id_list)
+    
+    async def checkin(self, message_id, user_id_list):
+        '''checks for people who are "late" and responds if appropriate'''
+        
+        print("CHECKING IN")
+        print(message_id)
+        print(user_id_list)
 
-client.messageToSession = dict()
-#client.clockMap = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"1:00","🕜":"1:30","🕑":"2:00","🕝":"2:30","🕒":"3:00","🕞":"3:30","🕓":"4:00","🕟":"4:30","🕔":"5:00","🕠":"5:30","🕕":"6:00","🕡":"6:30","🕖":"7:00","🕢":"7:30","🕗":"8:00","🕣":"8:30","🕘":"9:00","🕤":"9:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30"}
-client.clockMap = {"✅":"Now","🕛":"12:00","🕧":"12:30","🕐":"01:00","🕜":"01:30","🕑":"02:00","🕝":"02:30","🕒":"03:00","🕞":"03:30","🕓":"04:00","🕟":"04:30","🕔":"05:00","🕠":"05:30","🕕":"06:00","🕡":"06:30","🕖":"07:00","🕢":"07:30","🕗":"08:00","🕣":"08:30","🕘":"09:00","🕤":"09:30","🕙":"10:00","🕥":"10:30","🕚":"11:00","🕦":"11:30","❌": None}
-client.scheduler = AsyncIOScheduler()
+        guild_id = self.client.db.get_guild_id(message_id)
+        
+        flake_list = []
+        
+        for react_user_id in user_id_list:
+            # Continue if reaction is by bot
+            if react_user_id == self.client.user.id: continue
+            
+            voice_guild_id = self.client.db.get_user_voice_guild(react_user_id)
+            if (voice_guild_id == guild_id): continue
+        
+            flake_list.append(react_user_id)
+            
+        if flake_list != []:
+            channel_id  = self.client.db.get_channel_id(message_id)
+            message     = await self.client.get_channel(channel_id).fetch_message(message_id)
+            await self.post_checkin(message, flake_list)
+            
+        # for user_id in user_id_list:
+        #     if user_id in flake_list:   self.client.db.add_social_credit(-200)
+        #     else:                       self.client.db.add_social_credit(200)
+            
+    async def update_checkin_embed(self, message):
+        '''Updates the checkin embed of message'''
+        embed = message.embeds[0]
+        embedDic = embed.to_dict()
+        newFieldList = [embedDic["fields"][0]]
+        newFieldList.append({'inline': False, 'name': "__Coming Now__", 'value': "\u200b"})
+        newFieldList.append({'inline': True, 'name': "__Need More Time__", 'value': "\u200b"})
+        newFieldList.append({'inline': True, 'name': "__Not Coming__", 'value': "\u200b"})
+    
+        for react in message.reactions:
+            pass
+    
+    async def update_request_embed(self, message):
+        '''Updates the request embed of message'''
+        message_id = message.id
+        start_time = self.client.db.get_creation_time(message_id)
+        
+        ordered_emoji_list, next_time = self.get_ordered_emoji_list(start_time)
 
-@client.event
-async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
-    client.scheduler = AsyncIOScheduler()
-    client.scheduler.start()
+        base_embed      = message.embeds[0]
+        embed_dict      = base_embed.to_dict()
+        new_field_list  = [embed_dict["fields"][0]]
+        
+        new_field_list.append({'inline': False, 'name': "✅ (Now)", 'value': ""})
 
+        for e in ordered_emoji_list:
+            time_str = next_time.strftime("%H:%M")
+            new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
+            next_time = next_time + datetime.timedelta(minutes = 30)
 
-class ValorantSession():
-    def __init__(self, message=None):
-        self.message = message
-        self.hasStarted = False
-        self.hasEnded = False
-        self.voiceChannel = None
-        self.time = message.created_at
+        new_field_list.append({'inline': False, 'name': "❌ (Unavailable)", 'value': ""})
 
-        self.timeDict = self.makeTimeDict()
-        self.orderedEmojiList = list([emoji for emoji in self.timeDict])
+        emoji_display_order = ["✅"] + ordered_emoji_list + ["❌"]
+        for reaction in self.client.db.get_reactions(message_id):
+            if reaction['emoji'] not in clock_map: continue
 
-    async def get_message(self):
-        msg = await self.message.channel.fetch_message(self.message.id)
-        return msg
+            ind = emoji_display_order.index(reaction['emoji']) + 1
+            if reaction['user'] != self.client.user.id:
+                new_field_list[ind]["value"] += f"\n> <@{reaction['user']}>"
 
-    def makeTimeDict(self):
-        message = self.message
-        currTime = message.created_at.replace(tzinfo=pytz.utc)
+        final_field_list = [field for field in new_field_list if field["value"]!=""]
 
-        deltaMin = ((currTime.minute // 30)+1)*30 - currTime.minute
-        deltaTime = datetime.timedelta(minutes=deltaMin, seconds=-currTime.second, microseconds=-currTime.microsecond)
+        embed_dict["fields"] = final_field_list
+        new_embed = discord.Embed.from_dict(embed_dict)
 
-        firstTime = currTime + deltaTime
-        mins30 = datetime.timedelta(minutes = 30)
+        await message.edit(embed=new_embed)
 
-        indOffset = 0
-        timeStrList = [val for key, val in client.clockMap.items() if key != "✅" and key != "❌"]
-        lookupTime = firstTime.astimezone(pytz.timezone("Europe/London")).strftime("%I:%M")
+    async def post_checkin(self, trigger_message, user_id_list):
 
-        for ind in range(0, len(timeStrList)):
-            if lookupTime == timeStrList[ind]:
-                indOffset = ind
-                print(indOffset)
-                break
+        newEmbed = discord.Embed(title="__Check In__", color=0xff8800)
+        value_string = "\n".join([f"<@{user_id}>" for user_id in user_id_list])
+        newEmbed.add_field(name="The following people reacted to the reqeust, but do not appear to have joined:", value=value_string, inline=False)
+        
+        author_text, author_icon = authordetails.get_author_pair()
+        newEmbed.set_author(name=author_text, icon_url=author_icon)
 
-        timeEmojiList = [key for key in client.clockMap if key != "✅" and key != "❌"]*2
+        checkin_message = await trigger_message.reply(embed=newEmbed)
+        
+        self.client.db.add_message(checkin_message, trigger_message, 2)
 
-        self.orderedEmojiList = ["✅"]
-        timeDict = {"✅": currTime}
-
-        for num in range(0,24):
-            nextTime = firstTime + mins30 * num
-            key = timeEmojiList[num + indOffset]
-
-            self.orderedEmojiList.append(key)
-            timeDict[key] = nextTime
-
-
-        self.orderedEmojiList.append("❌")
-        timeDict["❌"] = None
-
-        return timeDict
-
-    def start(self):
-
-        mins5 = datetime.timedelta(minutes = 5)
-        client.scheduler.add_job(checkIn, "date", args=["✅", self], run_date=datetime.datetime.now() + mins5)
-
-        for emoji,time in self.timeDict.items():
-            if emoji == "✅" or emoji == "❌":
-                continue
-            client.scheduler.add_job(checkIn, "date", args=[emoji, self], run_date=time + mins5)
-
-
-async def checkIn(emoji, session):
-    print("CHECKING IN")
-    message = await session.get_message()
-
-    if session.hasStarted == False:
-        print("Session not started")
-        return
-
-    for react in message.reactions:
-        if react.emoji == emoji:
-
-            flakeList = []
-
-            async for reactUser in react.users():
-                print(reactUser)
-                userJoined = False
-                if reactUser == client.user:
-                    continue
-                for channel in message.guild.voice_channels:
-                    for voiceUser in channel.members:
-
-                        if voiceUser == reactUser:
-                            userJoined = True
-
-                print(f"HAS JOINED: {userJoined}")
-                if userJoined == False:
-                    flakeList.append(reactUser.mention)
-
-            if flakeList != []:
-                flakeStr = ",".join(flakeList)
-                await message.reply(f"{flakeStr}, where the fuck are you?")
-
-def makeNewSession(message):
-    newSession = ValorantSession(message)
-    client.messageToSession[message] = newSession
-    newSession.start()
-    return newSession
-
-client.makeNewSession = makeNewSession
-
-
-def getSession(message):
-    try:
-        return client.messageToSession[message]
-    except:
-        newSession = client.makeNewSession(message)
-        return newSession
-client.getSession = getSession
-
-async def update_checkin_embed(message):
-    embed = message.embeds[0]
-    embedDic = embed.to_dict()
-    newFieldList = [embedDic["fields"][0]]
-    newFieldList.append({'inline': False, 'name': "__Coming Now__", 'value': "\u200b"})
-    newFieldList.append({'inline': True, 'name': "__Need More Time__", 'value': "\u200b"})
-    newFieldList.append({'inline': True, 'name': "__Not Coming__", 'value': "\u200b"})
-
-    for react in message.reactions:
-        pass
-
-
-async def update_request_embed(message):
-    print("Getting Session")
-    currSession = client.getSession(message)
-    emojiToTimeDict = currSession.timeDict
-
-    embed = message.embeds[0]
-    embedDic = embed.to_dict()
-    newFieldList = [embedDic["fields"][0]]
-
-    for e in currSession.orderedEmojiList:
-        try:
-            timeStr = emojiToTimeDict[e].strftime("%H:%M")
-            newFieldList.append({'inline': False, 'name': f"{e} ({timeStr})", 'value': ""})
-        except:
-            if e == "❌":
-                timeStr = "Unavailable"
-                newFieldList.append({'inline': False, 'name': f"{e} ({timeStr})", 'value': ""})
-            else:
-                raise Exception("Error found updating embed using ValorantSession.orderedEmojiList")
-
-    newFieldList[1] = {'inline': False, 'name': "✅ (Now)", 'value': ""}
-
-    print("Scanning Reactions")
-    for reaction in db.get_reactions(message.id):
-        if reaction['emoji'] not in client.clockMap:
-            continue
-
-        ind = currSession.orderedEmojiList.index(reaction['emoji']) + 1
-        if reaction['user'] != client.user.id:
-            newFieldList[ind]["value"] += f"\n> <@{reaction['user']}>"
-
-    print("Finishing up")
-    cleanNewFieldList = [field for field in newFieldList if field["value"]!=""]
-
-    embedDic["fields"] = cleanNewFieldList
-    newEmbed = discord.Embed.from_dict(embedDic)
-
-    await message.edit(embed=newEmbed)
-    print("---FINISHED---")
-
-client.update_request_embed = update_request_embed
-
-@client.command()
-async def fakecheckin(ctx):
-
-    newEmbed = discord.Embed(title="__Check In__", color=0xff8800)
-    # newEmbed.add_field(name=s"🕜 (01:30)", value="CUM\n", inline=False)
-    newEmbed.add_field(name="The following people reacted to the reqeust, but do not appear to have joined:", value="PLACEHOLDER TEXT", inline=False)
-
-    authorText, authorIcon = authordetails.get_author_pair()
-    newEmbed.set_author(name=authorText, icon_url=authorIcon)
-
-    message = await ctx.reply(embed=newEmbed)
-
-    await message.add_reaction("❌")
-    await message.add_reaction("✅")
+        # await message.add_reaction("❌")
+        # await message.add_reaction("✅")
 
 
-# @client.command()
-# async def ecoround(ctx):
-#     txt = "The one with the rifle shoots! The one without follows him!\nWhen the one with the rifle gets killed, the one who is following picks up the rifle and shoots!"
-#     message = await ctx.reply(txt)
+    def is_request(self, message_id):
+        return self.client.db.get_message_type(message_id) == 1
+    
+    def is_checkin(self, message_id):
+        return self.client.db.get_message_type(message_id) == 2
+    
+    def get_blank_request_embed(self, author_name):
+        new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
+        new_embed.add_field(name=f"{author_name} wants to play Valorant", value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later.", inline=False)
+        new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
+        
+        return new_embed
 
-@client.command()
-async def randommap(ctx):
-    mapList = authordetails.maps
-    await ctx.reply(random.choice(mapList))
-
-@client.command()
-async def randomagent(ctx, num="1"):
-    num = int(num)
-    try:
-        sample = authordetails.random_agents(num)
-        if num == 1:
-            await ctx.reply(f"> {sample[0]}")
+    @commands.command()
+    async def valorant(self, ctx):
+        '''Creates a valorant request message'''
+        new_embed = self.get_blank_request_embed(ctx.author.name)
+    
+        agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
+    
+        message = await ctx.reply(agentsID, embed=new_embed)
+    
+        self.client.db.add_message(message, ctx.message, 1)
+    
+        await message.add_reaction("❌")
+        await message.add_reaction("✅")
+        temp_emoji_list, _ = self.get_ordered_emoji_list(datetime.datetime.now())
+        for i in range(0,7):
+            await message.add_reaction(temp_emoji_list[i])
+    
+    @commands.command()
+    async def username(self, ctx):
+        '''Sets valorant username and tag. eg: ?username FootGirl420#Euw'''
+        print(ctx.message.content)
+        match = re.fullmatch(r'\?username (?P<user>[^#]*)#(?P<tag>.{3,5})', ctx.message.content)
+        print(match)
+        if not match:
             return
+    
+        self.client.db.set_valorant_username(ctx.author.id, match.group('user'), match.group('tag'))
+    
+        await ctx.message.add_reaction("✅")
+    
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        message_id = payload.message_id
+        channel_id = payload.channel_id
+    
+        if not self.is_request(message_id): return
 
+        message = await self.client.get_channel(channel_id).fetch_message(message_id)
+        self.client.db.remove_reaction(message_id, payload.user_id, payload.emoji.name)
+        await self.update_request_embed(message)
+    
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+    
+        this_emoji  = payload.emoji.name
+        channel_id  = payload.channel_id
+        message_id  = payload.message_id
+        user_id     = payload.user_id
+        bot_id      = self.client.user.id
+        
 
-        agentStr = "\n".join([f"> {i + 1}: {sample[i]}" for i in range(0,num)])
-        await ctx.reply(agentStr)
-
-    except:
-        await ctx.reply(f"I'm sorry {ctx.author.name}, I can't let you do that")
-
-
-@client.command()
-async def ligma(ctx):
-    await ctx.reply("Ligma balls, bitch!")
-
-def is_request(message):
-    return "Valorant Request" in message.embeds[0].title
-client.is_request = is_request
-
-@client.command()
-async def ranks(ctx):
-    memberList = []
-    rankList = []
-    for member in discord.utils.get(ctx.guild.roles,name="Agents").members:
-        memberList.append(f"> {member.name}")
-        try:
-            memberRank = valorantranks.get_player_rank(member.id)
-            rankList.append(memberRank)
-        except:
-            rankList.append("Unknown")
-
-    rankNumList = [valorantranks.get_rank_num(rank) if rank != "Unknown" else -1 for rank in rankList]
-    print(rankNumList)
-
-    zip_list = zip(rankNumList, memberList, rankList)
-    sorted_zip_list = sorted(zip_list, reverse=True)
-
-    orderedMemberList = [m for _,m,_ in sorted_zip_list]
-    orderedRankList = [r for _,_,r in sorted_zip_list]
-
-    memberStr = "\n".join(orderedMemberList)
-    rankStr = "\n".join(orderedRankList)
-
-    newEmbed = discord.Embed(title="__Leaderboard__", color=0xff0000)
-
-    newEmbed.add_field(name="__Player__", value=memberStr, inline=True)
-    newEmbed.add_field(name="__Rank__", value=rankStr, inline=True)
-
-    await ctx.send(embed=newEmbed)
-
-@client.command()
-async def valorant(ctx):
-    newEmbed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-    newEmbed.add_field(name=f"{ctx.author.name} wants to play Valorant", value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later.", inline=False)
-    newEmbed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
-
-    agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
-
-    message = await ctx.reply(agentsID, embed=newEmbed)
-
-    db.add_message(message, ctx.message)
-
-    newSession = client.makeNewSession(message)
-
-    await message.add_reaction("❌")
-    tempEmojiList = [emoji for emoji, dt in newSession.timeDict.items()]
-    for i in range(0,7):
-        await message.add_reaction(tempEmojiList[i])
-
-@client.command()
-async def username(ctx):
-    print(ctx.message.content)
-    match = re.fullmatch(r'\?username (?P<user>[^#]*)#(?P<tag>.{3,5})', ctx.message.content)
-    print(match)
-    if not match:
-        return
-
-    db.set_valorant_username(ctx.author.id, match.group('user'), match.group('tag'))
-
-    await ctx.message.add_reaction("✅")
-
-@client.command()
-async def version(ctx):
-    repo = Repo(os.getcwd())
-    hash = repo.head.commit.binsha.hex()[:7]
-    await ctx.reply(f"`{hash}`")
-
-@client.event
-async def on_raw_reaction_remove(payload):
-    message = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
-
-    if not client.is_request(message):
-      return
-
-    db.remove_reaction(message.id, payload.user_id, payload.emoji.name)
-    await client.update_request_embed(message)
-
-@client.event
-async def on_raw_reaction_add(payload):
-
-    thisEmoji = payload.emoji.name
-    channel = client.get_channel(payload.channel_id)
-    message = await channel.fetch_message(payload.message_id)
-    guild = message.guild
-    user = discord.utils.find(lambda m : m.id == payload.user_id, guild.members)
-
-    #Checks for reactions to ignore
-    #If message was not posted by bot
-    if message.author != client.user:
-        return
-    #If reaction was from bot
-    if user == client.user:
-        return
-
-    #Removes unwanted reactions
-    if thisEmoji not in client.clockMap:
-        await message.remove_reaction(payload.emoji, user)
-        return
-
-    # Check if there is already a reaction in the database
-    if db.get_user_reaction(message.id, user.id):
-        # Remove the new reaction if there is
-        await message.remove_reaction(thisEmoji, user)
-        return
-
-    # Add the new reaction to the database
-    db.add_reaction(message.id, user, thisEmoji)
-
-    if client.is_request(message):
-        print("Message: Request")
-        await client.update_request_embed(message)
-
-    elif client.is_checkin(message):
-        print("Message: Check In")
-        if thisEmoji not in ["❌", "✅"]:
-            await message.remove_reaction(payload.emoji,user)
+        '''ADD CHECK IF MESSAGE IS IN DATABASE'''
+    
+        #If reaction was from bot
+        if user_id == bot_id:
             return
+    
+        user = await self.client.fetch_user(user_id)
+        message = await self.client.get_channel(channel_id).fetch_message(message_id)
+    
+        #Removes unwanted reactions
+        if this_emoji not in clock_map:
+            await message.remove_reaction(this_emoji, user_id)
+            return
+    
+        # Check if there is already a reaction in the database
+        if self.client.db.get_user_reaction(message_id, user_id):
+            # Remove the new reaction if there is
+            await message.remove_reaction(this_emoji, user_id)
+            return
+    
+        # Add the new reaction to the database
+        self.client.db.add_reaction(message_id, user, this_emoji)
 
-        await client.update_checkin_embed(message)
+        if self.is_request(message_id):
+            print("Message: Request")
+            await self.update_request_embed(message)
 
-@client.event
-async def on_voice_state_update(joinUser, before, after):
-    # New Person Joins Voice Chat
-    if before.channel is None and after.channel is not None:
-        print(f"{joinUser} has joined a voice channel. Checking for session")
-        for message, session in client.messageToSession.items():
-            message = await message.channel.fetch_message(message.id)
-            print(f"Checking session from {session.time}")
-            for react in message.reactions:
-                print(f"Checking {react.emoji}")
-                async for user in react.users():
-                    print(f"Checking {user} == {joinUser}")
-                    if user == joinUser:
-                        print(f"STARTING SESSION FROM {session.time}")
-                        session = client.messageToSession[message]
-                        session.hasStarted = True
-                        print(datetime.datetime.now())
+        elif self.is_checkin(message_id):
+            print("Message: Check In")
+            if this_emoji not in ["❌", "✅"]:
+                await message.remove_reaction(payload.emoji, user)
+                return
+    
+            await self.update_checkin_embed(message)
+    
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, user, leave, join):
 
-    # Someone Leaves Voice Chat
-    if before.channel is not None and after.channel is None:
-        guild = before.channel.guild
+        if join.channel != None:    self.client.db.user_join(user, join.channel)
+        if leave.channel != None:   self.client.db.user_leave(user, leave.channel)
+            
+    @commands.Cog.listener()
+    async def on_message_delete(self, ctx):
+        msg = self.client.db.get_message_from_trigger(ctx.id)
+        if not msg:
+            return
+    
+        message = await ctx.channel.fetch_message(msg['id'])
+        await message.delete()
 
-        count = 0
-        for channel in guild.voice_channels:
-            for voiceUser in channel.members:
-                count +=1
-
-        if count == 0:
-            for message,session in client.messageToSession.items():
-                if message.guild == guild:
-
-                    print(f"Channel is now empty, ending session from {session.time}")
-                    session = client.messageToSession[message]
-                    session.hasStarted = False
-                    session.hasEnded = True
-
-@client.event
-async def on_message_delete(ctx):
-    msg = db.get_message_from_trigger(ctx.id)
-    if not msg:
-        return
-
-    message = await ctx.channel.fetch_message(msg['id'])
-    await message.delete()
-
-client.run(config['discord']['key'])
+def setup(client):
+    client.add_cog(ValorantBot(client))
+    
