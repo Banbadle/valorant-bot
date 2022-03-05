@@ -1,1 +1,1 @@
-ALTER TABLE messages ADD messagetype TINYINT(8);
+ALTER TABLE messages ADD message_type TINYINT(8);
