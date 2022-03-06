@@ -49,6 +49,7 @@ class Valranks(commands.Cog):
         memberList = []
         rankList = []
         for member in discord.utils.get(ctx.guild.roles,name="Agents").members:
+            if not self.client.db.get_valorant_username(member.id): continue
             username, tag = self.client.db.get_valorant_username(member.id)
             if not username or not tag: continue
             memberList.append(f"> {member.name}")
