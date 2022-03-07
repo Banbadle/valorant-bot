@@ -45,6 +45,7 @@ class Valranks(commands.Cog):
         return rank
   
     @commands.command()
+    @commands.guild_only()
     async def ranks(self, ctx):
         memberList = []
         rankList = []
