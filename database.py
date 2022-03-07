@@ -65,6 +65,17 @@ class Database():
 
         self._add_social_credit(user, num)
 
+    def is_admin(self, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT is_admin
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            result = cursor.fetchone()
+            return result is not None and result[0] == 1
+
     def _get_user(self, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:

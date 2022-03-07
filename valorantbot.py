@@ -172,6 +172,7 @@ class ValorantBot(commands.Cog):
         return new_embed
 
     @commands.command()
+    @commands.guild_only()
     async def valorant(self, ctx):
         '''Creates a valorant request message'''
         new_embed = self.get_blank_request_embed(ctx.author.name)
