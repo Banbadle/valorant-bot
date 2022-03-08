@@ -57,7 +57,8 @@ class Database():
                 WHERE id = %s
                 LIMIT 1
             ''', (user_id,))
-            return cursor.fetchone()['social_credit']
+            result = cursor.fetchone()
+            return result and result['social_credit']
 
     def add_social_credit(self, user, num):
         if not self._get_user(user.id):
@@ -127,7 +128,8 @@ class Database():
                 ORDER BY created DESC
                 LIMIT 1;
             ''', (guild_id,))
-            return cursor.fetchone()['id']
+            result = cursor.fetchone()
+            return result and result['id']
 
     def get_message_from_trigger(self, trigger_id):
         self._refresh_connection()
@@ -150,7 +152,8 @@ class Database():
                 WHERE id = %s
                 LIMIT 1;
             ''', (message_id,))
-            return cursor.fetchone()[0]
+            result = cursor.fetchone()
+            return result and result[0]
 
     def get_channel_id(self, message_id):
         self._refresh_connection()
@@ -161,7 +164,8 @@ class Database():
                 WHERE id = %s
                 LIMIT 1;
             ''', (message_id,))
-            return cursor.fetchone()[0]
+            result = cursor.fetchone()
+            return result and result[0]
 
     def _add_message(self, guild_id, channel_id, message_id, user_id, trigger_id, message_type):
         self._refresh_connection()
@@ -199,7 +203,8 @@ class Database():
                 WHERE id = %s
                 LIMIT 1;
             ''', (message_id,))
-            return cursor.fetchone()[0]
+            result = cursor.fetchone()
+            return result and result[0]
 
     def get_creation_time(self, message_id):
         self._refresh_connection()
@@ -209,7 +214,8 @@ class Database():
                 FROM messages
                 WHERE id = %s
             ''', (message_id,))
-            return cursor.fetchone()[0]
+            result = cursor.fetchone()
+            return result and result[0]
 
     def get_creator(self, message_id):
         self._refresh_connection()
@@ -219,7 +225,8 @@ class Database():
                 FROM messages
                 WHERE id = %s
             ''', (message_id,))
-            return cursor.fetchone()[0]
+            result = cursor.fetchone()
+            return result and result[0]
 #------------------------------------------------------------------------------
 
     # Reactions table functions
@@ -313,7 +320,7 @@ class Database():
             self._add_user(user.name, user.discriminator, user.id)
 
         self._user_join(user, channel)
-        
+
     def get_users_in_voice(self, message_id):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
