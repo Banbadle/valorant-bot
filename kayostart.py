@@ -35,7 +35,8 @@ async def version(ctx):
 
 @client.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
+    if isinstance(error, commands.CheckFailure) or
+      isinstance(error, commands.CommandOnCooldown):
         await ctx.message.add_reaction("❌")
 
 load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py"]
