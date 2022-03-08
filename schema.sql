@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   val_tag VARCHAR(255), -- Valorant tag
   val_rank TINYINT(8), -- Valorant rank
   notify TINYINT(1) NOT NULL DEFAULT 0, -- Notify on message updates
+  is_admin TINYINT(1) NOT NULL DEFAULT 0,
   -- on time and not on time
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id),

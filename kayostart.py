@@ -2,6 +2,7 @@ import discord
 import os
 from discord.ext import commands
 from database import Database
+from checks import is_admin
 import toml
 from git import Repo
 
@@ -16,14 +17,17 @@ client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord
 client.db = Database()
 
 @client.command()
+@commands.check(is_admin)
 async def load(ctx, extension):
     client.load_extension(extension)
 
 @client.command()
+@commands.check(is_admin)
 async def unload(ctx, extension):
     client.unload_extension(extension)
 
 @client.command()
+@commands.check(is_admin)
 async def version(ctx):
     repo = Repo(os.getcwd())
     hash = repo.head.commit.binsha.hex()[:7]
@@ -31,7 +35,8 @@ async def version(ctx):
 
 @client.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
+    if isinstance(error, commands.CheckFailure) or
+      isinstance(error, commands.CommandOnCooldown):
         await ctx.message.add_reaction("❌")
 
 load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py"]

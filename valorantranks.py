@@ -41,6 +41,7 @@ class Valranks(commands.Cog):
         return response['data'][0]['currenttierpatched']
 
     @commands.command()
+    @commands.guild_only()
     @commands.cooldown(1, 1*60)
     async def ranks(self, ctx):
         memberList = []
