@@ -41,6 +41,10 @@ async def on_command_error(ctx, error):
     ]:
         await ctx.message.add_reaction("❌")
 
+@client.event
+async def on_command_completion(ctx):
+    await ctx.message.add_reaction("✅")
+
 load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py"]
 
 for filename in os.listdir(os.getcwd()):
