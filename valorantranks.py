@@ -51,12 +51,11 @@ class Valranks(commands.Cog):
         rankList = []
         agents = discord.utils.get(ctx.guild.roles, name="Agents").members
         for member in agents:
-            valorant_user = self.client.db.get_valorant_username(member.id)
-            if not valorant_user:
+            valorant = self.client.db.get_valorant_username(member.id)
+            if not valorant:
                 continue
 
-            username, tag = valorant_user
-            if not username or not tag:
+            if not valorant['username'] or not valorant['tag']:
                 continue
 
             memberList.append(f"> {member.name}")
