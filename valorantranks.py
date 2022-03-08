@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import sys
-from bs4 import BeautifulSoup
 import requests
 
 ranks = ('Unrated', 'Iron 1', 'Iron 2', 'Iron 3', 'Bronze 1', 'Bronze 2', 'Bronze 3', 'Silver 1', 'Silver 2', 'Silver 3', 'Gold 1', 'Gold 2', 'Gold 3', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Imortal 1', 'Imortal 2', 'Imortal 3', 'Radiant')
@@ -35,17 +34,14 @@ class Valranks(commands.Cog):
 
     def get_player_rank(self, user_id):
         user = self.client.db.get_valorant_username(user_id)
-        tracker = f"https://tracker.gg/valorant/profile/riot/{user['val_username']}%23{user['val_tag']}/overview?playlist=competitive"
+        url = f"https://api.henrikdev.xyz/valorant/v1/mmr-history/eu/{user['val_username']}/{user['val_tag']}"
 
-        source = requests.get(tracker).text
-        soup = BeautifulSoup(source, 'html.parser')
-        rankSpan = soup.find("span", {"class":"valorant-highlighted-stat__value"})
-        rank = rankSpan.text
+        response = requests.get(url).json()
 
-        return rank
+        return response['data'][0]['currenttierpatched']
 
     @commands.command()
-    @commands.cooldown(1, 60*60)
+    @commands.cooldown(1, 1*60)
     async def ranks(self, ctx):
         memberList = []
         rankList = []
@@ -55,7 +51,7 @@ class Valranks(commands.Cog):
             if not valorant:
                 continue
 
-            if not valorant['username'] or not valorant['tag']:
+            if None in valorant.values():
                 continue
 
             memberList.append(f"> {member.name}")
