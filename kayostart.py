@@ -33,13 +33,18 @@ async def version(ctx):
     hash = repo.head.commit.binsha.hex()[:7]
     await ctx.reply(f"`{hash}`")
 
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.message.add_reaction("❌")
+
 load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py"]
 
 for filename in os.listdir(os.getcwd()):
     if filename in load_list:
         load_list.remove(filename)
         client.load_extension(filename[:-3])
-        
+
 if len(load_list) != 0:
     print(f"The following cogs were not found in the current directory, and have not been loaded:\n{load_list}")
 
