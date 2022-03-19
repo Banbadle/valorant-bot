@@ -168,7 +168,7 @@ class Database():
             return result and result[0]
         
     def is_message_in_db(self, message_id):
-        channel_id = self.get_channel_id(self, message_id)
+        channel_id = self.get_channel_id(message_id)
         return bool(channel_id)
 
     def _add_message(self, guild_id, channel_id, message_id, user_id, trigger_id, message_type):
