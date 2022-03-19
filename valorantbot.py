@@ -207,7 +207,7 @@ class ValorantBot(commands.Cog):
         message_id = payload.message_id
         channel_id = payload.channel_id
 
-        if not self.client.db.is_message_in_db(): return
+        if not self.client.db.is_message_in_db(message_id): return
 
         message = await self.client.get_channel(channel_id).fetch_message(message_id)
         self.client.db.remove_reaction(message_id, payload.user_id, payload.emoji.name)
@@ -222,7 +222,7 @@ class ValorantBot(commands.Cog):
         user_id     = payload.user_id
         bot_id      = self.client.user.id
 
-        if not self.client.db.is_message_in_db(): return
+        if not self.client.db.is_message_in_db(message_id): return
 
         #If reaction was from bot
         if user_id == bot_id:
