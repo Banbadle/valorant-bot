@@ -13,14 +13,14 @@ class Selects(commands.Cog):
         print(sys.argv[0])
         
     @commands.command()
-    async def randommap(ctx):
+    async def randommap(self, ctx):
         await ctx.reply(random.choice(ad.map_list))
     
     @commands.command()
     async def randomagents(self, ctx, num="1"):
         num = int(num)
         try:
-            sample = random.sample(ad.agent_details, num)
+            sample = random.sample(list(ad.agent_details), num)
             agentStr = "\n".join([f"> {i + 1}: " * (num!=1) + f"{sample[i]}" for i in range(0,num)])
             await ctx.reply(agentStr)
     
