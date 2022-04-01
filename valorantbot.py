@@ -38,6 +38,12 @@ class ValorantBot(commands.Cog):
         ordered_emoji_list  = emoji_list[slice_index: slice_index+24]
 
         return ordered_emoji_list, first_time
+    
+    def uwuify(self, original_text):
+        uwu_text = "".join([letter if letter not in {"r", "l"} else "w" for letter in original_text])
+        uwu_text = "".join([letter if letter not in {"R", "L"} else "W" for letter in uwu_text])
+        
+        return uwu_text
 
     @tasks.loop(minutes = 30)
     async def checkin_loop(self):
@@ -115,7 +121,9 @@ class ValorantBot(commands.Cog):
 
         base_embed      = message.embeds[0]
         embed_dict      = base_embed.to_dict()
-        new_field_list  = [embed_dict["fields"][0]]
+        embed_dict["title"] = self.uwuify(["title"])
+        embed_dict["description"] = self.uwuify(["description"])
+        new_field_list  = [self.uwuify(embed_dict["fields"][0])]
 
         new_field_list.append({'inline': False, 'name': "✅ (Now)", 'value': ""})
 
