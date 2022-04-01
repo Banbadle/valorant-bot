@@ -121,9 +121,11 @@ class ValorantBot(commands.Cog):
 
         base_embed      = message.embeds[0]
         embed_dict      = base_embed.to_dict()
-        embed_dict["title"] = self.uwuify(["title"])
-        embed_dict["description"] = self.uwuify(["description"])
-        new_field_list  = [self.uwuify(embed_dict["fields"][0])]
+        new_field_list  = [embed_dict["fields"][0]]
+
+        embed_dict["title"] = self.uwuify(embed_dict["title"])
+        new_field_list[0]["name"] = self.uwuify(new_field_list[0]["name"])
+        new_field_list[0]["value"] = self.uwuify("React with ✅ if interested now,❌ if unavailable, or a clock emoji if interested later.")
 
         new_field_list.append({'inline': False, 'name': "✅ (Now)", 'value': ""})
 
@@ -141,12 +143,11 @@ class ValorantBot(commands.Cog):
             ind = emoji_display_order.index(reaction['emoji']) + 1
             if reaction['user'] != self.client.user.id:
                 new_field_list[ind]["value"] += f"\n> <@{reaction['user']}>"
-
+        
         final_field_list = [field for field in new_field_list if field["value"]!=""]
 
         embed_dict["fields"] = final_field_list
         new_embed = discord.Embed.from_dict(embed_dict)
-
         await message.edit(embed=new_embed)
 
     async def post_checkin(self, trigger_message, user_id_list):
@@ -174,7 +175,7 @@ class ValorantBot(commands.Cog):
 
     def get_blank_request_embed(self, author_name):
         new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-        new_embed.add_field(name=f"{author_name} wants to play Valorant", value="React with :white_check_mark: if interested now, :x: if unavailable, or a clock emoji if interested later.", inline=False)
+        new_embed.add_field(name=f"{author_name} wants to play Valorant", value="React with ✅ if interested now,❌ if unavailable, or a clock emoji if interested later.", inline=False)
         new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
 
         return new_embed
