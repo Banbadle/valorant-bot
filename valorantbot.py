@@ -123,7 +123,7 @@ class ValorantBot(commands.Cog):
         embed_dict      = base_embed.to_dict()
         new_field_list  = [embed_dict["fields"][0]]
 
-        embed_dict["title"] = self.uwuify(embed_dict["title"])
+        embed_dict["title"] = "__Vawowant Wequest uWu__"
         new_field_list[0]["name"] = self.uwuify(new_field_list[0]["name"])
         new_field_list[0]["value"] = self.uwuify("React with ✅ if interested now,❌ if unavailable, or a clock emoji if interested later.")
 
