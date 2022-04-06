@@ -1,7 +1,10 @@
 import discord
+from discord_components import SelectOption
 import datetime
+import time
 import re
 import sys
+import pytz
 from discord.ext import commands, tasks
 from collections import defaultdict
 
@@ -38,18 +41,13 @@ class ValorantBot(commands.Cog):
         ordered_emoji_list  = emoji_list[slice_index: slice_index+24]
 
         return ordered_emoji_list, first_time
-    
-    def uwuify(self, original_text):
-        uwu_text = "".join([letter if letter not in {"r", "l"} else "w" for letter in original_text])
-        uwu_text = "".join([letter if letter not in {"R", "L"} else "W" for letter in uwu_text])
-        
-        return uwu_text
 
     @tasks.loop(minutes = 30)
     async def checkin_loop(self):
         '''Loop to run checkin every 30 minutes'''
         grace_period = 5
-        curr_time = datetime.datetime.now()
+        tz = pytz.timezone('Europe/London')
+        curr_time = datetime.datetime.now(tz)
         wait_time = 30 - (((curr_time.minute - 1 - grace_period) % 30) + 1)
 
         print(f"current time: {curr_time}")
@@ -123,14 +121,11 @@ class ValorantBot(commands.Cog):
         embed_dict      = base_embed.to_dict()
         new_field_list  = [embed_dict["fields"][0]]
 
-        embed_dict["title"] = "__Vawowant Wequest uWu__"
-        new_field_list[0]["name"] = self.uwuify(new_field_list[0]["name"])
-        new_field_list[0]["value"] = self.uwuify("React with ✅ if interested now,❌ if unavailable, or a clock emoji if interested later.")
-
         new_field_list.append({'inline': False, 'name': "✅ (Now)", 'value': ""})
 
         for e in ordered_emoji_list:
-            time_str = next_time.strftime("%H:%M")
+            unix_time = int(time.mktime(next_time.timetuple()))
+            time_str = f"<t:{unix_time}:t>"
             new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
             next_time = next_time + datetime.timedelta(minutes = 30)
 
@@ -143,11 +138,12 @@ class ValorantBot(commands.Cog):
             ind = emoji_display_order.index(reaction['emoji']) + 1
             if reaction['user'] != self.client.user.id:
                 new_field_list[ind]["value"] += f"\n> <@{reaction['user']}>"
-        
+
         final_field_list = [field for field in new_field_list if field["value"]!=""]
 
         embed_dict["fields"] = final_field_list
         new_embed = discord.Embed.from_dict(embed_dict)
+
         await message.edit(embed=new_embed)
 
     async def post_checkin(self, trigger_message, user_id_list):
@@ -175,7 +171,7 @@ class ValorantBot(commands.Cog):
 
     def get_blank_request_embed(self, author_name):
         new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-        new_embed.add_field(name=f"{author_name} wants to play Valorant", value="React with ✅ if interested now,❌ if unavailable, or a clock emoji if interested later.", inline=False)
+        new_embed.add_field(name=f"{author_name} wants to play Valorant", value="React with ✅ if interested now, ❌ if unavailable, or a clock emoji if interested later.", inline=False)
         new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
 
         return new_embed
@@ -194,7 +190,8 @@ class ValorantBot(commands.Cog):
 
         await message.add_reaction("❌")
         await message.add_reaction("✅")
-        temp_emoji_list, _ = self.get_ordered_emoji_list(datetime.datetime.now())
+        tz = pytz.timezone('Europe/London')
+        temp_emoji_list, _ = self.get_ordered_emoji_list(datetime.datetime.now(tz))
         for i in range(0,7):
             await message.add_reaction(temp_emoji_list[i])
 
