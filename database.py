@@ -337,7 +337,7 @@ class Database():
                     AND r.removed IS NULL
                     AND r.emoji <> '❌'
                     AND r.message_id = %s
-            ''', (message_id))
+            ''', (message_id,))
             return cursor.fetchall()
 
     def user_leave(self, user, channel):
