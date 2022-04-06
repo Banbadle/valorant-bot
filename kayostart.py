@@ -1,4 +1,5 @@
 import discord
+from discord_components import ComponentsBot
 import os
 from discord.ext import commands
 from database import Database
@@ -12,7 +13,7 @@ nest_asyncio.apply()
 with open('config.toml', 'r') as f:
     config = toml.loads(f.read())
 
-client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
+client = ComponentsBot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
 
 client.db = Database()
 
