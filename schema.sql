@@ -31,11 +31,11 @@ CREATE TABLE IF NOT EXISTS reactions (
   id INT NOT NULL AUTO_INCREMENT,
   message_id BIGINT NOT NULL, -- Discord message id
   user_id BIGINT NOT NULL, -- Discord user id
-  emoji CHAR(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  react_stamp BIGINT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE (message_id, user_id, emoji),
+  UNIQUE (message_id, user_id, react_stamp),
   FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
