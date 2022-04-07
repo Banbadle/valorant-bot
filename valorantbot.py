@@ -204,7 +204,36 @@ class ValorantBot(commands.Cog):
         print("MESSAGE SENT")
     
         self.client.db.add_message(message, ctx.message, 1)
-
+        
+    def interact_val_to_text(self, val):
+        if val == "0" or val == 0:  
+            return "Now" 
+        
+        return f"<t:{val}:t> (Local Time)"
+    
+    @commands.Cog.listener()
+    async def on_select_option(self, interaction):
+        message_id  = interaction.message.id
+        user        = interaction.user
+        
+        if self.is_request(message_id):
+            old_val = self.client.db.get_user_reaction(message_id, user.id)
+            new_val = interaction.values[0]
+            if old_val == new_val:
+                response = await interaction.send(content=f"You have already selected {self.interact_val_to_text(new_val)}")
+            
+            if old_val != None:
+                self.client.db.remove_reaction(message_id, user.id, old_val)
+                
+            self.client.db.add_reaction(message_id, interaction.user, new_val)
+            
+            extra_string = f"\nPreviously was {self.interact_val_to_text(old_val)}" * (old_val!=None)
+            response = await interaction.send(content=f"You have responded with {self.interact_val_to_text(new_val)}" + extra_string)
+            
+            self.update_request_embed(interaction.message)
+            
+        if self.is_checkin(message_id):
+            pass
 
     @commands.command()
     async def username(self, ctx):
