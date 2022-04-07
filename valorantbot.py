@@ -1,5 +1,5 @@
 import discord
-from discord_components import SelectOption
+from discord_components import Select, SelectOption
 import datetime
 import time
 import re
@@ -133,7 +133,6 @@ class ValorantBot(commands.Cog):
 
         emoji_display_order = ["✅"] + ordered_emoji_list + ["❌"]
         for reaction in self.client.db.get_reactions(message_id):
-            if reaction['emoji'] not in clock_map: continue
 
             ind = emoji_display_order.index(reaction['emoji']) + 1
             if reaction['user'] != self.client.user.id:
@@ -171,7 +170,11 @@ class ValorantBot(commands.Cog):
 
     def get_blank_request_embed(self, author_name):
         new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-        new_embed.add_field(name=f"{author_name} wants to play Valorant", value="React with ✅ if interested now, ❌ if unavailable, or a clock emoji if interested later.", inline=False)
+        tz = pytz.timezone('Europe/London')
+        curr_time = datetime.datetime.now(tz).strftime("%H:%M")
+        new_embed.add_field(name=f"{author_name} wants to play Valorant", 
+                            value=f"If interested, please select a time from the drop-down list.\n(This request was sent at {curr_time} UK Time)",
+                            inline=False)
         new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
 
         return new_embed
@@ -183,17 +186,25 @@ class ValorantBot(commands.Cog):
         new_embed = self.get_blank_request_embed(ctx.author.name)
 
         agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
+        
+        t_step = 15 * 60 #time step in seconds
+        first_timestamp = (int(time.time() // t_step) + 1) * t_step
+        option_list = [SelectOption(label = "Now",
+                                    value = 0)]
+        
+        for i in range(0,24):
+            new_timestamp = first_timestamp + t_step * i
+            new_time = datetime.datetime.fromtimestamp(new_timestamp).strftime("%H:%M")
+            new_select = SelectOption(label = f"{new_time} (UK Time)",
+                                      value = new_timestamp)
+            option_list.append(new_select)
+            
 
-        message = await ctx.reply(agentsID, embed=new_embed)
-
+        message = await ctx.reply(agentsID, embed=new_embed, components = [Select(placeholder= "Select a time", options=option_list)])
+        print("MESSAGE SENT")
+    
         self.client.db.add_message(message, ctx.message, 1)
 
-        await message.add_reaction("❌")
-        await message.add_reaction("✅")
-        tz = pytz.timezone('Europe/London')
-        temp_emoji_list, _ = self.get_ordered_emoji_list(datetime.datetime.now(tz))
-        for i in range(0,7):
-            await message.add_reaction(temp_emoji_list[i])
 
     @commands.command()
     async def username(self, ctx):
