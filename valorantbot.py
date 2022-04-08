@@ -1,5 +1,5 @@
 import discord
-from discord_components import Select, SelectOption
+from discord_components import Select, SelectOption, Button, ActionRow, ButtonStyle
 import datetime
 import time
 import re
@@ -113,34 +113,36 @@ class ValorantBot(commands.Cog):
     async def update_request_embed(self, message):
         '''Updates the request embed of message'''
         message_id = message.id
-        start_time = self.client.db.get_creation_time(message_id)
-
-        ordered_emoji_list, next_time = self.get_ordered_emoji_list(start_time)
+        start_datetime = self.client.db.get_creation_time(message_id)
+        start_time = int(time.mktime(start_datetime.timetuple()))
 
         base_embed      = message.embeds[0]
         embed_dict      = base_embed.to_dict()
         new_field_list  = [embed_dict["fields"][0]]
 
-        new_field_list.append({'inline': False, 'name': "✅ (Now)", 'value': ""})
-
-        for e in ordered_emoji_list:
-            unix_time = int(time.mktime(next_time.timetuple()))
-            time_str = f"<t:{unix_time}:t>"
-            new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
-            next_time = next_time + datetime.timedelta(minutes = 30)
-
-        new_field_list.append({'inline': False, 'name': "❌ (Unavailable)", 'value': ""})
-
-        emoji_display_order = ["✅"] + ordered_emoji_list + ["❌"]
+        last_react_stamp = None
+        unavailable_field = {'inline': False, 'name': ":x: (Unavailable)", 'value': ""}
+        
         for reaction in self.client.db.get_reactions(message_id):
- 
-            ind = emoji_display_order.index(reaction['emoji']) + 1
-            if reaction['user'] != self.client.user.id:
-                new_field_list[ind]["value"] += f"\n> <@{reaction['user']}>"
+            react_stamp = reaction['react_stamp']
+            
+            if react_stamp == -1:
+                unavailable_field["value"] += f"\n> <@{reaction['user']}>"
+                continue
+            
+            if react_stamp != last_react_stamp:
+                time_str = self.interact_val_to_str(react_stamp)
+                e = "🕘" # ADJUST TO CLOSEST TIME EMOJI
+                new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
+                
+                last_react_stamp = react_stamp
+                
+            new_field_list[-1]["value"] += f"\n> <@{reaction['user']}>"
+            
+        if unavailable_field['value'] != "":
+            new_field_list.append(unavailable_field)
 
-        final_field_list = [field for field in new_field_list if field["value"]!=""]
-
-        embed_dict["fields"] = final_field_list
+        embed_dict["fields"] = new_field_list
         new_embed = discord.Embed.from_dict(embed_dict)
 
         await message.edit(embed=new_embed)
@@ -204,10 +206,12 @@ class ValorantBot(commands.Cog):
         print("MESSAGE SENT")
     
         self.client.db.add_message(message, ctx.message, 1)
-        
+    
     def interact_val_to_str(self, val):
         if val == "0" or val == 0:  
             return "Now" 
+        if val == "-1" or val == -1:
+            return "Unavailable"
         
         return f"<t:{val}:t> (Local Time)"
     
