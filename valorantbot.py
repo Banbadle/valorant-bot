@@ -133,7 +133,7 @@ class ValorantBot(commands.Cog):
 
         emoji_display_order = ["✅"] + ordered_emoji_list + ["❌"]
         for reaction in self.client.db.get_reactions(message_id):
-
+ 
             ind = emoji_display_order.index(reaction['emoji']) + 1
             if reaction['user'] != self.client.user.id:
                 new_field_list[ind]["value"] += f"\n> <@{reaction['user']}>"
@@ -205,7 +205,7 @@ class ValorantBot(commands.Cog):
     
         self.client.db.add_message(message, ctx.message, 1)
         
-    def interact_val_to_text(self, val):
+    def interact_val_to_str(self, val):
         if val == "0" or val == 0:  
             return "Now" 
         
@@ -220,17 +220,17 @@ class ValorantBot(commands.Cog):
             old_val = self.client.db.get_user_reaction(message_id, user.id)
             new_val = interaction.values[0]
             if old_val == new_val:
-                response = await interaction.send(content=f"You have already selected {self.interact_val_to_text(new_val)}")
+                response = await interaction.send(content=f"You have already selected {self.interact_val_to_str(new_val)}")
             
             if old_val != None:
                 self.client.db.remove_reaction(message_id, user.id, old_val)
                 
             self.client.db.add_reaction(message_id, interaction.user, new_val)
             
-            extra_string = f"\nPreviously was {self.interact_val_to_text(old_val)}" * (old_val!=None)
-            response = await interaction.send(content=f"You have responded with {self.interact_val_to_text(new_val)}" + extra_string)
+            extra_string = f"\nPreviously was {self.interact_val_to_str(old_val)}" * (old_val!=None)
+            response = await interaction.send(content=f"You have responded with {self.interact_val_to_str(new_val)}" + extra_string)
             
-            self.update_request_embed(interaction.message)
+            await self.update_request_embed(interaction.message)
             
         if self.is_checkin(message_id):
             pass
