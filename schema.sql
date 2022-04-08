@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   notify TINYINT(1) NOT NULL DEFAULT 0, -- Notify on message updates
   is_admin TINYINT(1) NOT NULL DEFAULT 0,
   -- on time and not on time
-  created TIMESTAMP NOT NULL DEFAULT NOW(),
+  created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   PRIMARY KEY (id),
   UNIQUE (username, tag),
   UNIQUE (val_username, val_tag)
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS messages (
   channel_id BIGINT NOT NULL, -- Discord channel id
   created_by BIGINT NOT NULL, -- Discord user id
   trigger_msg BIGINT NOT NULL, -- Discord message id which triggered this message
-  created TIMESTAMP NOT NULL DEFAULT NOW(),
+  created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   message_type TINYINT(8) NOT NULL DEFAULT 1,
   FOREIGN KEY (created_by) REFERENCES users(id),
   PRIMARY KEY (id)
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS reactions (
   message_id BIGINT NOT NULL, -- Discord message id
   user_id BIGINT NOT NULL, -- Discord user id
   emoji CHAR(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  created TIMESTAMP NOT NULL DEFAULT NOW(),
+  created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE (message_id, user_id, emoji),
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS voicechannellog (
   user_id BIGINT NOT NULL, -- Discord user id
   guild_id BIGINT NOT NULL, -- Discord guild id
   channel_id BIGINT NOT NULL, -- Discord channel id
-  join_time TIMESTAMP NOT NULL DEFAULT NOW(),
+  join_time TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   leave_time TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

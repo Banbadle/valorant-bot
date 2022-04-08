@@ -1,0 +1,20 @@
+START TRANSACTION;
+
+
+ALTER TABLE `users`
+CHANGE COLUMN `created`
+`created` TIMESTAMP NOT NULL DEFAULT NOW();
+
+ALTER TABLE `messages`
+CHANGE COLUMN `created`
+`created` TIMESTAMP NOT NULL DEFAULT NOW();
+
+ALTER TABLE `reactions`
+CHANGE COLUMN `created`
+`created` TIMESTAMP NOT NULL DEFAULT NOW();
+
+ALTER TABLE `voicechannellog`
+CHANGE COLUMN `join_time`
+`join_time` TIMESTAMP NOT NULL DEFAULT NOW();
+
+COMMIT;

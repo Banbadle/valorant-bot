@@ -166,7 +166,7 @@ class Database():
             ''', (message_id,))
             result = cursor.fetchone()
             return result and result[0]
-        
+
     def is_message_in_db(self, message_id):
         channel_id = self.get_channel_id(message_id)
         return bool(channel_id)
@@ -194,7 +194,7 @@ class Database():
                 	ON m.id = r.message_id
                 WHERE r.emoji = %s
                 	AND r.removed IS NULL
-                	AND ADDTIME(m.created, '12:30:00') > NOW();
+                	AND ADDTIME(m.created, '12:30:00') > UTC_TIMESTAMP();
             ''', (emoji,))
             return cursor.fetchall()
 
@@ -310,7 +310,7 @@ class Database():
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 UPDATE reactions
-                SET removed = NOW()
+                SET removed = UTC_TIMESTAMP()
                 WHERE message_id = %s
                     AND user_id = %s
                     AND emoji = %s
@@ -345,7 +345,7 @@ class Database():
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 UPDATE voicechannellog
-                SET leave_time = NOW()
+                SET leave_time = UTC_TIMESTAMP()
                 WHERE user_id = %s
                     AND channel_id = %s
             ''', (user.id, channel.id))
