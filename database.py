@@ -76,6 +76,26 @@ class Database():
             ''', (user_id,))
             result = cursor.fetchone()
             return result is not None and result[0] == 1
+        
+    def get_timezone(self, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT timezone
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            result = cursor.fetchone()
+            return result is not None and result[0]
+        
+    def set_timezone(self, user_id, timezone):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET timezone = %s
+                WHERE id = %s
+            ''', (timezone, user_id))
+        self.connection.commit()
 
     def _get_user(self, user_id):
         self._refresh_connection()
