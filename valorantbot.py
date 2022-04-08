@@ -42,13 +42,13 @@ class ValorantBot(commands.Cog):
 
         return ordered_emoji_list, first_time
 
-    @tasks.loop(minutes = 30)
+    @tasks.loop(minutes = 15)
     async def checkin_loop(self):
         '''Loop to run checkin every 30 minutes'''
-        grace_period = 5
+        grace_period = 3
         tz = pytz.timezone('Europe/London')
         curr_time = datetime.datetime.now(tz)
-        wait_time = 30 - (((curr_time.minute - 1 - grace_period) % 30) + 1)
+        wait_time = 15 - (((curr_time.minute - 1 - grace_period) % 15) + 1)
 
         print(f"current time: {curr_time}")
         print(f"wait time until execution: {wait_time} mins")
@@ -173,7 +173,7 @@ class ValorantBot(commands.Cog):
     def get_blank_request_embed(self, author_name):
         new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
         new_embed.add_field(name=f"{author_name} wants to play Valorant", 
-                            value=f"If interested, please select a time from the drop-down list.\n(This request was sent at {curr_time} UK Time)",
+                            value="Please respond using the appropriate button.",
                             inline=False)
         new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
 
@@ -245,7 +245,7 @@ class ValorantBot(commands.Cog):
         if val == "-1" or val == -1:
             return "Unavailable"
         
-        return f"<t:{val}:t> (Local Time)"
+        return f"<t:{val}:t>"
     
     @commands.Cog.listener()
     async def on_button_click(self, interaction):
