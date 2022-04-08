@@ -172,8 +172,6 @@ class ValorantBot(commands.Cog):
 
     def get_blank_request_embed(self, author_name):
         new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-        tz = pytz.timezone('Europe/London')
-        curr_time = datetime.datetime.now(tz).strftime("%H:%M")
         new_embed.add_field(name=f"{author_name} wants to play Valorant", 
                             value=f"If interested, please select a time from the drop-down list.\n(This request was sent at {curr_time} UK Time)",
                             inline=False)
@@ -287,60 +285,6 @@ class ValorantBot(commands.Cog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, payload):
-        message_id = payload.message_id
-        channel_id = payload.channel_id
-
-        if not self.client.db.is_message_in_db(message_id): return
-
-        message = await self.client.get_channel(channel_id).fetch_message(message_id)
-        self.client.db.remove_reaction(message_id, payload.user_id, payload.emoji.name)
-        await self.update_request_embed(message)
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-
-        this_emoji  = payload.emoji.name
-        channel_id  = payload.channel_id
-        message_id  = payload.message_id
-        user_id     = payload.user_id
-        bot_id      = self.client.user.id
-
-        if not self.client.db.is_message_in_db(message_id): return
-
-        #If reaction was from bot
-        if user_id == bot_id:
-            return
-
-        user = await self.client.fetch_user(user_id)
-        message = await self.client.get_channel(channel_id).fetch_message(message_id)
-
-        #Removes unwanted reactions
-        if this_emoji not in clock_map:
-            await message.remove_reaction(this_emoji, user)
-            return
-
-        # Check if there is already a reaction in the database
-        if self.client.db.get_user_reaction(message_id, user_id):
-            # Remove the new reaction if there is
-            await message.remove_reaction(this_emoji, user)
-            return
-
-        # Add the new reaction to the database
-        self.client.db.add_reaction(message_id, user, this_emoji)
-
-        if self.is_request(message_id):
-            print("Message: Request")
-            await self.update_request_embed(message)
-
-        elif self.is_checkin(message_id):
-            print("Message: Check In")
-            if this_emoji not in ["❌", "✅"]:
-                await message.remove_reaction(payload.emoji, user)
-                return
-
-            await self.update_checkin_embed(message)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, user, leave, join):
