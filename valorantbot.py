@@ -198,6 +198,27 @@ class ValorantBot(commands.Cog):
     
         self.client.db.add_message(message, ctx.message, 1)
     
+    async def update_reaction(self, interaction, message, new_timestamp):  
+        user = interaction.user 
+        message_id = message.id
+        
+        new_str = self.interact_val_to_str(new_timestamp)
+        old_timestamp = self.client.db.get_user_reaction(message_id, user.id)
+        old_str = self.interact_val_to_str(old_timestamp)
+        if old_timestamp == new_timestamp:
+            await interaction.send(content=f"You have already selected {old_str}")
+            return
+            
+        if old_timestamp != None:
+            self.client.db.remove_reaction(message_id, user.id, old_timestamp)
+            
+        self.client.db.add_reaction(message_id, user, new_timestamp)
+        
+        extra_string = f"\nYour previous response was: {old_str}" * (old_timestamp!=None)
+        await interaction.send(content=f"You have responded with: {new_str}" + extra_string)
+        
+        await self.update_request_embed(message)
+    
     async def send_request_time_list(self, interaction):
         t_step          = 15 * 60 #time step in seconds
         
@@ -236,28 +257,19 @@ class ValorantBot(commands.Cog):
             if interaction.custom_id == "rqst_yes":
                 await self.send_request_time_list(interaction)
             elif interaction.custom_id == "rqst_no":
-                pass        
+                await self.update_reaction(interaction, interaction.message, -1)          
     
     @commands.Cog.listener()
     async def on_select_option(self, interaction):
-        message_id  = interaction.message.id
-        user        = interaction.user
+        val = interaction.values[0]
         
-        if self.is_request(message_id):
-            old_val = self.client.db.get_user_reaction(message_id, user.id)
-            new_val = interaction.values[0]
-            if old_val == new_val:
-                response = await interaction.send(content=f"You have already selected {self.interact_val_to_str(new_val)}")
+        RQST_PREFIX = "rqst_time"
+        if val[0:len(RQST_PREFIX)] == RQST_PREFIX:
+            _,_,timestamp,message_id = val.split("_")
             
-            if old_val != None:
-                self.client.db.remove_reaction(message_id, user.id, old_val)
-                
-            self.client.db.add_reaction(message_id, interaction.user, new_val)
-            
-            extra_string = f"\nPreviously was {self.interact_val_to_str(old_val)}" * (old_val!=None)
-            response = await interaction.send(content=f"You have responded with {self.interact_val_to_str(new_val)}" + extra_string)
-            
-            await self.update_request_embed(interaction.message)
+            message = await interaction.channel.fetch_message(message_id)
+            await self.update_reaction(interaction, message, timestamp)
+            return
             
         if self.is_checkin(message_id):
             pass
