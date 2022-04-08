@@ -189,23 +189,36 @@ class ValorantBot(commands.Cog):
 
         agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
         
-        t_step = 15 * 60 #time step in seconds
-        first_timestamp = (int(time.time() // t_step) + 1) * t_step
-        option_list = [SelectOption(label = "Now",
-                                    value = 0)]
-        
-        for i in range(0,24):
-            new_timestamp = first_timestamp + t_step * i
-            new_time = datetime.datetime.fromtimestamp(new_timestamp).strftime("%H:%M")
-            new_select = SelectOption(label = f"{new_time} (UK Time)",
-                                      value = new_timestamp)
-            option_list.append(new_select)
-            
+        button_yes = Button(label="Select a Time", style=ButtonStyle(3), custom_id="rqst_yes")
+        button_no  = Button(label="Unavailable", style=ButtonStyle(4), custom_id="rqst_no")
+        button_row = ActionRow(button_no, button_yes)
 
-        message = await ctx.reply(agentsID, embed=new_embed, components = [Select(placeholder= "Select a time", options=option_list)])
+        message = await ctx.reply(agentsID, embed=new_embed, components=[button_row])
         print("MESSAGE SENT")
     
         self.client.db.add_message(message, ctx.message, 1)
+    
+    async def send_request_time_list(self, interaction):
+        t_step          = 15 * 60 #time step in seconds
+        
+        message_id      = interaction.message.id
+        user_id         = interaction.user.id
+        user_timezone   = pytz.timezone(self.client.db.get_timezone(user_id))
+        creation_time   = self.client.db.get_creation_time(message_id)
+        creation_unix   = time.mktime(creation_time.timetuple())
+        
+        first_timestamp = (int(creation_unix // t_step) + 1) * t_step
+        
+        option_list = [SelectOption(label = "Now", value = f"rqst_time_0_{message_id}")]
+        for i in range(0,24):   
+            new_timestamp = first_timestamp + t_step * i
+            local_time = datetime.datetime.fromtimestamp(new_timestamp, user_timezone)
+            
+            time_str = local_time.strftime("%H:%M")
+            new_select = SelectOption(label = f"{time_str}", value = f"rqst_time_{new_timestamp}_{message_id}")
+            option_list.append(new_select)
+    
+        await interaction.send(content=f"Please select a time from the list.\nAll times are in '{user_timezone}' time.", components = [Select(placeholder= "Select a time", options=option_list)])
     
     def interact_val_to_str(self, val):
         if val == "0" or val == 0:  
@@ -214,6 +227,16 @@ class ValorantBot(commands.Cog):
             return "Unavailable"
         
         return f"<t:{val}:t> (Local Time)"
+    
+    @commands.Cog.listener()
+    async def on_button_click(self, interaction):
+        message_id = interaction.message.id
+
+        if self.is_request(message_id):
+            if interaction.custom_id == "rqst_yes":
+                await self.send_request_time_list(interaction)
+            elif interaction.custom_id == "rqst_no":
+                pass        
     
     @commands.Cog.listener()
     async def on_select_option(self, interaction):
