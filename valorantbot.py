@@ -269,6 +269,7 @@ class ValorantBot(commands.Cog):
             await self.update_reaction(interaction, message, timestamp)
             return
             
+        message_id = interaction.message.id
         if self.is_checkin(message_id):
             pass
 
