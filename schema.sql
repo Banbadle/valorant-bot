@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   -- on time and not on time
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id),
-  UNIQUE (username, tag),
-  UNIQUE (val_username, val_tag)
+  UNIQUE `discord_user` (username, tag),
+  UNIQUE `valorant_user` (val_username, val_tag)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS messages (
   trigger_msg BIGINT NOT NULL, -- Discord message id which triggered this message
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   message_type TINYINT(8) NOT NULL DEFAULT 1,
-  FOREIGN KEY (created_by) REFERENCES users(id),
+  FOREIGN KEY `fk_created_by` (created_by) REFERENCES users(id),
   PRIMARY KEY (id)
 );
 
@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS reactions (
   created TIMESTAMP NOT NULL DEFAULT NOW(),
   removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE (message_id, user_id, react_stamp),
-  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  UNIQUE `message_user_time` (message_id, user_id, react_stamp),
+  FOREIGN KEY `fk_message_id` (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+  FOREIGN KEY `fk_reactions_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS voicechannellog (
@@ -49,5 +49,5 @@ CREATE TABLE IF NOT EXISTS voicechannellog (
   join_time TIMESTAMP NOT NULL DEFAULT NOW(),
   leave_time TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY `fk_voice_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
