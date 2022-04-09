@@ -111,6 +111,21 @@ class Database():
             result = cursor.fetchone()
             return result is not None and result[0]
 
+    def get_users_to_notify(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT u.id
+                FROM users u
+                JOIN reactions r
+                    ON u.id = r.user_id
+                WHERE r.message_id = %s
+                    AND r.removed IS NULL
+                    AND u.notify = 1
+            ''', (message_id,))
+            result = cursor.fetchall()
+            return result and result[0]
+
     def _get_user(self, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
