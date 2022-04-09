@@ -237,7 +237,7 @@ class ValorantBot(commands.Cog):
             new_select = SelectOption(label = f"{time_str}", value = f"rqst_time_{new_timestamp}_{message_id}")
             option_list.append(new_select)
     
-        await interaction.send(content=f"Please select a time from the list.\nAll times are in '{user_timezone}' time.", components = [Select(placeholder= "Select a time", options=option_list)])
+        await interaction.send(content=f"Please select a time from the list.\nAll times are in '{user_timezone}' time. To change this, use '?timezone'", components = [Select(placeholder= "Select a time", options=option_list)])
     
     def interact_val_to_str(self, val):
         if val == "0" or val == 0:  
