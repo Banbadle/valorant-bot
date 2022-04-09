@@ -32,21 +32,20 @@ class ValorantBot(commands.Cog):
 
     @tasks.loop(minutes = 15)
     async def checkin_loop(self):
-        '''Loop to run checkin every 30 minutes'''
+        '''Loop to run checkin every 15 minutes'''
+        MINUTES = 15
         GRACE_PERIOD = 3
-        tz = pytz.timezone('Europe/London')
-        curr_time = datetime.datetime.now(tz)
-        wait_time = 15 - (((curr_time.minute - 1 - GRACE_PERIOD) % 15) + 1)
+        
+        curr_timestamp = int(time.time())
+        wait_time = (MINUTES*60) - (curr_timestamp % (MINUTES*60)) + GRACE_PERIOD*60
 
-        print(f"current time: {curr_time}")
-        print(f"wait time until execution: {wait_time} mins")
-        await asyncio.sleep(wait_time * 60)
+        react_stamp = curr_timestamp + wait_time - GRACE_PERIOD*60
 
-        new_time = curr_time.replace(second=0, microsecond=0, minute=curr_time.minute, hour=curr_time.hour) + datetime.timedelta(minutes = wait_time - GRACE_PERIOD)
-        time_str = new_time.strftime("%I:%M")
-        curr_emoji = list(key for key, val in clock_map.items() if val == time_str)[0]
+        print(f"current time: {datetime.datetime.now()}")
+        print(f"wait time until execution: {wait_time//60} mins, {wait_time % 60} seconds")
+        await asyncio.sleep(wait_time)
 
-        reaction_list = self.client.db.get_current_time_reactions(curr_emoji)
+        reaction_list = self.client.db.get_current_time_reactions(react_stamp)
 
         msg_dict = defaultdict(list)
         for message_id, user_id in reaction_list:
@@ -65,15 +64,16 @@ class ValorantBot(commands.Cog):
         guild_id = self.client.db.get_guild_id(message_id)
 
         flake_list = []
-
-        if not self.client.db.get_users_in_voice(message_id): return           #Stop if no reacted users are in a voice channel
+        
+        #Stop if no reacted users are in a voice channel
+        if not self.client.db.get_users_in_voice(message_id): 
+            return           
 
         for react_user_id in user_id_list:
 
             voice_guild_id = self.client.db.get_user_voice_guild(react_user_id)
-            if voice_guild_id: continue                                        # Do not add if user is in voice channel
-
-            flake_list.append(react_user_id)
+            if not voice_guild_id:                             
+                flake_list.append(react_user_id)
 
         if flake_list != []:
             channel_id  = self.client.db.get_channel_id(message_id)
