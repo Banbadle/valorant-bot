@@ -77,6 +77,12 @@ class Database():
             result = cursor.fetchone()
             return result is not None and result[0] == 1
         
+    def set_timezone(self, user, timezone):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._set_timezone(user.id, timezone)
+    
     def get_timezone(self, user_id):
         with self.connection.cursor() as cursor:
             cursor.execute('''
@@ -87,15 +93,6 @@ class Database():
             ''', (user_id,))
             result = cursor.fetchone()
             return result is not None and result[0]
-        
-    def set_timezone(self, user_id, timezone):
-        with self.connection.cursor() as cursor:
-            cursor.execute('''
-                UPDATE users
-                SET timezone = %s
-                WHERE id = %s
-            ''', (timezone, user_id))
-        self.connection.commit()
 
     def set_notifications(self, user, status):
         if not self._get_user(user.id):
@@ -144,6 +141,15 @@ class Database():
                 SET social_credit = social_credit + %s,
                 WHERE id = %s
             ''', (num, user.id))
+        self.connection.commit()
+
+    def _set_timezone(self, user_id, timezone):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET timezone = %s
+                WHERE id = %s
+            ''', (timezone, user_id))
         self.connection.commit()
         
     def _set_notifications(self, user_id, status):

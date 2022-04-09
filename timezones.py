@@ -67,7 +67,7 @@ class Timezones(commands.Cog):
         PREFIX_FINAL = "tz_final"
         if interaction.values[0][0:len(PREFIX_FINAL)] == PREFIX_FINAL:
             _,_,tz = interaction.values[0].split("_")
-            self.client.db.set_timezone(interaction.user.id, tz)
+            self.client.db.set_timezone(interaction.user, tz)
             await interaction.send(content=f"You have changed your timezone to {tz}", ephemeral=False)
             await interaction.message.delete()
             return
