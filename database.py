@@ -97,6 +97,23 @@ class Database():
             ''', (timezone, user_id))
         self.connection.commit()
 
+    def set_notifications(self, user, status):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._set_notifications(user.id, status)
+    
+    def get_notifications(self, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT notify
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            result = cursor.fetchone()
+            return result is not None and result[0]
+
     def _get_user(self, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
@@ -128,7 +145,16 @@ class Database():
                 WHERE id = %s
             ''', (num, user.id))
         self.connection.commit()
-
+        
+    def _set_notifications(self, user_id, status):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET notify = %s
+                WHERE id = %s
+            ''', (status, user_id))
+        self.connection.commit()
+        
     # Messages table functions
 
     def add_message(self, message, trigger, message_type = 0):
