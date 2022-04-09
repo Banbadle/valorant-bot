@@ -1,17 +1,6 @@
 import pytz
 from discord.ext import commands
-from discord_components import Select, Button, ButtonStyle, SelectOption, Interaction
-
-# region_list = ['Africa',
-#  'America',
-#  'Antarctica',
-#  'Arctic',
-#  'Asia',
-#  'Atlantic',
-#  'Australia',
-#  'Europe',
-#  'Indian',
-#  'Pacific']
+from discord_components import Select, SelectOption
 
 class Timezones(commands.Cog):
     
@@ -21,31 +10,6 @@ class Timezones(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("Timezones.py loaded")
-        
-    # def get_regions(self):
-    #     return region_list
-        
-    # def get_countries_from_region(self, region):
-    #     country_code_list = []
-    #     for code, tz_list in pytz.country_timezones.items():
-    #         if region.lower() == tz_list[0][0: len(region)].lower():
-    #             country_code_list.append(code)
-        
-    #     country_list = sorted([country for code, country in pytz.country_names.items() if code in country_code_list])
-    #     return country_list
-    
-    # def get_cities_from_country(self, country):
-    #     for code, check_country in pytz.country_names.items():
-    #         if check_country == country:
-                
-    #             tz_list = pytz.country_timezones[code]
-    #             city_list = []
-    #             for tz in tz_list:
-    #                 _, city = tz.split("/",1)
-    #                 city_list.append(city)
-                    
-    #             return sorted(city_list)
-    #     return []
         
     @commands.command()
     async def timezone(self, ctx, country=""):
@@ -89,16 +53,7 @@ class Timezones(commands.Cog):
                 return await ctx.channel.send(content="Select the city which follows your timezone.", components=[Select(placeholder="Select City", max_values=1, options=option_list)])
                     
         return await ctx.respond(content="Something went wrong, sorry. I have no idea what")
-        
-    # @commands.Cog.listener()
-    # async def on_button_click(self, interaction):
-    #     if interaction.custom_id == "change_timezone":
-    #         option_list = []
-    #         for region in region_list:
-    #             new_option = SelectOption(label=region, value=f"tz_region_{region}")
-    #             option_list.append(new_option)
-    #         await interaction.send(content="Select a Region", components=[Select(placeholder="Region", max_values=1, options=option_list)])
-            
+
     @commands.Cog.listener()
     async def on_select_option(self, interaction):
    
@@ -116,33 +71,6 @@ class Timezones(commands.Cog):
             await interaction.send(content=f"You have changed your timezone to {tz}", ephemeral=False)
             await interaction.message.delete()
             return
-           
-        # PREFIX_REGION = "tz_region"
-        # if interaction.values[0][0:len(PREFIX_REGION)] == PREFIX_REGION:
-        #     _,_, region = interaction.values[0].split("_")
-        #     country_list = self.get_countries_from_region(region)
-        #     option_list = []
-        #     for country in country_list:
-        #         new_option = SelectOption(label=country, value=f"tz_country_{country}_{region}")
-        #         option_list.append(new_option)
-        #     await interaction.respond(content="Select a Country", components=[Select(placeholder="Country", max_values=1, options=option_list)])
-            
-        # PREFIX_COUNTRY = "tz_country"
-        # if interaction.values[0][0:len(PREFIX_COUNTRY)] == PREFIX_COUNTRY:
-        #     _,_,country,region = interaction.values[0].split("_")
-        #     city_list = self.get_cities_from_country(country)
-        #     option_list = []
-        #     for city in city_list:
-        #         new_option  = SelectOption(label=city, value=f"tz_city_{city}_{region}")
-        #         option_list.append(new_option)
-        #     await interaction.respond(content="Select a City", components=[Select(placeholder="City", max_values=1, options=option_list)])
-            
-        # PREFIX_CITY = "tz_city"
-        # if interaction.values[0][0:len(PREFIX_CITY)] == PREFIX_CITY:
-        #     _,_, city, region = interaction.values[0].split("_")
-        #     new_tz = f"{region}/{city}"
-        #     await interaction.respond(f"Your timezone is now {new_tz}")
-            
-    
+ 
 def setup(client):
     client.add_cog(Timezones(client))
