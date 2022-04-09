@@ -30,31 +30,19 @@ class ValorantBot(commands.Cog):
         print(sys.argv[0])
         await self.checkin_loop() # Inital pass of checkin
 
-    def get_ordered_emoji_list(self, start_time):
-        '''returns an ordered list of emojis (corresponding to times after the given start_time), and a datetime object of the time of the first occurrence after start_time'''
-        wait_time   = 5 + 29 - ((start_time.minute - 1) % 30)
-        first_time  = start_time.replace(second=0, microsecond=0, minute=start_time.minute, hour=start_time.hour) + datetime.timedelta(minutes = wait_time - 5)
-
-        emoji_list          = list(clock_map)[1:-1] * 2
-        slice_emoji         = list(key for key, val in clock_map.items() if val == first_time.strftime("%I:%M"))[0]
-        slice_index         = emoji_list.index(slice_emoji)
-        ordered_emoji_list  = emoji_list[slice_index: slice_index+24]
-
-        return ordered_emoji_list, first_time
-
     @tasks.loop(minutes = 15)
     async def checkin_loop(self):
         '''Loop to run checkin every 30 minutes'''
-        grace_period = 3
+        GRACE_PERIOD = 3
         tz = pytz.timezone('Europe/London')
         curr_time = datetime.datetime.now(tz)
-        wait_time = 15 - (((curr_time.minute - 1 - grace_period) % 15) + 1)
+        wait_time = 15 - (((curr_time.minute - 1 - GRACE_PERIOD) % 15) + 1)
 
         print(f"current time: {curr_time}")
         print(f"wait time until execution: {wait_time} mins")
         await asyncio.sleep(wait_time * 60)
 
-        new_time = curr_time.replace(second=0, microsecond=0, minute=curr_time.minute, hour=curr_time.hour) + datetime.timedelta(minutes = wait_time - grace_period)
+        new_time = curr_time.replace(second=0, microsecond=0, minute=curr_time.minute, hour=curr_time.hour) + datetime.timedelta(minutes = wait_time - GRACE_PERIOD)
         time_str = new_time.strftime("%I:%M")
         curr_emoji = list(key for key, val in clock_map.items() if val == time_str)[0]
 
@@ -81,8 +69,6 @@ class ValorantBot(commands.Cog):
         if not self.client.db.get_users_in_voice(message_id): return           #Stop if no reacted users are in a voice channel
 
         for react_user_id in user_id_list:
-            # Continue if reaction is by bot
-            if react_user_id == self.client.user.id: continue
 
             voice_guild_id = self.client.db.get_user_voice_guild(react_user_id)
             if voice_guild_id: continue                                        # Do not add if user is in voice channel
