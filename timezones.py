@@ -50,7 +50,7 @@ class Timezones(commands.Cog):
                     new_option = SelectOption(label=city, value=f"tz_final_{city}")
                     option_list.append(new_option)
                     
-                return await ctx.channel.send(content="Select the city which follows your timezone.", components=[Select(placeholder="Select City", max_values=1, options=option_list)])
+                return await ctx.author.send(content="Select the city which follows your timezone.", components=[Select(placeholder="Select City", max_values=1, options=option_list)])
                     
         return await ctx.respond(content="Something went wrong, sorry. I have no idea what")
 
