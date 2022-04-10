@@ -235,13 +235,11 @@ class ValorantBot(commands.Cog):
     
     @commands.Cog.listener()
     async def on_button_click(self, interaction):
-        message_id = interaction.message.id
 
-        if self.is_request(message_id):
-            if interaction.custom_id == "rqst_yes":
-                await self.send_request_time_list(interaction)
-            elif interaction.custom_id == "rqst_no":
-                await self.update_reaction(interaction, interaction.message, -1)          
+        if interaction.custom_id == "rqst_yes":
+            await self.send_request_time_list(interaction)
+        elif interaction.custom_id == "rqst_no":
+            await self.update_reaction(interaction, interaction.message, -1)          
     
     @commands.Cog.listener()
     async def on_select_option(self, interaction):
