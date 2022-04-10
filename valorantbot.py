@@ -1,7 +1,10 @@
 import discord
+from discord_components import Select, SelectOption, Button, ActionRow, ButtonStyle
 import datetime
+import time
 import re
 import sys
+import pytz
 from discord.ext import commands, tasks
 from collections import defaultdict
 
@@ -27,40 +30,22 @@ class ValorantBot(commands.Cog):
         print(sys.argv[0])
         await self.checkin_loop() # Inital pass of checkin
 
-    def get_ordered_emoji_list(self, start_time):
-        '''returns an ordered list of emojis (corresponding to times after the given start_time), and a datetime object of the time of the first occurrence after start_time'''
-        wait_time   = 5 + 29 - ((start_time.minute - 1) % 30)
-        first_time  = start_time.replace(second=0, microsecond=0, minute=start_time.minute, hour=start_time.hour) + datetime.timedelta(minutes = wait_time - 5)
-
-        emoji_list          = list(clock_map)[1:-1] * 2
-        slice_emoji         = list(key for key, val in clock_map.items() if val == first_time.strftime("%I:%M"))[0]
-        slice_index         = emoji_list.index(slice_emoji)
-        ordered_emoji_list  = emoji_list[slice_index: slice_index+24]
-
-        return ordered_emoji_list, first_time
-    
-    def uwuify(self, original_text):
-        uwu_text = "".join([letter if letter not in {"r", "l"} else "w" for letter in original_text])
-        uwu_text = "".join([letter if letter not in {"R", "L"} else "W" for letter in uwu_text])
-        
-        return uwu_text
-
-    @tasks.loop(minutes = 30)
+    @tasks.loop(minutes = 15)
     async def checkin_loop(self):
-        '''Loop to run checkin every 30 minutes'''
-        grace_period = 5
-        curr_time = datetime.datetime.now()
-        wait_time = 30 - (((curr_time.minute - 1 - grace_period) % 30) + 1)
+        '''Loop to run checkin every 15 minutes'''
+        MINUTES = 15
+        GRACE_PERIOD = 3
+        
+        curr_timestamp = int(time.time())
+        wait_time = (MINUTES*60) - (curr_timestamp % (MINUTES*60)) + GRACE_PERIOD*60
 
-        print(f"current time: {curr_time}")
-        print(f"wait time until execution: {wait_time} mins")
-        await asyncio.sleep(wait_time * 60)
+        react_stamp = curr_timestamp + wait_time - GRACE_PERIOD*60
 
-        new_time = curr_time.replace(second=0, microsecond=0, minute=curr_time.minute, hour=curr_time.hour) + datetime.timedelta(minutes = wait_time - grace_period)
-        time_str = new_time.strftime("%I:%M")
-        curr_emoji = list(key for key, val in clock_map.items() if val == time_str)[0]
+        print(f"current time: {datetime.datetime.now()}")
+        print(f"wait time until execution: {wait_time//60} mins, {wait_time % 60} seconds")
+        await asyncio.sleep(wait_time)
 
-        reaction_list = self.client.db.get_current_time_reactions(curr_emoji)
+        reaction_list = self.client.db.get_current_time_reactions(react_stamp)
 
         msg_dict = defaultdict(list)
         for message_id, user_id in reaction_list:
@@ -79,17 +64,16 @@ class ValorantBot(commands.Cog):
         guild_id = self.client.db.get_guild_id(message_id)
 
         flake_list = []
-
-        if not self.client.db.get_users_in_voice(message_id): return           #Stop if no reacted users are in a voice channel
+        
+        #Stop if no reacted users are in a voice channel
+        if not self.client.db.get_users_in_voice(message_id): 
+            return           
 
         for react_user_id in user_id_list:
-            # Continue if reaction is by bot
-            if react_user_id == self.client.user.id: continue
 
             voice_guild_id = self.client.db.get_user_voice_guild(react_user_id)
-            if voice_guild_id: continue                                        # Do not add if user is in voice channel
-
-            flake_list.append(react_user_id)
+            if not voice_guild_id:                             
+                flake_list.append(react_user_id)
 
         if flake_list != []:
             channel_id  = self.client.db.get_channel_id(message_id)
@@ -115,39 +99,38 @@ class ValorantBot(commands.Cog):
     async def update_request_embed(self, message):
         '''Updates the request embed of message'''
         message_id = message.id
-        start_time = self.client.db.get_creation_time(message_id)
-
-        ordered_emoji_list, next_time = self.get_ordered_emoji_list(start_time)
+        start_datetime = self.client.db.get_creation_time(message_id)
+        start_time = int(time.mktime(start_datetime.timetuple()))
 
         base_embed      = message.embeds[0]
         embed_dict      = base_embed.to_dict()
         new_field_list  = [embed_dict["fields"][0]]
 
-        embed_dict["title"] = "__Vawowant Wequest uWu__"
-        new_field_list[0]["name"] = self.uwuify(new_field_list[0]["name"])
-        new_field_list[0]["value"] = self.uwuify("React with ✅ if interested now,❌ if unavailable, or a clock emoji if interested later.")
-
-        new_field_list.append({'inline': False, 'name': "✅ (Now)", 'value': ""})
-
-        for e in ordered_emoji_list:
-            time_str = next_time.strftime("%H:%M")
-            new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
-            next_time = next_time + datetime.timedelta(minutes = 30)
-
-        new_field_list.append({'inline': False, 'name': "❌ (Unavailable)", 'value': ""})
-
-        emoji_display_order = ["✅"] + ordered_emoji_list + ["❌"]
-        for reaction in self.client.db.get_reactions(message_id):
-            if reaction['emoji'] not in clock_map: continue
-
-            ind = emoji_display_order.index(reaction['emoji']) + 1
-            if reaction['user'] != self.client.user.id:
-                new_field_list[ind]["value"] += f"\n> <@{reaction['user']}>"
+        last_react_stamp = None
+        unavailable_field = {'inline': False, 'name': ":x: (Unavailable)", 'value': ""}
         
-        final_field_list = [field for field in new_field_list if field["value"]!=""]
+        for reaction in self.client.db.get_reactions(message_id):
+            react_stamp = reaction['react_stamp']
+            
+            if react_stamp == -1:
+                unavailable_field["value"] += f"\n> <@{reaction['user']}>"
+                continue
+            
+            if react_stamp != last_react_stamp:
+                time_str = self.interact_val_to_str(react_stamp)
+                e = "🕘" # ADJUST TO CLOSEST TIME EMOJI
+                new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
+                
+                last_react_stamp = react_stamp
+                
+            new_field_list[-1]["value"] += f"\n> <@{reaction['user']}>"
+            
+        if unavailable_field['value'] != "":
+            new_field_list.append(unavailable_field)
 
-        embed_dict["fields"] = final_field_list
+        embed_dict["fields"] = new_field_list
         new_embed = discord.Embed.from_dict(embed_dict)
+
         await message.edit(embed=new_embed)
 
     async def post_checkin(self, trigger_message, user_id_list):
@@ -175,7 +158,9 @@ class ValorantBot(commands.Cog):
 
     def get_blank_request_embed(self, author_name):
         new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-        new_embed.add_field(name=f"{author_name} wants to play Valorant", value="React with ✅ if interested now,❌ if unavailable, or a clock emoji if interested later.", inline=False)
+        new_embed.add_field(name=f"{author_name} wants to play Valorant", 
+                            value="Please respond using the appropriate button.",
+                            inline=False)
         new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
 
         return new_embed
@@ -187,16 +172,90 @@ class ValorantBot(commands.Cog):
         new_embed = self.get_blank_request_embed(ctx.author.name)
 
         agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
+        
+        button_yes = Button(label="Select a Time", style=ButtonStyle(3), custom_id="rqst_yes")
+        button_no  = Button(label="Unavailable", style=ButtonStyle(4), custom_id="rqst_no")
+        button_row = ActionRow(button_no, button_yes)
 
-        message = await ctx.reply(agentsID, embed=new_embed)
-
+        message = await ctx.reply(agentsID, embed=new_embed, components=[button_row])
+        print("MESSAGE SENT")
+    
         self.client.db.add_message(message, ctx.message, 1)
+    
+    async def update_reaction(self, interaction, message, new_timestamp):  
+        user = interaction.user 
+        message_id = message.id
+        
+        new_str = self.interact_val_to_str(new_timestamp)
+        old_timestamp = self.client.db.get_user_reaction(message_id, user.id)
+        old_str = self.interact_val_to_str(old_timestamp)
+        if old_timestamp == new_timestamp:
+            await interaction.send(content=f"You have already selected {old_str}")
+            return
+            
+        if old_timestamp != None:
+            self.client.db.remove_reaction(message_id, user.id, old_timestamp)
+            
+        self.client.db.add_reaction(message_id, user, new_timestamp)
+        
+        extra_string = f"\nYour previous response was: {old_str}" * (old_timestamp!=None)
+        await interaction.send(content=f"You have responded with: {new_str}" + extra_string)
+        
+        await self.update_request_embed(message)
+    
+    async def send_request_time_list(self, interaction):
+        t_step          = 15 * 60 #time step in seconds
+        
+        message_id      = interaction.message.id
+        user_id         = interaction.user.id
+        user_timezone   = pytz.timezone(self.client.db.get_timezone(user_id))
+        creation_time   = self.client.db.get_creation_time(message_id)
+        creation_unix   = time.mktime(creation_time.timetuple())
+        
+        first_timestamp = (int(creation_unix // t_step) + 1) * t_step
+        
+        option_list = [SelectOption(label = "Now", value = f"rqst_time_0_{message_id}")]
+        for i in range(0,24):   
+            new_timestamp = first_timestamp + t_step * i
+            local_time = datetime.datetime.fromtimestamp(new_timestamp, user_timezone)
+            
+            time_str = local_time.strftime("%H:%M")
+            new_select = SelectOption(label = f"{time_str}", value = f"rqst_time_{new_timestamp}_{message_id}")
+            option_list.append(new_select)
+    
+        await interaction.send(content=f"Please select a time from the list.\nAll times are in '{user_timezone}' time. To change this, use '?timezone'", components = [Select(placeholder= "Select a time", options=option_list)])
+    
+    def interact_val_to_str(self, val):
+        if val == "0" or val == 0:  
+            return "Now" 
+        if val == "-1" or val == -1:
+            return "Unavailable"
+        
+        return f"<t:{val}:t>"
+    
+    @commands.Cog.listener()
+    async def on_button_click(self, interaction):
 
-        await message.add_reaction("❌")
-        await message.add_reaction("✅")
-        temp_emoji_list, _ = self.get_ordered_emoji_list(datetime.datetime.now())
-        for i in range(0,7):
-            await message.add_reaction(temp_emoji_list[i])
+        if interaction.custom_id == "rqst_yes":
+            await self.send_request_time_list(interaction)
+        elif interaction.custom_id == "rqst_no":
+            await self.update_reaction(interaction, interaction.message, -1)          
+    
+    @commands.Cog.listener()
+    async def on_select_option(self, interaction):
+        val = interaction.values[0]
+        
+        RQST_PREFIX = "rqst_time"
+        if val[0:len(RQST_PREFIX)] == RQST_PREFIX:
+            _,_,timestamp,message_id = val.split("_")
+            
+            message = await interaction.channel.fetch_message(message_id)
+            await self.update_reaction(interaction, message, timestamp)
+            return
+            
+        message_id = interaction.message.id
+        if self.is_checkin(message_id):
+            pass
 
     @commands.command()
     async def username(self, ctx):
@@ -211,60 +270,6 @@ class ValorantBot(commands.Cog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, payload):
-        message_id = payload.message_id
-        channel_id = payload.channel_id
-
-        if not self.client.db.is_message_in_db(message_id): return
-
-        message = await self.client.get_channel(channel_id).fetch_message(message_id)
-        self.client.db.remove_reaction(message_id, payload.user_id, payload.emoji.name)
-        await self.update_request_embed(message)
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-
-        this_emoji  = payload.emoji.name
-        channel_id  = payload.channel_id
-        message_id  = payload.message_id
-        user_id     = payload.user_id
-        bot_id      = self.client.user.id
-
-        if not self.client.db.is_message_in_db(message_id): return
-
-        #If reaction was from bot
-        if user_id == bot_id:
-            return
-
-        user = await self.client.fetch_user(user_id)
-        message = await self.client.get_channel(channel_id).fetch_message(message_id)
-
-        #Removes unwanted reactions
-        if this_emoji not in clock_map:
-            await message.remove_reaction(this_emoji, user)
-            return
-
-        # Check if there is already a reaction in the database
-        if self.client.db.get_user_reaction(message_id, user_id):
-            # Remove the new reaction if there is
-            await message.remove_reaction(this_emoji, user)
-            return
-
-        # Add the new reaction to the database
-        self.client.db.add_reaction(message_id, user, this_emoji)
-
-        if self.is_request(message_id):
-            print("Message: Request")
-            await self.update_request_embed(message)
-
-        elif self.is_checkin(message_id):
-            print("Message: Check In")
-            if this_emoji not in ["❌", "✅"]:
-                await message.remove_reaction(payload.emoji, user)
-                return
-
-            await self.update_checkin_embed(message)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, user, leave, join):

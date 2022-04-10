@@ -8,11 +8,12 @@ CREATE TABLE IF NOT EXISTS users (
   val_rank TINYINT(8), -- Valorant rank
   notify TINYINT(1) NOT NULL DEFAULT 0, -- Notify on message updates
   is_admin TINYINT(1) NOT NULL DEFAULT 0,
+  timezone VARCHAR(255) DEFAULT 'Europe/London',
   -- on time and not on time
   created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   PRIMARY KEY (id),
-  UNIQUE (username, tag),
-  UNIQUE (val_username, val_tag)
+  UNIQUE `discord_user` (username, tag),
+  UNIQUE `valorant_user` (val_username, val_tag)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -23,7 +24,7 @@ CREATE TABLE IF NOT EXISTS messages (
   trigger_msg BIGINT NOT NULL, -- Discord message id which triggered this message
   created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   message_type TINYINT(8) NOT NULL DEFAULT 1,
-  FOREIGN KEY (created_by) REFERENCES users(id),
+  FOREIGN KEY `fk_created_by` (created_by) REFERENCES users(id),
   PRIMARY KEY (id)
 );
 
@@ -31,13 +32,13 @@ CREATE TABLE IF NOT EXISTS reactions (
   id INT NOT NULL AUTO_INCREMENT,
   message_id BIGINT NOT NULL, -- Discord message id
   user_id BIGINT NOT NULL, -- Discord user id
-  emoji CHAR(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  react_stamp BIGINT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE (message_id, user_id, emoji),
-  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  UNIQUE `message_user_time` (message_id, user_id, react_stamp),
+  FOREIGN KEY `fk_message_id` (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+  FOREIGN KEY `fk_reactions_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS voicechannellog (
@@ -48,5 +49,5 @@ CREATE TABLE IF NOT EXISTS voicechannellog (
   join_time TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   leave_time TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY `fk_voice_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

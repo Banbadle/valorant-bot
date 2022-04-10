@@ -76,6 +76,50 @@ class Database():
             ''', (user_id,))
             result = cursor.fetchone()
             return result is not None and result[0] == 1
+        
+    def set_timezone(self, user, timezone):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._set_timezone(user.id, timezone)
+    
+    def get_timezone(self, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT timezone
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            result = cursor.fetchone()
+            return result is not None and result[0]
+
+    def set_notifications(self, user, status):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._set_notifications(user.id, status)
+    
+    def get_notifications(self, user):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._get_notifications(user.id)
+
+    def get_users_to_notify(self, message_id):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT u.id
+                FROM users u
+                JOIN reactions r
+                    ON u.id = r.user_id
+                WHERE r.message_id = %s
+                    AND r.removed IS NULL
+                    AND u.notify = 1
+            ''', (message_id,))
+            result = cursor.fetchall()
+            return result and result[0]
 
     def _get_user(self, user_id):
         self._refresh_connection()
@@ -109,6 +153,35 @@ class Database():
             ''', (num, user.id))
         self.connection.commit()
 
+    def _set_timezone(self, user_id, timezone):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET timezone = %s
+                WHERE id = %s
+            ''', (timezone, user_id))
+        self.connection.commit()
+        
+    def _get_notifications(self, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT notify
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            result = cursor.fetchone()
+            return result is not None and result[0]
+        
+    def _set_notifications(self, user_id, status):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users
+                SET notify = %s
+                WHERE id = %s
+            ''', (status, user_id))
+        self.connection.commit()
+        
     # Messages table functions
 
     def add_message(self, message, trigger, message_type = 0):
@@ -130,6 +203,18 @@ class Database():
             ''', (guild_id,))
             result = cursor.fetchone()
             return result and result['id']
+        
+    def get_active_messages(self, guild_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT id
+                FROM messages
+                WHERE guild_id = %s
+                    AND ADDTIME(created, '06:00:00') > NOW();
+                ORDER BY created DESC
+            ''', (guild_id,))
+            result = cursor.fetchall()
+            return result and result[0]
 
     def get_message_from_trigger(self, trigger_id):
         self._refresh_connection()
@@ -184,7 +269,7 @@ class Database():
         self.connection.commit()
 
 #------------------------------------------------------------------------------
-    def get_current_time_reactions(self, emoji):
+    def get_current_time_reactions(self, react_stamp):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
@@ -192,10 +277,11 @@ class Database():
                 FROM messages m
                 JOIN reactions r
                 	ON m.id = r.message_id
-                WHERE r.emoji = %s
+                WHERE r.react_stamp = %s
                 	AND r.removed IS NULL
                 	AND ADDTIME(m.created, '12:30:00') > UTC_TIMESTAMP();
-            ''', (emoji,))
+            ''', (react_stamp,))
+
             return cursor.fetchall()
 
     def get_guild_id(self, message_id):
@@ -232,32 +318,31 @@ class Database():
             result = cursor.fetchone()
             return result and result[0]
 #------------------------------------------------------------------------------
-
     # Reactions table functions
 
     def get_user_reaction(self, message_id, user_id):
         reaction = self._get_user_reaction(message_id, user_id)
         if not reaction:
             return
-        return reaction['emoji']
+        return reaction['react_stamp']
 
-    def add_reaction(self, message_id, user, emoji):
+    def add_reaction(self, message_id, user, react_stamp):
         if not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
 
-        self._add_reaction(message_id, user.id, emoji)
+        self._add_reaction(message_id, user.id, react_stamp)
 
-    def remove_reaction(self, message_id, user_id, emoji):
+    def remove_reaction(self, message_id, user_id, react_stamp):
         if not self._get_user(user_id):
             return
 
-        self._remove_reaction(message_id, user_id, emoji)
+        self._remove_reaction(message_id, user_id, react_stamp)
 
     def get_reactions(self, message_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
-                SELECT r.emoji, u.id as user
+                SELECT r.react_stamp, u.id as user
                 FROM messages m
                 JOIN reactions r
                     ON m.id = r.message_id
@@ -265,22 +350,22 @@ class Database():
                     ON r.user_id = u.id
                 WHERE m.id = %s
                     AND r.removed IS NULL
+                ORDER BY r.react_stamp
             ''', (message_id,))
             return cursor.fetchall()
 
-# -----------------------------------------------------------------------------
-    def get_users_from_reaction(self, message_id, emoji):
+    def get_users_from_reaction(self, message_id, react_stamp):
         self.refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 SELECT user_id
                 FROM reactions
                 WHERE message_id = %s
-                    AND emoji = %s
+                    AND react_stamp = %s
                     AND removed IS NULL
-            ''', (message_id, emoji))
+            ''', (message_id, react_stamp))
             return cursor.fetchall()
-# -----------------------------------------------------------------------------
+
     def _get_user_reaction(self, message_id, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
@@ -293,19 +378,19 @@ class Database():
             ''', (message_id, user_id))
             return cursor.fetchone()
 
-    def _add_reaction(self, message_id, user_id, emoji):
+    def _add_reaction(self, message_id, user_id, react_stamp):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO reactions (
-                    message_id, user_id, emoji
+                    message_id, user_id, react_stamp
                 ) VALUES (
                     %s, %s, %s
                 ) ON DUPLICATE KEY UPDATE removed = NULL
-            ''', (message_id, user_id, emoji))
+            ''', (message_id, user_id, react_stamp))
         self.connection.commit()
 
-    def _remove_reaction(self, message_id, user_id, emoji):
+    def _remove_reaction(self, message_id, user_id, react_stamp):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
@@ -313,10 +398,10 @@ class Database():
                 SET removed = UTC_TIMESTAMP()
                 WHERE message_id = %s
                     AND user_id = %s
-                    AND emoji = %s
-            ''', (message_id, user_id, emoji))
+                    AND react_stamp = %s
+            ''', (message_id, user_id, react_stamp))
         self.connection.commit()
-
+# -----------------------------------------------------------------------------
     # VoiceChannelLog table functions
 
     def user_join(self, user, channel):
@@ -335,9 +420,9 @@ class Database():
                     ON v.user_id = r.user_id
                 WHERE v.leave_time IS NULL
                     AND r.removed IS NULL
-                    AND r.emoji <> '❌'
+                    AND r.react_stamp <> '❌'
                     AND r.message_id = %s
-            ''', (message_id))
+            ''', (message_id,))
             return cursor.fetchall()
 
     def user_leave(self, user, channel):

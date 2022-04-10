@@ -1,4 +1,5 @@
 import discord
+from discord_components import ComponentsBot
 import os
 from discord.ext import commands
 from database import Database
@@ -12,7 +13,7 @@ nest_asyncio.apply()
 with open('config.toml', 'r') as f:
     config = toml.loads(f.read())
 
-client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
+client = ComponentsBot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
 
 client.db = Database()
 
@@ -45,7 +46,7 @@ async def on_command_error(ctx, error):
 async def on_command_completion(ctx):
     await ctx.message.add_reaction("✅")
 
-load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py"]
+load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py", "timezones.py", "notifications.py"]
 
 for filename in os.listdir(os.getcwd()):
     if filename in load_list:
