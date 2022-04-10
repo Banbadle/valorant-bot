@@ -100,16 +100,11 @@ class Database():
 
         self._set_notifications(user.id, status)
     
-    def get_notifications(self, user_id):
-        with self.connection.cursor() as cursor:
-            cursor.execute('''
-                SELECT notify
-                FROM users
-                WHERE id = %s
-                LIMIT 1
-            ''', (user_id,))
-            result = cursor.fetchone()
-            return result is not None and result[0]
+    def get_notifications(self, user):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._get_notifications(user.id)
 
     def get_users_to_notify(self, message_id):
         self._refresh_connection()
@@ -166,6 +161,17 @@ class Database():
                 WHERE id = %s
             ''', (timezone, user_id))
         self.connection.commit()
+        
+    def _get_notifications(self, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT notify
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            result = cursor.fetchone()
+            return result is not None and result[0]
         
     def _set_notifications(self, user_id, status):
         with self.connection.cursor() as cursor:

@@ -27,7 +27,7 @@ class Notifications(commands.Cog):
             self.client.db.set_notifications(ctx.author, 0)
             await ctx.reply("You have turned notifications off")
         else:
-            status_bool = self.client.db.get_notifications(ctx.author.id)
+            status_bool = self.client.db.get_notifications(ctx.author)
             status = "on" if status_bool == 1 else "off"
             await ctx.reply(f"Your notifications are currently turned {status}.\nYou can change this setting using '?notifications on' or '?notifications off'")
 
