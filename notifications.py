@@ -42,6 +42,39 @@ class Notifications(commands.Cog):
                     await notify_user.send(f"<@{poster_user_id}> is now Unavailable.")
                     return
                 await notify_user.send(f"<@{poster_user_id}> wants to play valorant " + "at "*(react_stamp_str!="Now") + f"{react_stamp_str} in {guild_name}.")
+                
+    # async def notify_join(self, join_user_id, join_channel):
+    #     user_set = set()
+    #     join_guild = join_channel.guild
+    #     guild_name = join_guild.name
+        
+    #     print(join_guild.id)
+    #     message_id_list = self.client.db.get_active_messages(join_guild.id)
+    #     for message_id in message_id_list:
+    #         user_list = self.client.db.get_users_to_notify(message_id)
+    #         for react_user in user_list:
+    #             user_set.add(react_user)
+
+    #     for notify_user_id in user_set:
+    #         if notify_user_id != join_user_id:
+    #             if self.client.db.get_user_voice_guild(message_id) != join_guild:
+    #                 notify_user = self.client.get_user(notify_user_id)
+    #                 await notify_user.send(f"<@poster_user_id> has joined a voice channel in {guild_name}")
+
+    # @commands.Cog.listener()
+    # async def on_voice_state_update(self, user, leave, join):
+
+    #     new_channel = None if join == None else join.channel
+    #     old_channel = None if leave == None else leave.channel
+        
+    #     new_guild = None if new_channel == None else new_channel.guild
+    #     old_guild = None if old_channel == None else old_channel.guild
+        
+    #     if new_guild == old_guild: 
+    #         return
+        
+    #     if new_channel != None:
+    #         await self.notify_join(user.id, new_channel)
     
     @commands.Cog.listener()
     async def on_select_option(self, interaction):
