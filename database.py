@@ -99,7 +99,7 @@ class Database():
         if not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
 
-        self._get_notifications(user.id)
+        return self._get_notifications(user.id)
 
     def get_users_to_notify(self, message_id):
         self._refresh_connection()
