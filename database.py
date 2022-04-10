@@ -197,6 +197,19 @@ class Database():
             ''', (guild_id,))
             result = cursor.fetchone()
             return result and result['id']
+        
+    def get_active_messages(self, guild_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT id
+                FROM messages
+                WHERE guild_id = %s
+                    AND ADDTIME(created, '06:00:00') > NOW();
+                ORDER BY created DESC
+                LIMIT 1;
+            ''', (guild_id,))
+            result = cursor.fetchall()
+            return result and result[0]
 
     def get_message_from_trigger(self, trigger_id):
         self._refresh_connection()
