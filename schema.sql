@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   is_admin TINYINT(1) NOT NULL DEFAULT 0,
   timezone VARCHAR(255) DEFAULT 'Europe/London',
   -- on time and not on time
-  created TIMESTAMP NOT NULL DEFAULT NOW(),
+  created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   PRIMARY KEY (id),
   UNIQUE `discord_user` (username, tag),
   UNIQUE `valorant_user` (val_username, val_tag)
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS messages (
   channel_id BIGINT NOT NULL, -- Discord channel id
   created_by BIGINT NOT NULL, -- Discord user id
   trigger_msg BIGINT NOT NULL, -- Discord message id which triggered this message
-  created TIMESTAMP NOT NULL DEFAULT NOW(),
+  created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   message_type TINYINT(8) NOT NULL DEFAULT 1,
   FOREIGN KEY `fk_created_by` (created_by) REFERENCES users(id),
   PRIMARY KEY (id)
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS reactions (
   message_id BIGINT NOT NULL, -- Discord message id
   user_id BIGINT NOT NULL, -- Discord user id
   react_stamp BIGINT NOT NULL,
-  created TIMESTAMP NOT NULL DEFAULT NOW(),
+  created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   removed TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE `message_user_time` (message_id, user_id, react_stamp),
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS voicechannellog (
   user_id BIGINT NOT NULL, -- Discord user id
   guild_id BIGINT NOT NULL, -- Discord guild id
   channel_id BIGINT NOT NULL, -- Discord channel id
-  join_time TIMESTAMP NOT NULL DEFAULT NOW(),
+  join_time TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   leave_time TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY `fk_voice_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE
