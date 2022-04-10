@@ -14,7 +14,7 @@ class Timezones(commands.Cog):
     @commands.command()
     async def timezone(self, ctx, country=""):
         if country=="":
-            curr_tz = self.client.db.get_timezone(ctx.author.id)
+            curr_tz = self.client.db.get_timezone(ctx.author)
             #change_button = Button(label="Change Timezone", style=ButtonStyle(3), custom_id="change_timezone")
             await ctx.author.send(f"Your current timezone is set to '{curr_tz}'.\nTo change this, type '?timezone ' followed by your country / region.\nExamples: '?timezone UK', ?'timezone Germany'")
         else:

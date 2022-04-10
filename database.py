@@ -83,16 +83,11 @@ class Database():
 
         self._set_timezone(user.id, timezone)
     
-    def get_timezone(self, user_id):
-        with self.connection.cursor() as cursor:
-            cursor.execute('''
-                SELECT timezone
-                FROM users
-                WHERE id = %s
-                LIMIT 1
-            ''', (user_id,))
-            result = cursor.fetchone()
-            return result is not None and result[0]
+    def get_timezone(self, user):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._get_timezone(user.id)
 
     def set_notifications(self, user, status):
         if not self._get_user(user.id):
@@ -181,6 +176,17 @@ class Database():
                 WHERE id = %s
             ''', (status, user_id))
         self.connection.commit()
+        
+    def _get_timezone(self, user_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT timezone
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+            ''', (user_id,))
+            result = cursor.fetchone()
+            return result is not None and result[0]
         
     # Messages table functions
 

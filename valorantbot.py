@@ -207,8 +207,8 @@ class ValorantBot(commands.Cog):
         t_step          = 15 * 60 #time step in seconds
         
         message_id      = interaction.message.id
-        user_id         = interaction.user.id
-        user_timezone   = pytz.timezone(self.client.db.get_timezone(user_id))
+        user            = interaction.user
+        user_timezone   = pytz.timezone(self.client.db.get_timezone(user))
         creation_time   = self.client.db.get_creation_time(message_id)
         creation_unix   = time.mktime(creation_time.timetuple())
         
