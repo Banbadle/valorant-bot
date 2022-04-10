@@ -206,7 +206,6 @@ class Database():
                 WHERE guild_id = %s
                     AND ADDTIME(created, '06:00:00') > NOW();
                 ORDER BY created DESC
-                LIMIT 1;
             ''', (guild_id,))
             result = cursor.fetchall()
             return result and result[0]
