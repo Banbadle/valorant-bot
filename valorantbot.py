@@ -165,7 +165,7 @@ class ValorantBot(commands.Cog):
 
         return new_embed
 
-    @commands.command()
+    @commands.command(help = "Creates a valorant request message")
     @commands.guild_only()
     async def valorant(self, ctx):
         '''Creates a valorant request message'''
@@ -257,7 +257,9 @@ class ValorantBot(commands.Cog):
         if self.is_checkin(message_id):
             pass
 
-    @commands.command()
+    @commands.command(help = "Sets valorant username and tag.\n" +\
+                      "parameters:\n    username: the username and tag, separated by '#'\n" +\
+                      "Example: ?username FootGirl420#Euw")
     async def username(self, ctx):
         '''Sets valorant username and tag. eg: ?username FootGirl420#Euw'''
         print(ctx.message.content)

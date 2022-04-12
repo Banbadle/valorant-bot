@@ -40,10 +40,11 @@ class Valranks(commands.Cog):
 
         return response['data'][0]['currenttierpatched']
 
-    @commands.command()
+    @commands.command(help = "Lists the ranks of everyone with the 'Agents' role.")
     @commands.guild_only()
     @commands.cooldown(1, 1*60)
     async def ranks(self, ctx):
+        '''Lists the ranks of everyone with the 'Agents' role.'''
         memberList = []
         rankList = []
         agents = discord.utils.get(ctx.guild.roles, name="Agents").members

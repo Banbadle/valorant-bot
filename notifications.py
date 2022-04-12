@@ -18,8 +18,11 @@ class Notifications(commands.Cog):
         
         return f"<t:{val}:t>"
         
-    @commands.command()
+    @commands.command(help = "View and change whether you recieve notifications from KAY/O.\n"+\
+                      "With notifications on, KAY/O will send private messages to you when someone responds to a message you have expressed interest in.\n"
+                      "parameters:\n    arg: 'on', 'off', or None")
     async def notifications(self, ctx, arg=""):
+        '''View and change whether you recieve notifications from KAY/O.'''
         if arg.lower() == "on":
             self.client.db.set_notifications(ctx.author, 1)
             await ctx.reply("You have turned notifications on")

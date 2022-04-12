@@ -11,8 +11,10 @@ class Timezones(commands.Cog):
     async def on_ready(self):
         print("Timezones.py loaded")
         
-    @commands.command()
+    @commands.command(help = "View and change your timezone.\n"+\
+                      "parameters:\n    country: the country or region you are located")
     async def timezone(self, ctx, *country):
+        '''View and change your timezone'''
         country = " ".join(country)
         if country=="":
             curr_tz = self.client.db.get_timezone(ctx.author)

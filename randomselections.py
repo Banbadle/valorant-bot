@@ -12,12 +12,15 @@ class Selects(commands.Cog):
     async def on_ready(self):
         print(sys.argv[0])
         
-    @commands.command()
+    @commands.command(help = "Returns a random map.")
     async def randommap(self, ctx):
+        '''Returns a random map.'''
         await ctx.reply(random.choice(ad.map_list))
     
-    @commands.command()
+    @commands.command(help = "Returns a number of random agents.\n" +\
+                      "parameters:\n    num: the number of agents to select (default is 1)")
     async def randomagents(self, ctx, num="1"):
+        '''Returns a number of random agents.'''
         num = int(num)
         try:
             sample = random.sample(list(ad.agent_details), num)
