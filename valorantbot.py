@@ -260,10 +260,10 @@ class ValorantBot(commands.Cog):
     @commands.command(help = "Sets valorant username and tag.\n" +\
                       "parameters:\n    username: the username and tag, separated by '#'\n" +\
                       "Example: ?username FootGirl420#Euw")
-    async def username(self, ctx):
-        '''Sets valorant username and tag. eg: ?username FootGirl420#Euw'''
-        print(ctx.message.content)
-        match = re.fullmatch(r'\?username (?P<user>[^#]*)#(?P<tag>.{3,5})', ctx.message.content)
+    async def username(self, ctx, username):
+        '''Sets valorant username and tag.'''
+        print(username)
+        match = re.fullmatch(r'(?P<user>[^#]*)#(?P<tag>.{3,5})', username)
         print(match)
         if not match:
             return
