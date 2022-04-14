@@ -119,6 +119,8 @@ class ValorantBot(commands.Cog):
             if react_stamp != last_react_stamp:
                 time_str = self.interact_val_to_str(react_stamp)
                 e = "🕘" # ADJUST TO CLOSEST TIME EMOJI
+                if time_str == "Now":
+                    e = "✅"
                 new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
                 
                 last_react_stamp = react_stamp
