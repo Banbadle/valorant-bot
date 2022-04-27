@@ -1,7 +1,7 @@
 import random
 
 agent_details = {'Astra':       {'image': 'https://static.wikia.nocookie.net/valorant/images/0/08/Astra_icon.png/',     'phrase': '"My people, are you ready?"'},\
-                 'Pheonix':     {'image': 'https://static.wikia.nocookie.net/valorant/images/1/14/Phoenix_icon.png/',   'phrase': '"Come on, let\'s go"'},\
+                 'Phoenix':     {'image': 'https://static.wikia.nocookie.net/valorant/images/1/14/Phoenix_icon.png/',   'phrase': '"Come on, let\'s go"'},\
                  'Killjoy':     {'image': 'https://static.wikia.nocookie.net/valorant/images/1/15/Killjoy_icon.png/',   'phrase': '"You should run"'},\
                  'Skye':        {'image': 'https://static.wikia.nocookie.net/valorant/images/3/33/Skye_icon.png/',      'phrase': '"Time to hunt"'},
                  'Jett':        {'image': 'https://static.wikia.nocookie.net/valorant/images/3/35/Jett_icon.png/',      'phrase': '"I hate to say it but, probably best to play as a team"'}, 
