@@ -5,6 +5,12 @@ import sys
 
 class Selects(commands.Cog):
     
+    primary_guns    = {"Stinger": 950, "Spectre": 1600, "Bulldog": 2050, "Guardian": 2250, "Marshal": 950, "Operator": 4700,\
+                            "Bucky": 850, "Judge": 1850, "Phantom": 2900, "Vandal": 2900, "Ares": 1600, "Odin": 3200,\
+                                None: 0}
+        
+    second_guns     = {"Classic": 0, "Shorty": 150, "Frenzy": 450, "Ghost": 500, "Sheriff": 800}
+    
     def __init__(self, client):
         self.client = client
 
@@ -30,6 +36,20 @@ class Selects(commands.Cog):
         except:
             await ctx.reply(f"I'm sorry {ctx.author.name}, I can't let you do that")
             
+    @commands.command(help = "Returns a random primary and secondary weapon.\n" +\
+                      "parameters:\n    creds: the number of credits to use (default is 9000)")
+    async def randomguns(self, ctx, creds="9000"):
+        '''Returns a random primary and secondary weapon.'''
+        creds = int(creds)
+        primary_list    = list([gun for gun, val in self.primary_guns.items() if val<= creds])
+        primary         = random.choice(primary_list)
+        spent           = self.primary_guns[primary]
+        
+        second_list     = list([gun for gun, val in self.second_guns.items() if val <= creds-spent])
+        secondary       = random.choice(second_list)
+        
+        await ctx.reply(f"Primary:       {primary}\nSecondary:  {secondary}")
+        
 def setup(client):
     client.add_cog(Selects(client))
     
