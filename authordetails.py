@@ -17,7 +17,8 @@ agent_details = {'Astra':       {'image': 'https://static.wikia.nocookie.net/val
                  'Yoru':        {'image': 'https://static.wikia.nocookie.net/valorant/images/d/d4/Yoru_icon.png/',      'phrase': '"Anyone else?"'}, 
                  'KAY/O':       {'image': 'https://static.wikia.nocookie.net/valorant/images/f/f0/KAYO_icon.png/',      'phrase': '"Where the fuck are you?"'}, 
                  'Chamber':     {'image': 'https://static.wikia.nocookie.net/valorant/images/0/09/Chamber_icon.png',    'phrase': '"This has gone on long enough I think."'}, 
-                 'Neon':        {'image': 'https://static.wikia.nocookie.net/valorant/images/d/d0/Neon_icon.png/',      'phrase': '"Lets go. World\'s not saving itself."'}}
+                 'Neon':        {'image': 'https://static.wikia.nocookie.net/valorant/images/d/d0/Neon_icon.png/',      'phrase': '"Lets go. World\'s not saving itself."'},
+                 'Fade':        {'image': 'https://static.wikia.nocookie.net/valorant/images/a/a6/Fade_icon.png/',      'phrase': '"Another mission? Good. Anything to keep me awake."'}}
 
 map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven")
 
