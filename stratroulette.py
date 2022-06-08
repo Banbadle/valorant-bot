@@ -49,7 +49,6 @@ class StratRoulette(commands.Cog):
                      ["Protect the President",  "{player} may only use a classic. The team must stay near, and protect them. If they die, you cannot move."],
                      ["Gun Vendor",             "Only {player} may spend money on weapons for the team."],
                      ["(Almost) Powerless",     "Only {player} may use abilities."],
-                     ["Radio Silence",          "{player} must deafen their discord until the end of the round (or until they die). No one may communicate with them in-game."],
                      ["Dictatorship",           "The team must follow any order given by {player}."]]
     
     key_strats    = [["Sticky Keys",            "You must hold down the {key} key for the entire round."],
