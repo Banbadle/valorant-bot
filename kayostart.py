@@ -6,6 +6,7 @@ from database import Database
 from checks import is_admin
 import toml
 from git import Repo
+import requests
 
 import nest_asyncio
 nest_asyncio.apply()
@@ -33,6 +34,17 @@ async def version(ctx):
     repo = Repo(os.getcwd())
     hash = repo.head.commit.binsha.hex()[:7]
     await ctx.reply(f"`{hash}`")
+
+@client.command()
+@commands.check(is_admin)
+async def setbotname(ctx, name):
+    await client.user.edit(username=name)
+
+@client.command()
+@commands.check(is_admin)
+async def setbotimage(ctx, url):
+    img = requests.get(url).content
+    await client.user.edit(avatar=img)
 
 @client.event
 async def on_command_error(ctx, error):
