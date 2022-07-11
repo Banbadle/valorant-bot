@@ -3,7 +3,7 @@ from discord.ext import commands
 import sys
 import requests
 
-ranks = ('Unrated', 'Iron 1', 'Iron 2', 'Iron 3', 'Bronze 1', 'Bronze 2', 'Bronze 3', 'Silver 1', 'Silver 2', 'Silver 3', 'Gold 1', 'Gold 2', 'Gold 3', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Imortal 1', 'Imortal 2', 'Imortal 3', 'Radiant')
+ranks = ('Unrated', 'Unrated', 'Unrated', 'Iron 1', 'Iron 2', 'Iron 3', 'Bronze 1', 'Bronze 2', 'Bronze 3', 'Silver 1', 'Silver 2', 'Silver 3', 'Gold 1', 'Gold 2', 'Gold 3', 'Platinum 1', 'Platinum 2', 'Platinum 3', 'Diamond 1', 'Diamond 2', 'Diamond 3', 'Ascendant 1', 'Ascendant 2', 'Ascendant 3', 'Imortal 1', 'Imortal 2', 'Imortal 3', 'Radiant')
 rank_brackets = ((1,2,3,4,5,6,7,8,9), (7,8,9,10,11,12), (10,11,12,13,14,15), (13,14,15,16), (14,15,16,17), (15,16,17,18), (16,17,18,19,20,21), (21,22))
 rank_ranges = ((1, 10), (1, 10), (1, 10), (1, 10), (1, 10), (1, 10), (1, 13), (1, 13), (1, 13), (7, 16), (7, 16), (7, 16), (10, 17), (10, 18), (10, 19), (13, 22), (14, 22), (15, 22), (16, 22), (16, 22), (16, 23), (21, 23))
 
@@ -15,9 +15,6 @@ class Valranks(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print(sys.argv[0])
-
-    def get_rank_num(self, rankText):
-        return (None if rankText not in ranks else ranks.index(rankText))
 
     def num_to_rank(self, num):
         return ranks[num]
@@ -34,18 +31,20 @@ class Valranks(commands.Cog):
 
     def get_player_rank(self, user_id):
         user = self.client.db.get_valorant_username(user_id)
+        print(user['val_username'])
         url = f"https://api.henrikdev.xyz/valorant/v1/mmr-history/eu/{user['val_username']}/{user['val_tag']}"
 
         response = requests.get(url).json()
+        print(response)
+        lastGame = response['data'][0]
 
-        return response['data'][0]['currenttierpatched']
+        return (lastGame['currenttier'], lastGame['ranking_in_tier'])
 
     @commands.command(help = "Lists the ranks of everyone with the 'Agents' role.")
     @commands.guild_only()
     @commands.cooldown(1, 1*60)
     async def ranks(self, ctx):
         '''Lists the ranks of everyone with the 'Agents' role.'''
-        memberList = []
         rankList = []
         agents = discord.utils.get(ctx.guild.roles, name="Agents").members
         for member in agents:
@@ -56,23 +55,17 @@ class Valranks(commands.Cog):
             if None in valorant.values():
                 continue
 
-            memberList.append(f"> {member.name}")
             try:
-                memberRank = self.get_player_rank(member.id)
-                rankList.append(memberRank)
+                rank = self.get_player_rank(member.id)
             except:
-                rankList.append("Unknown")
+                rank = "Unknown"
 
-        rank_num_list = [self.get_rank_num(rank) if rank != "Unknown" else -1 for rank in rankList]
+            rankList.append((rank, member.name))
 
-        zip_list = zip(rank_num_list, memberList, rankList)
-        sorted_zip_list = sorted(zip_list, reverse=True)
+        rankList.sort(reverse=True)
 
-        orderedMemberList = [m for _,m,_ in sorted_zip_list]
-        orderedRankList = [r for _,_,r in sorted_zip_list]
-
-        memberStr = "\n".join(orderedMemberList)
-        rankStr = "\n".join(orderedRankList)
+        memberStr = '\n'.join([u for (_, u) in rankList])
+        rankStr = '\n'.join([f"{self.num_to_rank(t)} {rr}RR" for ((t, rr), _) in rankList])
 
         newEmbed = discord.Embed(title="__Leaderboard__", color=0xff0000)
 
