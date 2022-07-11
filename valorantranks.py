@@ -31,11 +31,9 @@ class Valranks(commands.Cog):
 
     def get_player_rank(self, user_id):
         user = self.client.db.get_valorant_username(user_id)
-        print(user['val_username'])
         url = f"https://api.henrikdev.xyz/valorant/v1/mmr-history/eu/{user['val_username']}/{user['val_tag']}"
 
         response = requests.get(url).json()
-        print(response)
         lastGame = response['data'][0]
 
         return (lastGame['currenttier'], lastGame['ranking_in_tier'])
