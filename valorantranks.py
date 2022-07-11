@@ -65,7 +65,7 @@ class Valranks(commands.Cog):
         rankList.sort(reverse=True)
 
         memberStr = '\n'.join([u for (_, u) in rankList])
-        rankStr = '\n'.join([f"{self.num_to_rank(t)} {rr}RR" for ((t, rr), _) in rankList])
+        rankStr = '\n'.join([f"{self.num_to_rank(t)} ({rr} RR)" for ((t, rr), _) in rankList])
 
         newEmbed = discord.Embed(title="__Leaderboard__", color=0xff0000)
 
