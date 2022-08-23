@@ -20,7 +20,7 @@ agent_details = {'Astra':       {'image': 'https://static.wikia.nocookie.net/val
                  'Neon':        {'image': 'https://static.wikia.nocookie.net/valorant/images/d/d0/Neon_icon.png/',      'phrase': '"Lets go. World\'s not saving itself."'},
                  'Fade':        {'image': 'https://static.wikia.nocookie.net/valorant/images/a/a6/Fade_icon.png/',      'phrase': '"Another mission? Good. Anything to keep me awake."'}}
 
-map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven")
+map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven", "Pearl")
 
 def get_author_pair(agent=None):
     if agent==None:
