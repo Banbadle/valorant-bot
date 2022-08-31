@@ -167,6 +167,33 @@ class ValorantBot(commands.Cog):
 
         return new_embed
 
+    @commands.command(help = "Creates a game request message for a given rank")
+    @commands.guild_only()
+    async def game(self, ctx, rank_name):
+        '''Creates a game request message for a given rank'''
+        author_name = ctx.author.name
+        
+        discord_rank = discord.utils.get(ctx.guild.roles,name=rank_name)
+        if discord_rank == None:
+            await ctx.reply(f"I couldn't find any rank called '{rank_name}', please try again. Note that ranks are case sensitive.")
+            return
+            
+        discord_rank_id = discord_rank.mention
+        discord_rank_color = discord_rank.color
+        
+        new_embed = discord.Embed(title=f"__{rank_name} Request__", color=discord_rank_color)
+        new_embed.add_field(name=f"{author_name} wants to play", 
+                            value="Please respond using the appropriate button.",
+                            inline=False)
+
+        button_yes = Button(label="Select a Time", style=ButtonStyle(3), custom_id="rqst_yes")
+        button_no  = Button(label="Unavailable", style=ButtonStyle(4), custom_id="rqst_no")
+        button_row = ActionRow(button_no, button_yes)
+
+        message = await ctx.reply(discord_rank_id, embed=new_embed, components=[button_row])
+    
+        self.client.db.add_message(message, ctx.message, 1)
+
     @commands.command(help = "Creates a valorant request message")
     @commands.guild_only()
     async def valorant(self, ctx):
