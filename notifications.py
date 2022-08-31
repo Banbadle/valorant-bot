@@ -44,7 +44,7 @@ class Notifications(commands.Cog):
                 if react_stamp_str == "Unavailable":
                     await notify_user.send(f"<@{poster_user_id}> is now Unavailable.")
                     return
-                await notify_user.send(f"<@{poster_user_id}> wants to play valorant " + "at "*(react_stamp_str!="Now") + f"{react_stamp_str} in {guild_name}.")
+                await notify_user.send(f"<@{poster_user_id}> also wants to play " + "at "*(react_stamp_str!="Now") + f"{react_stamp_str} in {guild_name}.")
                 
     # async def notify_join(self, join_user_id, join_channel):
     #     user_set = set()
