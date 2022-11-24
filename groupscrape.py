@@ -1,0 +1,68 @@
+import discord
+from discord.ext import commands
+import requests
+from bs4 import BeautifulSoup
+import datetime
+
+class Groupscrape(commands.Cog):
+    
+    def __init__(self, client):
+        self.client = client
+        
+    @commands.Cog.listener()
+    async def on_ready(self):
+        pass      
+        
+    def get_game_list(self):
+    
+        group_url = "https://en.wikipedia.org/wiki/2022_FIFA_World_Cup#Group_stage"
+        result = requests.get(group_url)
+        soup = BeautifulSoup(result.text, "html.parser")
+        games = soup.find_all("div", {"class": "footballbox"})
+        
+        game_list = []
+        
+        for game in games:
+            game_dict = {}
+            
+            # Date of match
+            date = game.find("span", {"class": "bday dtstart published updated"})
+            date_text = date.get_text()
+            game_dict["Date"] = date_text
+            
+            # Time of match
+            time = game.find("div", {"class": "ftime"})
+            time_text = time.get_text()
+            game_dict["Time"] = time_text
+            
+            # Unix timestamp of match
+            unix_num_list = list([*date_text.split("-"), *time_text.split(":")])
+            unix_num_list = list(int(num) for num in unix_num_list)
+            unix_time = datetime.datetime(*unix_num_list)
+            game_dict["Timestamp"] = unix_time
+            
+            # Home team
+            home_team = game.find("th", {"itemprop": "homeTeam"})
+            game_dict["Home"] = home_team.get_text(strip=True)
+            
+            # Away team
+            away_team = game.find("th", {"itemprop": "awayTeam"})
+            game_dict["Away"] = away_team.get_text(strip=True)
+            
+            # Score
+            score = game.find("th", {"class": "fscore"})
+            score = score.get_text()
+            game_dict["Score"] = score if score[0] != "M" else None
+            
+            game_list.append(game_dict)
+        
+        ordered_game_list = sorted(game_list, key=lambda d: d["Timestamp"])
+        
+        return ordered_game_list
+            
+    def update_group(char):
+        group_template_url = f"https://en.wikipedia.org/wiki/2022_FIFA_World_Cup_Group_{char}"
+        result = requests.get(group_template_url)
+    
+def setup(client):
+    client.add_cog(Groupscrape(client))
