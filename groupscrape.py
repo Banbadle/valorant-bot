@@ -37,7 +37,7 @@ class Groupscrape(commands.Cog):
                     if played_game["Home"] == next_game["Home"] and played_game["Away"] == next_game["Away"] and played_game["Date"] == next_game["Date"]:
                         score = played_game["Score"]
                         
-                if score != None:
+                if score == None:
                     await asyncio.sleep(15*60)
             
             for game in self.game_list:
