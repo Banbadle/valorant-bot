@@ -6,6 +6,7 @@ import datetime
 import pytz
 import asyncio
 from checks import is_admin
+from sweepstake import country_flag_map
 
 class Groupscrape(commands.Cog):
     
@@ -14,10 +15,12 @@ class Groupscrape(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self):
-        print("groupscrape.py loaded")
-        
+
+        channel_id = 0
+        channel = await self.client.get_channel()
         tz = pytz.timezone('Asia/Qatar')
         game_list = self.get_game_list()
+        self.game_list = game_list
         upcoming_game_list = [game for game in game_list if game["Score"] == None]
         
         for next_game in upcoming_game_list:
@@ -37,7 +40,34 @@ class Groupscrape(commands.Cog):
                 if score != None:
                     await asyncio.sleep(15*60)
             
-            await 
+            for game in self.game_list:
+                if game["Score"] == None:
+                    game["Score"] = score
+                    
+                    msg = self.get_game_result(game)
+                    await channel.send(msg)
+                    break
+                
+
+                
+    def get_game_result(self, game):
+        home = game["Home"]
+        away = game["Away"]
+        print(home.replace(" ", "-"))
+        home_flag = country_flag_map[home.replace(" ", "-")]
+        print(away.replace(" ", "-"))
+        away_flag = country_flag_map[away.replace(" ", "-")]
+        return f"{home} {home_flag} {game['Score']} {away_flag} {away}"
+    
+    @commands.command()
+    @commands.check(is_admin)
+    async def postprevresults(self, ctx):
+        print("STARTING")
+        for game in self.game_list:
+            print(game)
+            if game["Score"] == None:
+                break
+            await ctx.send(self.get_game_result(game))
             
     @commands.command()
     @commands.check(is_admin)        
