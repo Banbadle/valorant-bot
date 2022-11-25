@@ -15,12 +15,14 @@ class Groupscrape(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("groupscrape.py loaded")
-        self.game_list = self.get_game_list()
-        upcoming_game_list = [game for game in self.game_list if game["Score"] == None]
+        
+        tz = pytz.timezone('Asia/Qatar')
+        game_list = self.get_game_list()
+        upcoming_game_list = [game for game in game_list if game["Score"] == None]
         
         for next_game in upcoming_game_list:
             self.next_game = next_game
-            wait_time = next_game["Timestamp"] - datetime.datetime.now()
+            wait_time = next_game["Timestamp"] - datetime.datetime.now(tz) + datetime.timedelta(hours=2)
             await asyncio.sleep(wait_time.total_seconds())
             
             score = None
@@ -35,12 +37,25 @@ class Groupscrape(commands.Cog):
                 if score != None:
                     await asyncio.sleep(15*60)
             
+            await 
+            
     @commands.command()
     @commands.check(is_admin)        
     async def timeuntil(self, ctx):
         game = self.next_game
-        wait_time = game["Timestamp"] - datetime.datetime.now()
+        tz = pytz.timezone('Asia/Qatar')
+        wait_time = game["Timestamp"] - datetime.datetime.now(tz)
+        print(game["Timestamp"])
+        print(datetime.datetime.now(tz))
         await ctx.reply(wait_time)
+        
+    @commands.command()
+    @commands.check(is_admin)        
+    async def nextmatch(self, ctx): 
+        game = self.next_game
+        home = game["Home"]
+        away = game["Away"]
+        await ctx.reply(f"Next match is: {home} vs {away}")
         
     def get_game_list(self):
     
@@ -65,10 +80,12 @@ class Groupscrape(commands.Cog):
             game_dict["Time"] = time_text
             
             # Unix timestamp of match
+            tz = pytz.timezone('Asia/Qatar')
             unix_num_list = list([*date_text.split("-"), *time_text.split(":")])
             unix_num_list = list(int(num) for num in unix_num_list)
             unix_time = datetime.datetime(*unix_num_list)
-            game_dict["Timestamp"] = unix_time
+            timestamp = tz.localize(unix_time)
+            game_dict["Timestamp"] = timestamp
             
             # Home team
             home_team = game.find("th", {"itemprop": "homeTeam"})
