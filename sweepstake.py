@@ -9,7 +9,7 @@ country_flag_map = {"Netherlands": ":flag_nl:",\
 "Senegal": ":flag_sn:",\
 "Qatar": ":flag_qa:",\
 "England": ":england:",\
-"USA": ":flag_us:",\
+"United-States": ":flag_us:",\
 "Iran": ":flag_ir:",\
 "Wales": ":wales:" ,\
 "Poland": ":flag_pl:",\
