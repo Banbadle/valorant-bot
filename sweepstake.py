@@ -3,40 +3,41 @@ from discord.ext import commands
 import random
 from checks import is_admin
 import asyncio
+
+country_flag_map = {"Netherlands": ":flag_nl:",\
+"Ecuador": ":flag_ec:" ,\
+"Senegal": ":flag_sn:",\
+"Qatar": ":flag_qa:",\
+"England": ":england:",\
+"USA": ":flag_us:",\
+"Iran": ":flag_ir:",\
+"Wales": ":wales:" ,\
+"Poland": ":flag_pl:",\
+"Argentina": ":flag_ar:",\
+"Mexico": ":flag_mx:",\
+"Saudi-Arabia": ":flag_sa:",\
+"France": ":flag_fr:",\
+"Denmark": ":flag_dk:",\
+"Tunisia": ":flag_tn:",\
+"Australia": ":flag_au:",\
+"Germany": ":flag_de:",\
+"Spain": ":flag_es:",\
+"Costa-Rica": ":flag_cr:",\
+"Japan": ":flag_jp:",\
+"Croatia": ":flag_hr:",\
+"Belgium": ":flag_be:",\
+"Canada": ":flag_ca:",\
+"Morocco": ":flag_ma:" ,\
+"Switzerland": ":flag_ch:",\
+"Serbia": ":flag_rs:",\
+"Brazil": ":flag_br:",\
+"Cameroon": ":flag_cm:",\
+"Portugal": ":flag_pt:",\
+"Uruguay": ":flag_uy:",\
+"Ghana": ":flag_gh:",\
+"South-Korea": ":flag_kr:"}
     
 class Sweepstake(commands.Cog):
-    country_flag_map = {"Netherlands": ":flag_nl:",\
-    "Ecuador": ":flag_ec:" ,\
-    "Senegal": ":flag_sn:",\
-    "Qatar": ":flag_qa:",\
-    "England": ":england:",\
-    "USA": ":flag_us:",\
-    "Iran": ":flag_ir:",\
-    "Wales": ":wales:" ,\
-    "Poland": ":flag_pl:",\
-    "Argentina": ":flag_ar:",\
-    "Mexico": ":flag_mx:",\
-    "Saudi-Arabia": ":flag_sa:",\
-    "France": ":flag_fr:",\
-    "Denmark": ":flag_dk:",\
-    "Tunisia": ":flag_tn:",\
-    "Australia": ":flag_au:",\
-    "Germany": ":flag_de:",\
-    "Spain": ":flag_es:",\
-    "Costa-Rica": ":flag_cr:",\
-    "Japan": ":flag_jp:",\
-    "Croatia": ":flag_hr:",\
-    "Belgium": ":flag_be:",\
-    "Canada": ":flag_ca:",\
-    "Morocco": ":flag_ma:" ,\
-    "Switzerland": ":flag_ch:",\
-    "Serbia": ":flag_rs:",\
-    "Brazil": ":flag_br:",\
-    "Cameroon": ":flag_cm:",\
-    "Portugal": ":flag_pt:",\
-    "Uruguay": ":flag_uy:",\
-    "Ghana": ":flag_gh:",\
-    "South-Korea": ":flag_kr:"}
         
     def __init__(self, client):
         self.client = client
@@ -46,12 +47,12 @@ class Sweepstake(commands.Cog):
         print("sweepstake.py loaded")
         
     def get_flag(self, country):
-        return self.country_flag_map[country]
+        return country_flag_map[country]
         
     @commands.command()
     @commands.check(is_admin)
     async def checkroles(self, ctx):
-        for country in self.country_flag_map:
+        for country in country_flag_map:
             role = discord.utils.get(ctx.guild.roles,name=country)
             if role == None:
                 await ctx.reply(f"Could not find role: {country}")
@@ -63,7 +64,7 @@ class Sweepstake(commands.Cog):
     @commands.check(is_admin)  
     async def startsweepstake(self, ctx):
         role_list = ctx.guild.roles
-        role_list = list(role for role in role_list if role.name in self.country_flag_map)
+        role_list = list(role for role in role_list if role.name in country_flag_map)
         if len(role_list) != 32:
             await ctx.reply(f"{len(role_list)} country ranks found. Expected 32")
             return
@@ -118,7 +119,7 @@ class Sweepstake(commands.Cog):
     @commands.check(is_admin) 
     async def resetcolors(self, ctx):
         role_list = ctx.guild.roles
-        role_list = list(role for role in role_list if role.name in self.country_flag_map)
+        role_list = list(role for role in role_list if role.name in country_flag_map)
         if len(role_list) != 32:
             await ctx.reply(f"{len(role_list)} country ranks found. Expected 32")
             return
@@ -130,20 +131,20 @@ class Sweepstake(commands.Cog):
     @commands.check(is_admin) 
     async def createroles(self, ctx):
         role_list = ctx.guild.roles
-        role_list = list(role for role in role_list if role.name in self.country_flag_map)
+        role_list = list(role for role in role_list if role.name in country_flag_map)
         if len(role_list) != 0:
             await ctx.reply(f"some country ranks were already found: {list(role.name for role in role_list)}.")
             return
 
         guild = ctx.guild
-        for country in self.country_flag_map:
+        for country in country_flag_map:
             await guild.create_role(name=country, colour=discord.Colour(0x30cc74))
 
     @commands.command()
     @commands.check(is_admin)      
     async def deleteroles(self, ctx):
         role_list = ctx.guild.roles
-        role_list = list(role for role in role_list if role.name in self.country_flag_map)
+        role_list = list(role for role in role_list if role.name in country_flag_map)
         for role in role_list:
             await role.delete()
 
