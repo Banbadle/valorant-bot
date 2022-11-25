@@ -62,9 +62,7 @@ class Groupscrape(commands.Cog):
     @commands.command()
     @commands.check(is_admin)
     async def postprevresults(self, ctx):
-        print("STARTING")
         for game in self.game_list:
-            print(game)
             if game["Score"] == None:
                 break
             await ctx.send(self.get_game_result(game, ctx.channel))
@@ -75,8 +73,6 @@ class Groupscrape(commands.Cog):
         game = self.next_game
         tz = pytz.timezone('Asia/Qatar')
         wait_time = game["Timestamp"] - datetime.datetime.now(tz)
-        print(game["Timestamp"])
-        print(datetime.datetime.now(tz))
         await ctx.reply(wait_time)
         
     @commands.command()
