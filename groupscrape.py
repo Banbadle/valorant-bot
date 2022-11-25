@@ -16,7 +16,7 @@ class Groupscrape(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        channel_id = 0
+        channel_id = 1045462897507172393
         channel = await self.client.get_channel()
         tz = pytz.timezone('Asia/Qatar')
         game_list = self.get_game_list()
