@@ -34,7 +34,7 @@ class Groupscrape(commands.Cog):
                 if score != None:
                     await asyncio.sleep(15*60)
             
-    @client.command()
+    @commands.command()
     @commands.check(is_admin)        
     async def timeuntil(self, ctx):
         game = self.next_game
