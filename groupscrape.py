@@ -44,20 +44,20 @@ class Groupscrape(commands.Cog):
                 if game["Score"] == None:
                     game["Score"] = score
                     
-                    msg = self.get_game_result(game)
+                    msg = self.get_game_result(game, channel)
                     await channel.send(msg)
                     break
                 
 
                 
-    def get_game_result(self, game):
-        home = game["Home"]
-        away = game["Away"]
-        print(home.replace(" ", "-"))
-        home_flag = country_flag_map[home.replace(" ", "-")]
-        print(away.replace(" ", "-"))
-        away_flag = country_flag_map[away.replace(" ", "-")]
-        return f"{home} {home_flag} {game['Score']} {away_flag} {away}"
+    def get_game_result(self, game, channel):
+        home = game["Home"].replace(" ", "-")
+        away = game["Away"].replace(" ", "-")
+        home_flag = country_flag_map[home]
+        away_flag = country_flag_map[away]
+        home_mention = discord.utils.get(channel.guild.roles,name=home).mention
+        away_mention = discord.utils.get(channel.guild.roles,name=home).mention
+        return f"{home_mention} {home_flag} {game['Score']} {away_flag} {away_mention}"
     
     @commands.command()
     @commands.check(is_admin)
@@ -67,7 +67,7 @@ class Groupscrape(commands.Cog):
             print(game)
             if game["Score"] == None:
                 break
-            await ctx.send(self.get_game_result(game))
+            await ctx.send(self.get_game_result(game, ctx.channel))
             
     @commands.command()
     @commands.check(is_admin)        
