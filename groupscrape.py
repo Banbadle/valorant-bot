@@ -14,13 +14,14 @@ class Groupscrape(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self):
+        print("groupscrape.py loaded")
         self.game_list = self.get_game_list()
         upcoming_game_list = [game for game in self.game_list if game["Score"] == None]
         
         for next_game in upcoming_game_list:
             self.next_game = next_game
             wait_time = next_game["Timestamp"] - datetime.datetime.now()
-            await asyncio.sleep(wait_time)
+            await asyncio.sleep(wait_time.total_seconds())
             
             score = None
             while score == None:
@@ -39,7 +40,7 @@ class Groupscrape(commands.Cog):
     async def timeuntil(self, ctx):
         game = self.next_game
         wait_time = game["Timestamp"] - datetime.datetime.now()
-        ctx.reply(wait_time)
+        await ctx.reply(wait_time)
         
     def get_game_list(self):
     
@@ -64,10 +65,9 @@ class Groupscrape(commands.Cog):
             game_dict["Time"] = time_text
             
             # Unix timestamp of match
-            tz = pytz.timezone("Asia/Qatar")
             unix_num_list = list([*date_text.split("-"), *time_text.split(":")])
             unix_num_list = list(int(num) for num in unix_num_list)
-            unix_time = datetime.datetime(*unix_num_list, tz)
+            unix_time = datetime.datetime(*unix_num_list)
             game_dict["Timestamp"] = unix_time
             
             # Home team
