@@ -56,7 +56,7 @@ class Groupscrape(commands.Cog):
         home_flag = country_flag_map[home]
         away_flag = country_flag_map[away]
         home_mention = discord.utils.get(channel.guild.roles,name=home).mention
-        away_mention = discord.utils.get(channel.guild.roles,name=home).mention
+        away_mention = discord.utils.get(channel.guild.roles,name=away).mention
         return f"{home_mention} {home_flag} {game['Score']} {away_flag} {away_mention}"
     
     @commands.command()
