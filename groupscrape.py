@@ -37,20 +37,17 @@ class Groupscrape(commands.Cog):
             score = None
             while score == None:
                 new_game_list = self.get_game_list()
-                played_game = new_game_list[i]
+                updated_game = new_game_list[i]
             
-                score = played_game["Score"]
+                score = updated_game["Score"]
                         
                 if score == None:
                     await asyncio.sleep(5*60)
             
-            for game in self.game_list:
-                if game["Score"] == None:
-                    game["Score"] = score
-                    
-                    msg = self.get_game_result(game, channel)
-                    await channel.send(msg)
-                    break
+            next_game["Score"] = score
+            
+            msg = self.get_game_result(next_game, channel)
+            await channel.send(msg)
                 
     def get_next_game(self):
         return self.game_list[self.game_index]
