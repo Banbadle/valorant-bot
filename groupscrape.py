@@ -16,8 +16,11 @@ class Groupscrape(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        channel_id = 1045462897507172393
-        channel = self.client.get_channel(channel_id)
+        result_channel_id   = 1045462897507172393
+        result_channel      = self.client.get_channel(result_channel_id)
+        team_channel_id     = 1029595534299766826
+        team_channel        = self.client.get_channel(team_channel_id)
+        
         tz = pytz.timezone('Asia/Qatar')
         game_list = self.get_game_list()
         self.game_list = game_list
@@ -46,8 +49,8 @@ class Groupscrape(commands.Cog):
             
             next_game["Score"] = score
             
-            msg = self.get_game_result(next_game, channel)
-            await channel.send(msg)
+            result_msg = self.get_game_result(next_game, result_channel)
+            await result_channel.send(result_msg)
                 
     def get_next_game(self):
         return self.game_list[self.game_index]
