@@ -22,7 +22,8 @@ class Groupscrape(commands.Cog):
         team_channel        = self.client.get_channel(team_channel_id)
         
         tz = pytz.timezone('Asia/Qatar')
-        game_list = self.get_game_list()
+        soup = self.get_page()
+        game_list = self.get_game_list(soup)
         self.game_list = game_list
         #upcoming_game_list = [game for game in game_list if game["Score"] == None]
         
@@ -38,8 +39,10 @@ class Groupscrape(commands.Cog):
                 await asyncio.sleep(wait_time.total_seconds())
             
             score = None
+            soup  = None
             while score == None:
-                new_game_list = self.get_game_list()
+                new_soup = self.get_page()
+                new_game_list = self.get_game_list(new_soup)
                 updated_game = new_game_list[i]
             
                 score = updated_game["Score"]
@@ -52,12 +55,12 @@ class Groupscrape(commands.Cog):
             result_msg = self.get_game_result(next_game, result_channel)
             await result_channel.send(result_msg)
             
-            opp_set = self.get_played_opponents(next_game["Home"])
-            if len(opp_set) == 3:
+            opp_list = self.get_played_opponents(next_game["Home"])
+            if len(opp_list) == 3:
                 
-                for opp in opp_set:
-                    new_opp_set = self.get_played_opponents(opp)
-                    if len(new_opp_set) != 3:
+                for opp in opp_list:
+                    new_opp_list = self.get_played_opponents(opp)
+                    if len(new_opp_list) != 3:
                         break
                 else:
                     # Find group standings
@@ -78,15 +81,15 @@ class Groupscrape(commands.Cog):
         return f"{home_mention} {home_flag} {game['Score']} {away_flag} {away_mention}"
     
     def get_played_opponents(self, team_name): 
-        opponent_set = set()
+        opponent_list = []
         for game in self.game_list:
             if game["Score"] != None:
                 if game["Home"] == team_name:
-                    opponent_set.add(game["Away"])
+                    opponent_list.append(game["Away"])
                 elif game["Away"] == team_name:
-                    opponent_set.add(game["Home"])
+                    opponent_list.append(game["Home"])
                 
-        return opponent_set
+        return opponent_list
     
     @commands.command()
     @commands.check(is_admin)
@@ -112,11 +115,14 @@ class Groupscrape(commands.Cog):
         away = game["Away"]
         await ctx.reply(f"Next match is: {home} vs {away}")
         
-    def get_game_list(self):
-    
+    def get_page(self):
         group_url = "https://en.wikipedia.org/wiki/2022_FIFA_World_Cup#Group_stage"
         result = requests.get(group_url)
         soup = BeautifulSoup(result.text, "html.parser")
+        
+        return soup
+        
+    def get_game_list(self, soup):
         games = soup.find_all("div", {"class": "footballbox"})
         
         game_list = []
