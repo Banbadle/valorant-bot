@@ -21,21 +21,24 @@ class Groupscrape(commands.Cog):
         tz = pytz.timezone('Asia/Qatar')
         game_list = self.get_game_list()
         self.game_list = game_list
-        upcoming_game_list = [game for game in game_list if game["Score"] == None]
+        #upcoming_game_list = [game for game in game_list if game["Score"] == None]
         
-        for next_game in upcoming_game_list:
-            self.next_game = next_game
+        num_matches = len(game_list)
+        for i in range(num_matches):
+            next_game = game_list[i]
+            self.game_index = i
+            if next_game["Score"] != None:
+                continue
+
             wait_time = next_game["Timestamp"] - datetime.datetime.now(tz) + datetime.timedelta(hours=2)
             await asyncio.sleep(wait_time.total_seconds())
             
             score = None
             while score == None:
                 new_game_list = self.get_game_list()
-                played_games_list = [game for game in new_game_list if game["Score"] != None]
-                
-                for played_game in played_games_list:
-                    if played_game["Home"] == next_game["Home"] and played_game["Away"] == next_game["Away"] and played_game["Date"] == next_game["Date"]:
-                        score = played_game["Score"]
+                played_game = new_game_list[i]
+            
+                score = played_game["Score"]
                         
                 if score == None:
                     await asyncio.sleep(15*60)
@@ -48,7 +51,8 @@ class Groupscrape(commands.Cog):
                     await channel.send(msg)
                     break
                 
-
+    def get_next_game(self):
+        return self.game_list[self.game_index]
                 
     def get_game_result(self, game, channel):
         home = game["Home"].replace(" ", "-")
@@ -70,7 +74,7 @@ class Groupscrape(commands.Cog):
     @commands.command()
     @commands.check(is_admin)        
     async def timeuntil(self, ctx):
-        game = self.next_game
+        game = self.get_next_game()
         tz = pytz.timezone('Asia/Qatar')
         wait_time = game["Timestamp"] - datetime.datetime.now(tz)
         await ctx.reply(wait_time)
@@ -78,7 +82,7 @@ class Groupscrape(commands.Cog):
     @commands.command()
     @commands.check(is_admin)        
     async def nextmatch(self, ctx): 
-        game = self.next_game
+        game = self.get_next_game()
         home = game["Home"]
         away = game["Away"]
         await ctx.reply(f"Next match is: {home} vs {away}")
