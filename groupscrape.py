@@ -51,6 +51,19 @@ class Groupscrape(commands.Cog):
             
             result_msg = self.get_game_result(next_game, result_channel)
             await result_channel.send(result_msg)
+            
+            opp_set = self.get_played_opponents(next_game["Home"])
+            if len(opp_set) == 3:
+                
+                for opp in opp_set:
+                    new_opp_set = self.get_played_opponents(opp)
+                    if len(new_opp_set) != 3:
+                        break
+                else:
+                    # Find group standings
+                    # Adjust roles
+                    pass
+                
                 
     def get_next_game(self):
         return self.game_list[self.game_index]
@@ -63,6 +76,17 @@ class Groupscrape(commands.Cog):
         home_mention = discord.utils.get(channel.guild.roles,name=home).mention
         away_mention = discord.utils.get(channel.guild.roles,name=away).mention
         return f"{home_mention} {home_flag} {game['Score']} {away_flag} {away_mention}"
+    
+    def get_played_opponents(self, team_name): 
+        opponent_set = set()
+        for game in self.game_list:
+            if game["Score"] != None:
+                if game["Home"] == team_name:
+                    opponent_set.add(game["Away"])
+                elif game["Away"] == team_name:
+                    opponent_set.add(game["Home"])
+                
+        return opponent_set
     
     @commands.command()
     @commands.check(is_admin)
