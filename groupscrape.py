@@ -55,6 +55,7 @@ class Groupscrape(commands.Cog):
             result_msg = self.get_game_result(next_game, result_channel)
             await result_channel.send(result_msg)
             
+            # CODE FOR END OF GROUP STAGE
             opp_list = self.get_played_opponents(next_game["Home"])
             if len(opp_list) == 3:
                 
@@ -64,9 +65,27 @@ class Groupscrape(commands.Cog):
                         break
                 else:
                     # Find group standings
+                    opp_list.append(next_game["Home"])
+                    group_order, g_num = self.get_group_order(opp_list)
+                    group_order = [team.replace(" ", "-") for team in group_order]
+                    
                     # Adjust roles
-                    pass
-                
+                    sw = self.client.get_cog("Sweepstake")
+                    role1, role3 = await sw.addresult(team_channel, group_order[0], group_order[2])
+                    role2, role4 = await sw.addresult(team_channel, group_order[1], group_order[3])
+                    
+                    # Announce Adjustments
+                    member_third  = role3.members[0]
+                    member_fourth = role4.members[0]
+                    msg0 = f"Group {'ABCDEFGH'[g_num]} has concluded"
+                    msg1 = f"{role4.mention} came 4th and has been eliminated.\n{member_fourth.mention} has been reassigned the 2nd Place team: {role2.mention}"
+                    msg2 = f"{role3.mention} came 3rd and has been eliminated.\n{member_third.mention} has been reassigned the 1st Place team: {role1.mention}"
+                    
+                    await team_channel.send(msg0)
+                    await asyncio.sleep(5)
+                    await team_channel.send(msg1)
+                    await asyncio.sleep(5)
+                    await team_channel.send(msg2)     
                 
     def get_next_game(self):
         return self.game_list[self.game_index]
@@ -166,10 +185,26 @@ class Groupscrape(commands.Cog):
         ordered_game_list = sorted(game_list, key=lambda d: d["Timestamp"])
         
         return ordered_game_list
+    
+    # Output: (table_team_list, i)
+    #     table_team_list: ordered list of the tables teams
+    #     i: the index corresponding to their group (0=A, 1=B, etc)
+    def get_group_order(self, team_list):
+        soup = self.get_page()
+        headers = soup.findAll("abbr", {"title": "Points"}, string="Pts")
+        for g_num in range(len(headers)):
+            hd = headers[g_num]
+            table = hd.parent.parent.parent
+            entry_list = [ref.get_text() for ref in table.findAll("a")]
             
-    def update_group(char):
-        group_template_url = f"https://en.wikipedia.org/wiki/2022_FIFA_World_Cup_Group_{char}"
-        result = requests.get(group_template_url)
+            table_team_list = []
+            for entry in entry_list:
+                if entry in team_list:
+                    table_team_list.append(entry)
+                    
+            if len(table_team_list)==4:
+                return table_team_list, g_num
+                
     
 def setup(client):
     client.add_cog(Groupscrape(client))

@@ -114,6 +114,8 @@ class Sweepstake(commands.Cog):
             await user.add_roles(role1)
             
         await role2.edit(colour=discord.Colour(0xec1c68))
+        
+        return [role1, role2]
 
     @commands.command()
     @commands.check(is_admin) 
