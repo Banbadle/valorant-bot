@@ -53,11 +53,11 @@ class Groupscrape(commands.Cog):
             result_msg = self.get_game_result(next_game, result_channel)
             await result_channel.send(result_msg)
             
-            await self.postgroupresults(next_game["Home"])
+            await self.postgroupresults(None, next_game["Home"])
     
     @commands.command()
     @commands.check(is_admin)
-    async def postgroupresults(self, team_name):
+    async def postgroupresults(self, ctx, team_name):
             
         # CODE FOR END OF GROUP STAGE
         opp_list = self.get_played_opponents(team_name)
