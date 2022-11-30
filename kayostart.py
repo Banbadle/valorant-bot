@@ -39,6 +39,12 @@ async def version(ctx):
 @commands.check(is_admin)
 async def setbotname(ctx, name):
     await client.user.edit(username=name)
+    
+@client.command()
+@commands.check(is_admin)
+async def sendmsg(ctx, *words):
+    msg = " ".join(words)
+    await ctx.send(msg)
 
 @client.command()
 @commands.check(is_admin)
