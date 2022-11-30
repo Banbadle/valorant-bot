@@ -32,7 +32,7 @@ class Groupscrape(commands.Cog):
             if next_game["Score"] != None:
                 continue
 
-            wait_time = next_game["Timestamp"] - datetime.datetime.now(tz) + datetime.timedelta(hours=2)
+            wait_time = next_game["Timestamp"] - datetime.datetime.now(tz) + datetime.timedelta(hours=2, minutes=15)
             if wait_time > datetime.timedelta(0):
                 await asyncio.sleep(wait_time.total_seconds())
             
@@ -46,7 +46,7 @@ class Groupscrape(commands.Cog):
                 score = updated_game["Score"]
                         
                 if score == None:
-                    await asyncio.sleep(5*60)
+                    await asyncio.sleep(15*60)
             
             next_game["Score"] = score
             
