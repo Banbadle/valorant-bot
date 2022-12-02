@@ -106,14 +106,20 @@ class Sweepstake(commands.Cog):
 
     @commands.command()
     @commands.check(is_admin)  
-    async def addresult(self, ctx, team1, team2):
+    async def addresult(self, ctx, team1, team2, games_played=3):
+        games_played = int(games_played)
+        i = games_played - 3
+        colour_list = [0xec1c68, 0xff5018, 0xfcad00, 0xf2fd0e, 0x9affa4]
+        loss_colour = discord.Colour(colour_list[i])
+        
         role1 = discord.utils.get(ctx.guild.roles,name=team1)
         role2 = discord.utils.get(ctx.guild.roles,name=team2)
         
         for user in role2.members:
             await user.add_roles(role1)
             
-        await role2.edit(colour=discord.Colour(0xec1c68))
+        await role2.edit(colour=loss_colour)
+        await role1.edit(position=31)
         
         return [role1, role2]
 
