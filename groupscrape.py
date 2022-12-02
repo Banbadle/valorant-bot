@@ -12,21 +12,28 @@ class Groupscrape(commands.Cog):
     
     def __init__(self, client):
         self.client = client
+        self.result_channel_id = 1045462897507172393
+        self.team_channel_id   = 1029595534299766826 #949464302526545941
         
     @commands.Cog.listener()
     async def on_ready(self):
 
-        result_channel_id   = 1045462897507172393
-        result_channel      = self.client.get_channel(result_channel_id)
+        result_channel      = self.client.get_channel(self.result_channel_id)
         
         tz = pytz.timezone('Asia/Qatar')
         soup = self.get_page()
         game_list = self.get_game_list(soup)
         self.game_list = game_list
-        #upcoming_game_list = [game for game in game_list if game["Score"] == None]
         
         num_matches = len(game_list)
         for i in range(num_matches):
+            
+            # Update game_list after match 48
+            if i == 48:
+                soup = self.get_page()
+                game_list = self.get_game_list(soup)
+                self.game_list = game_list
+            
             next_game = game_list[i]
             self.game_index = i
             if next_game["Score"] != None:
@@ -49,11 +56,20 @@ class Groupscrape(commands.Cog):
                     await asyncio.sleep(15*60)
             
             next_game["Score"] = score
+            next_game["Penalties"] = updated_game["Penalties"]
             
             result_msg = self.get_game_result(next_game, result_channel)
             await result_channel.send(result_msg)
             
-            await self.postgroupresults(None, next_game["Home"])
+            # Group Stage Result
+            if i <= 47:
+                await self.postgroupresults(None, next_game["Home"])
+            # Do not change roles on match 63 (bronze medal match)
+            elif i == 62:
+                continue
+            # Knockout Stage Result
+            else:
+                await self.postknockoutresult(None, i)
     
     @commands.command()
     @commands.check(is_admin)
@@ -61,21 +77,21 @@ class Groupscrape(commands.Cog):
             
         # CODE FOR END OF GROUP STAGE
         opp_list = self.get_played_opponents(team_name)
-        if len(opp_list) == 3:
+        
+        if len(opp_list) >= 3:
             
             for opp in opp_list:
                 new_opp_list = self.get_played_opponents(opp)
-                if len(new_opp_list) != 3:
+                if len(new_opp_list) < 3:
                     break
             else:
                 # Find group standings
                 opp_list.append(team_name)
-                group_order, g_num = self.get_group_order(opp_list)
+                group_order, g_num = self.get_group_order(opp_list[:3])
                 group_order = [team.replace(" ", "-") for team in group_order]
                 
                 # Adjust roles
-                team_channel_id     = 1029595534299766826
-                team_channel        = self.client.get_channel(team_channel_id)
+                team_channel = self.client.get_channel(self.team_channel_id)
                 sw = self.client.get_cog("Sweepstake")
                 role1, role3 = await sw.addresult(team_channel, group_order[0], group_order[2])
                 role2, role4 = await sw.addresult(team_channel, group_order[1], group_order[3])
@@ -93,6 +109,11 @@ class Groupscrape(commands.Cog):
                 await asyncio.sleep(5)
                 await team_channel.send(msg2)     
                 
+    @commands.command()
+    @commands.check(is_admin)
+    async def postknockoutresult(self, ctx, match_num):
+        pass
+
     def get_next_game(self):
         return self.game_list[self.game_index]
                 
@@ -182,9 +203,18 @@ class Groupscrape(commands.Cog):
             game_dict["Away"] = away_team.get_text(strip=True)
             
             # Score
-            score = game.find("th", {"class": "fscore"})
+            full_score = game.find("th", {"class": "fscore"})
+            score = full_score.findAll("a")[0]
             score = score.get_text()
             game_dict["Score"] = score if score[0] != "M" else None
+            
+            # Penalties
+            fgoals_list = game.findAll("tr", {"class": "fgoals"})
+            if len(fgoals_list) == 2:
+                pens = fgoals_list[1].find("th")
+                game_dict["Penalties"] = pens.get_text()
+            else:
+                game_dict["Penalties"] = None
             
             game_list.append(game_dict)
         
