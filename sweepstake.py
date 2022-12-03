@@ -103,6 +103,29 @@ class Sweepstake(commands.Cog):
         role = discord.utils.get(ctx.guild.roles,name=role_name)
         user = ctx.author
         await user.add_roles(role)
+        
+    @commands.command()
+    @commands.check(is_admin)
+    async def postcurrentroles(self, ctx):
+        first_role = ctx.guild.roles[0]
+        print(first_role)
+        print(first_role.colour)
+        for role in ctx.guild.roles:
+            print(role.colour)
+        role_list = [role for role in ctx.guild.roles if role.colour == discord.Colour(0x30cc74)]
+        print(role_list)
+        
+        role_str_list = []
+        for role in role_list:
+            member_mentions = [member.mention for member in role.members]
+            flag = country_flag_map[role.name]
+            role_str = f"{role.mention} {flag}:\n> " + "\n> ".join(member_mentions)
+            role_str_list.append(role_str)
+            
+        msg = "Current Teams:\n" + "\n".join(role_str_list)
+        await ctx.send(msg)
+            
+        
 
     @commands.command()
     @commands.check(is_admin)  
