@@ -195,7 +195,10 @@ class Groupscrape(commands.Cog):
         away_flag = country_flag_map[away]
         home_mention = discord.utils.get(channel.guild.roles,name=home).mention
         away_mention = discord.utils.get(channel.guild.roles,name=away).mention
-        return f"{home_mention} {home_flag} {game['Score']} {away_flag} {away_mention}"
+
+        extra_str = (f"\nPenalties: {home_flag} ({game['Penalties']}) {away_flag}") * (game["Penalties"] != None)
+
+        return f"{home_mention} {home_flag} {game['Score']} {away_flag} {away_mention}" + (extra_str)
     
     def get_played_opponents(self, team_name): 
         opponent_list = []
