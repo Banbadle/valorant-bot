@@ -66,7 +66,7 @@ class Groupscrape(commands.Cog):
                 await self.postgroupresults(None, next_game["Home"])
             # Do not change roles on match 63 (bronze medal match)
             elif i == 62:
-                continue
+                await result_channel.send("(This is the third place play-off match and has no impact on the sweepstake)")
             # Knockout Stage Result
             else:
                 await self.postknockoutresult(None, i)
