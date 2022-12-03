@@ -108,12 +108,83 @@ class Groupscrape(commands.Cog):
                 await team_channel.send(msg1)
                 await asyncio.sleep(5)
                 await team_channel.send(msg2)     
+
+    def get_result_from_score(self, home, away, score):
+        g_home, g_away = score.split("–")
+        g_home, g_away = int(g_home), int(g_away)
+        
+        winner, loser = None, None
+        if g_home > g_away:
+            winner = home
+            loser  = away
+        elif g_home < g_away:
+            winner = away
+            loser  = home
+            
+        return winner, loser
                 
     @commands.command()
     @commands.check(is_admin)
-    async def postknockoutresult(self, ctx, match_num):
-        pass
-
+    async def postknockoutresult(self, ctx, match_index):
+        
+        i = int(match_index)
+        
+        if i > 47 and i != 62:
+        
+            team_channel = self.client.get_channel(self.team_channel_id)
+            game = self.game_list[i]
+            
+            winner, loser = None, None
+            
+            # Find match winner
+            while winner == None:
+                # Should avoid loop if game has not finished
+                if game["Score"] == None:
+                    return
+                
+                # Find FT match winner
+                winner, loser = self.get_result_from_score(game["Home"], game["Away"], game["Score"])
+                
+                # Find winner if tied (and has penalties)
+                if winner == None:
+                    if game["Penalties"] != None:
+                        winner, loser = self.get_result_from_score(game["Home"], game["Away"], game["Penalties"])
+                    
+                    if winner == None:
+                        asyncio.sleep(15*60)
+                        new_soup = self.get_page()
+                        new_game_list = self.get_game_list(new_soup)
+                        updated_game = new_game_list[i]
+                        
+                        game["Score"]     = updated_game["Score"]
+                        game["Penalties"] = updated_game["Penalties"]
+                
+            # Adjust roles
+            opp_list = self.get_played_opponents(loser)
+            teams_played = len(opp_list)
+            
+            winner_role_name = winner.replace(" ", "-")
+            loser_role_name  = loser.replace(" ", "-")
+            sw = self.client.get_cog("Sweepstake")
+            winner_role, loser_role = await sw.addresult(team_channel, winner_role_name, loser_role_name, teams_played)
+            
+            # Announce Adjustments
+            members = loser_role.members
+            members_str = "> " + "\n> ".join(member.mention for member in members)
+            msg = f"{loser_role.mention} has been eliminated.\nThe following people have been reassigned {winner_role.mention}:\n{members_str}"
+            await team_channel.send(msg)
+            
+            # Update self.game_list with winner
+            for game in self.game_list:
+                search_string = "Winners Match {i+1}"
+                if game["Home"] == search_string:
+                    game["Home"] = winner
+                    break
+                elif game["Away"] == search_string:
+                    game["Away"] = winner
+                    break
+                    
+                        
     def get_next_game(self):
         return self.game_list[self.game_index]
                 
