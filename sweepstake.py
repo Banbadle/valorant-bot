@@ -142,7 +142,7 @@ class Sweepstake(commands.Cog):
             await user.add_roles(role1)
             
         await role2.edit(colour=loss_colour)
-        await role1.edit(position=31)
+        await role1.edit(position=32)
         
         return [role1, role2]
 
