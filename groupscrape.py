@@ -176,7 +176,7 @@ class Groupscrape(commands.Cog):
             
             # Update self.game_list with winner
             for game in self.game_list:
-                search_string = "Winners Match {i+1}"
+                search_string = f"Winners Match {i+1}"
                 if game["Home"] == search_string:
                     game["Home"] = winner
                     break
