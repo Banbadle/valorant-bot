@@ -42,8 +42,7 @@ async def setbotname(ctx, name):
     
 @client.command()
 @commands.check(is_admin)
-async def sendmsg(ctx, *words):
-    msg = " ".join(words)
+async def sendmsg(ctx, *, msg):
     await ctx.send(msg)
 
 @client.command()
