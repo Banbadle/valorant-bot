@@ -55,8 +55,10 @@ class Groupscrape(commands.Cog):
                 if score == None:
                     await asyncio.sleep(15*60)
             
-            next_game["Score"] = score
-            next_game["Penalties"] = updated_game["Penalties"]
+            next_game["Score"]      = score
+            next_game["Home"]       = updated_game["Home"]
+            next_game["Away"]       = updated_game["Away"]
+            next_game["Penalties"]  = updated_game["Penalties"]
             
             result_msg = self.get_game_result(next_game, result_channel)
             await result_channel.send(result_msg)
@@ -136,6 +138,7 @@ class Groupscrape(commands.Cog):
             
             winner, loser = None, None
             
+            updated_game = None
             # Find match winner
             while winner == None:
                 # Should avoid loop if game has not finished
@@ -176,13 +179,8 @@ class Groupscrape(commands.Cog):
             
             # Update self.game_list with winner
             for game in self.game_list:
-                search_string = f"Winners Match {i+1}"
-                if game["Home"] == search_string:
-                    game["Home"] = winner
-                    break
-                elif game["Away"] == search_string:
-                    game["Away"] = winner
-                    break
+                game["Home"] = updated_game["Home"]
+                game["Away"] = updated_game["Away"]
                     
                         
     def get_next_game(self):
