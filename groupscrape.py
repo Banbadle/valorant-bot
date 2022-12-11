@@ -137,8 +137,7 @@ class Groupscrape(commands.Cog):
             game = self.game_list[i]
             
             winner, loser = None, None
-            
-            updated_game = None
+
             # Find match winner
             while winner == None:
                 # Should avoid loop if game has not finished
@@ -178,10 +177,13 @@ class Groupscrape(commands.Cog):
             await team_channel.send(msg)
             
             # Update self.game_list with winner
-            for game in self.game_list:
+            new_soup = self.get_page()
+            new_game_list = self.get_game_list(new_soup)
+            for k in range(64):
+                game         = self.game_list[k]
+                updated_game = new_game_list[k]
                 game["Home"] = updated_game["Home"]
                 game["Away"] = updated_game["Away"]
-                    
                         
     def get_next_game(self):
         return self.game_list[self.game_index]
