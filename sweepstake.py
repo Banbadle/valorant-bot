@@ -124,8 +124,6 @@ class Sweepstake(commands.Cog):
             
         msg = "Current Teams:\n" + "\n".join(role_str_list)
         await ctx.send(msg)
-            
-        
 
     @commands.command()
     @commands.check(is_admin)  
@@ -145,6 +143,57 @@ class Sweepstake(commands.Cog):
         await role1.edit(position=32)
         
         return [role1, role2]
+    
+    @commands.command()
+    @commands.check(is_admin)  
+    async def postpotwins(self, ctx):
+        colour_list = [0x30cc74, 0xec1c68, 0xff5018, 0xfcad00, 0xf2fd0e, 0x9affa4]
+        prize_list  = [30,       20,       15,       10,       5,        0       ]
+        colour_dict = {}
+        for k in range(len(colour_list)):
+            colour = discord.Colour(colour_list[k])
+            colour_dict[colour] = prize_list[k]
+
+        paid_role  = discord.utils.get(ctx.guild.roles,name="Paid")
+        paid_users = paid_role.members
+        
+        user_dict = {user.mention: [None,None] for user in paid_users}
+        for user in paid_users:
+            for role in user.roles:
+                if role.colour == discord.Colour(0x30cc74):
+                    user_dict[user.mention][0] = role
+
+                if role.colour in colour_dict:
+                    new_prize = colour_dict[role.colour]
+                    old_prize = user_dict[user.mention][1]
+                    if old_prize == None or new_prize < old_prize:
+                        user_dict[user.mention][1] = new_prize
+                    
+        team_dict = {team: [] for user_mention, (team, prize) in user_dict.items()}
+        print(user_dict)
+        for user_mention, (team, prize) in user_dict.items():
+            team_dict[team].append((prize, user_mention))
+
+        prize_str_list = []
+        for team in team_dict:
+            
+            # Skip if no potential prize 
+            if team == None:
+                print("SKIP")
+                continue
+            
+            sorted_prizes = sorted(team_dict[team], reverse=True)
+            team_dict[team] = sorted_prizes
+            flag = country_flag_map[team.name]
+            
+            user_prize_str_list = [f"{user_mention}: £{prize}" for prize, user_mention in sorted_prizes]
+            
+            prize_str = f"{team.mention} {flag}:\n> " + "\n> ".join(user_prize_str_list)
+            prize_str_list.append(prize_str)
+            
+        header = "Potential Prizes" if len(prize_str_list) != 1 else "Prizes"
+        msg = f"{header}:\n" + "\n".join(prize_str_list)
+        await ctx.send(msg)
 
     @commands.command()
     @commands.check(is_admin) 
