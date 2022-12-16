@@ -136,8 +136,9 @@ class Sweepstake(commands.Cog):
         role1 = discord.utils.get(ctx.guild.roles,name=team1)
         role2 = discord.utils.get(ctx.guild.roles,name=team2)
         
-        for user in role2.members:
-            await user.add_roles(role1)
+        if i != 4:     # Do not reassign roles on final match
+            for user in role2.members:
+                await user.add_roles(role1)
             
         await role2.edit(colour=loss_colour)
         await role1.edit(position=32)

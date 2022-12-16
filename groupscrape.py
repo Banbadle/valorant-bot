@@ -89,7 +89,7 @@ class Groupscrape(commands.Cog):
             else:
                 # Find group standings
                 opp_list.append(team_name)
-                group_order, g_num = self.get_group_order(opp_list[:3])
+                group_order, g_num = self.get_group_order(opp_list[:4])
                 group_order = [team.replace(" ", "-") for team in group_order]
                 
                 # Adjust roles
@@ -170,20 +170,26 @@ class Groupscrape(commands.Cog):
             sw = self.client.get_cog("Sweepstake")
             winner_role, loser_role = await sw.addresult(team_channel, winner_role_name, loser_role_name, teams_played)
             
-            # Announce Adjustments
-            members = loser_role.members
-            members_str = "> " + "\n> ".join(member.mention for member in members)
-            msg = f"{loser_role.mention} has been eliminated.\nThe following people have been reassigned {winner_role.mention}:\n{members_str}"
-            await team_channel.send(msg)
-            
-            # Update self.game_list with winner
-            new_soup = self.get_page()
-            new_game_list = self.get_game_list(new_soup)
-            for k in range(64):
-                game         = self.game_list[k]
-                updated_game = new_game_list[k]
-                game["Home"] = updated_game["Home"]
-                game["Away"] = updated_game["Away"]
+            if i != 63:
+                # Announce Adjustments
+                members = loser_role.members
+                members_str = "> " + "\n> ".join(member.mention for member in members)
+                msg = f"{loser_role.mention} has been eliminated.\nThe following people have been reassigned {winner_role.mention}:\n{members_str}"
+                await team_channel.send(msg)
+                
+                # Update self.game_list with winner
+                new_soup = self.get_page()
+                new_game_list = self.get_game_list(new_soup)
+                for k in range(64):
+                    game         = self.game_list[k]
+                    updated_game = new_game_list[k]
+                    game["Home"] = updated_game["Home"]
+                    game["Away"] = updated_game["Away"]
+                    
+            else:
+                result_channel = self.client.get_channel(self.result_channel_id)
+                await result_channel.send(f"{winner_role.mention} have won the world cup")
+                await sw.postpotwins(result_channel)
                         
     def get_next_game(self):
         return self.game_list[self.game_index]
