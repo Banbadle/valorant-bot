@@ -18,9 +18,11 @@ agent_details = {'Astra':       {'image': 'https://static.wikia.nocookie.net/val
                  'KAY/O':       {'image': 'https://static.wikia.nocookie.net/valorant/images/f/f0/KAYO_icon.png/',      'phrase': '"Where the fuck are you?"'}, 
                  'Chamber':     {'image': 'https://static.wikia.nocookie.net/valorant/images/0/09/Chamber_icon.png',    'phrase': '"This has gone on long enough I think."'}, 
                  'Neon':        {'image': 'https://static.wikia.nocookie.net/valorant/images/d/d0/Neon_icon.png/',      'phrase': '"Lets go. World\'s not saving itself."'},
-                 'Fade':        {'image': 'https://static.wikia.nocookie.net/valorant/images/a/a6/Fade_icon.png/',      'phrase': '"Another mission? Good. Anything to keep me awake."'}}
+                 'Fade':        {'image': 'https://static.wikia.nocookie.net/valorant/images/a/a6/Fade_icon.png/',      'phrase': '"Another mission? Good. Anything to keep me awake."'},
+                 'Harbor':      {'image': 'https://static.wikia.nocookie.net/valorant/images/f/f3/Harbor_icon.png/',    'phrase': '"I suggest you move."'},
+                 'Gekko':       {'image': 'https://static.wikia.nocookie.net/valorant/images/6/66/Gekko_icon.png/',     'phrase': '"Run, little man."'}}
 
-map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven", "Pearl")
+map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven", "Pearl", "Lotus")
 
 def get_author_pair(agent=None):
     if agent==None:

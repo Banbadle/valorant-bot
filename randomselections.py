@@ -5,7 +5,7 @@ import sys
 
 class Selects(commands.Cog):
     
-    primary_guns    = {"Stinger": 950, "Spectre": 1600, "Bulldog": 2050, "Guardian": 2250, "Marshal": 950, "Operator": 4700,\
+    primary_guns    = {"Stinger": 1100, "Spectre": 1600, "Bulldog": 2050, "Guardian": 2250, "Marshal": 950, "Operator": 4700,\
                             "Bucky": 850, "Judge": 1850, "Phantom": 2900, "Vandal": 2900, "Ares": 1600, "Odin": 3200,\
                                 None: 0}
         
