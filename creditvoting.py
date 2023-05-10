@@ -47,6 +47,43 @@ class CreditVoting(commands.Cog):
         
         return message
 
+    async def post_result(self, ctx, user_id, feat, value, v_yes, v_no):
+        
+        ## TEMP TO ALLOW TESTING IN DISCORD, DELETE BEFORE PUSHING
+        user_id = int(user_id)
+        v_yes = int(v_yes)
+        v_no = int(v_no)
+        value = int(value)
+        
+        pass_condition = (v_yes > v_no) and v_yes > 1
+        is_reward = value > 0
+        is_good =  (not is_reward ^ pass_condition)
+
+        new_embed = discord.Embed(title=("__Reward Result__" if is_reward else "__Fine Result__"), 
+                                  color=(0x00ff00 if is_good else 0xff0000))
+
+        title_text = None
+        if pass_condition:
+            
+            if is_reward:
+                title_text = f'''The reward for {feat} has been granted to <@{user_id}>.
+                            They have been awarded {value} {CREDIT_NAME}'''
+            else:
+                title_text = f'''<@{user_id}> has been found guilty of {feat}.
+                            They have been fined {value} {CREDIT_NAME}.'''
+        else:
+            if is_reward:
+                title_text = f"The reward for {feat} has been denied to <@{user_id}>."
+            else:
+                title_text = f"Charges of {feat} have been dropped against <@{user_id}>."
+                
+        vote_str = f"Denied ({v_no}) v ({v_yes}) Accepted" if is_reward else f"Guilty ({v_yes}) v ({v_no}) Innocent"
+
+        new_embed.add_field(name=f"{feat}",  value=title_text + "\n" + vote_str,  inline=False)
+
+        message = await ctx.send(embed=new_embed)
+        return message
+        
     @commands.Cog.listener()
     async def on_button_click(self, interaction):
         msg_id = interaction.message.id
