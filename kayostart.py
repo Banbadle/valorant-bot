@@ -7,6 +7,7 @@ from checks import is_admin
 import toml
 from git import Repo
 import requests
+from checks import is_admin
 
 import nest_asyncio
 nest_asyncio.apply()
@@ -63,7 +64,7 @@ async def on_command_error(ctx, error):
 async def on_command_completion(ctx):
     await ctx.message.add_reaction("✅")
 
-load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py", "timezones.py", "notifications.py", "stratroulette.py", "sweepstake.py", "groupscrape.py"]
+load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py", "timezones.py", "notifications.py", "stratroulette.py", "creditvoting.py"]
 
 for filename in os.listdir(os.getcwd()):
     if filename in load_list:
