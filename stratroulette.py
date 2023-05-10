@@ -1,7 +1,6 @@
 import discord
 from random import choice
 from discord.ext import commands
-from discord_components import Select, SelectOption, Button, ActionRow, ButtonStyle
 
 class StratRoulette(commands.Cog):
     
@@ -101,6 +100,6 @@ class StratRoulette(commands.Cog):
         name, desc = self.choose()
         await ctx.send(f"{name}: {desc}", tts=True)
         
-def setup(client):
-    client.add_cog(StratRoulette(client))
+async def setup(client):
+    await client.add_cog(StratRoulette(client))
         
