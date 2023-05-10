@@ -6,14 +6,13 @@ authors = ["Archie Almond", "Lewis Treacy"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-discord = "^1.7.3"
+discord = "^2.2.3"
 mysql-connector-python = "^8.0.26"
 toml = "^0.10.2"
 APScheduler = "^3.7.0"
 nest-asyncio = "^1.5.1"
 requests = "^2.26.0"
 GitPython = "^3.1.26"
-discord-components = "^2.1.2"
 
 [tool.poetry.dev-dependencies]
 
