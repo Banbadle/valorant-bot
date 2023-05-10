@@ -14,6 +14,22 @@ class CreditVoting(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print(sys.argv[0])
+        
+    @commands.command(help = f"Starts a {CREDIT_NAME} vote")
+    @commands.guild_only()
+    @commands.check(is_admin)
+    async def ASCvoting(self, ctx, num):
+        
+        category_list = self.client.db.get_event_categories()
+        option_list = []
+        for categ in category_list:   
+            
+            new_select = SelectOption(label = f"{categ}", value = f"voteoption_category_{categ}")
+            option_list.append(new_select)
+            
+        await ctx.send(content="Select a Category", components = [Select(placeholder= "Categories", options=option_list)])
+        #await self.post_vote(ctx, 273795229264642048, "Misc", int(num))
+    
     async def post_vote(self, ctx, user_id, feat, value):
         
         is_reward = value > 0
