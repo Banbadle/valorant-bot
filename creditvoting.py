@@ -125,6 +125,30 @@ class CreditVoting(commands.Cog):
             elif v_id == "verdict_accept" or v_id == "verdict_guilty":
                 self.client.db.set_user_vote(msg_id, user, 1)
                 
+                
+    @commands.Cog.listener()
+    async def on_select_option(self, interaction):
+        val = interaction.values[0]              
+        if "voteoption" in val:
+           _, process_type, process_name = val.split("_")
+            
+           if process_type == "category":
+                event_types = self.client.db.get_event_types_from_category(process_name)
+                option_list = []
+                for event in event_types:   
+                    
+                    new_select = SelectOption(label = f"{event}", value = f"voteoption_event_{event}")
+                    option_list.append(new_select)
+                    
+                await interaction.send(content="Select an offense", components = [Select(placeholder= "offenses", options=option_list)])
+               
+           elif process_type == "event":
+               details = self.client.db.get_event_details(process_name)
+               
+               await self.post_vote(interaction, 1, process_name, details['default_value'])
+               
+                
+
 
 def setup(client):
     client.add_cog(CreditVoting(client))
