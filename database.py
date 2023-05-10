@@ -557,3 +557,39 @@ class Database():
             if result is not None:
                 return int(result[0])
         
+#------------------------------------------------------------------------------
+    # CreditVotes table functions
+#------------------------------------------------------------------------------    
+
+    def set_user_vote(self, message_id, user, vote):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        self._set_user_vote(message_id, user, vote) 
+
+    def _set_user_vote(self, message_id, user, vote):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO creditvotes (
+                    message_id, user_id, vote
+                ) VALUES (
+                    %s, %s, %s
+                )
+            ''', (message_id, user.id, vote))
+        self.connection.commit()
+        
+    def get_votes(self, message_id):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT vote
+                FROM creditvotes
+                WHERE message_id = %s
+            ''', (message_id,))
+            
+            results = cursor.fetchall()
+            return list(int(r[0]) for r in results)
+        
