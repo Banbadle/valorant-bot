@@ -72,5 +72,5 @@ class Valranks(commands.Cog):
 
         await ctx.send(embed=newEmbed)
 
-def setup(client):
-    client.add_cog(Valranks(client))
+async def setup(client):
+    await client.add_cog(Valranks(client))
