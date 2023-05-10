@@ -75,3 +75,14 @@ CREATE TABLE IF NOT EXISTS creditchanges (
   PRIMARY KEY (id),
   FOREIGN KEY `fk_creditchanges_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE,
 );
+
+CREATE TABLE IF NOT EXISTS creditvotes (
+  id INT NOT NULL AUTO_INCREMENT,
+  message_id BIGINT NOT NULL, -- Discord message id
+  user_id BIGINT NOT NULL, -- Discord user id
+  vote BOOL NOT NULL,
+  created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
+  PRIMARY KEY (id),
+  UNIQUE `message_user_time` (message_id, user_id),
+-- FOREIGN KEY `fk_message_id` (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
