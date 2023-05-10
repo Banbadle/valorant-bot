@@ -50,6 +50,6 @@ class Selects(commands.Cog):
         
         await ctx.reply(f"Primary:       {primary}\nSecondary:  {secondary}")
         
-def setup(client):
-    client.add_cog(Selects(client))
+async def setup(client):
+    await client.add_cog(Selects(client))
     
