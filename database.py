@@ -198,6 +198,7 @@ class Database():
 # 0: Misc
 # 1: Game Request
 # 2: Check In
+# 3: Credit Vote
 
 
     def add_message(self, message, trigger, message_type = 0):
@@ -529,6 +530,20 @@ class Database():
             results = cursor.fetchall()
             return list(r[0] for r in results)
         
+    def get_event_details(self, event_name):
+        self._refresh_connection()
+        
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT default_value, cooldown
+                FROM crediteventtypes
+                WHERE event_name = %s
+            ''', (event_name,))
+            
+            result = cursor.fetchone()
+            if result is not None:
+                return result
+            
     def get_event_value(self, event_name):
         self._refresh_connection()
         
@@ -579,6 +594,19 @@ class Database():
                 )
             ''', (message_id, user.id, vote))
         self.connection.commit()
+        
+    def get_user_vote(self, message_id, user_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT vote
+                FROM creditvotes
+                WHERE message_id = %s
+                    AND user_id = %s
+            ''', (message_id, user_id))
+            result = cursor.fetchone()
+            if result is not None:
+                return result['vote']
         
     def get_votes(self, message_id):
         self._refresh_connection()
