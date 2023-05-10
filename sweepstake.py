@@ -229,5 +229,5 @@ class Sweepstake(commands.Cog):
         for role in role_list:
             await role.delete()
 
-def setup(client):
-    client.add_cog(Sweepstake(client))
+async def setup(client):
+    await client.add_cog(Sweepstake(client))
