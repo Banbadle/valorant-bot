@@ -477,3 +477,70 @@ class Database():
                 )
             ''', (user.id, channel.guild.id, channel.id))
         self.connection.commit()
+        
+#------------------------------------------------------------------------------
+    # CreditEventTypes table functions
+#------------------------------------------------------------------------------
+
+    def add_credit_event_type(self, event_name, default_value, event_category="Misc", public="TRUE"):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO crediteventtypes (
+                    event_name, default_value, public
+                ) VALUES (
+                    %s, %s, %s
+                )
+            ''', (event_name, default_value, public))
+        self.connection.commit()
+        
+    def get_event_categories(self):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('SELECT DISTINCT event_category FROM crediteventtypes')
+            
+            results = cursor.fetchall()
+            return list(r[0] for r in results)
+        
+    def get_event_types_from_category(self, category):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT event_name
+                FROM crediteventtypes
+                WHERE event_category = %s
+            ''', (category,))
+            
+            results = cursor.fetchall()
+            return list(r[0] for r in results)
+        
+    def get_event_value(self, event_name):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT default_value
+                FROM crediteventtypes
+                WHERE event_name = %s
+            ''', (event_name,))
+            
+            result = cursor.fetchone()
+            if result is not None:
+                return int(result[0])
+        
+    def get_event_cooldown(self, event_name):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT cooldown
+                FROM crediteventtypes
+                WHERE event_name = %s
+            ''', (event_name,))
+            
+            result = cursor.fetchone()
+            if result is not None:
+                return int(result[0])
+        
