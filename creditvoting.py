@@ -47,6 +47,31 @@ class CreditVoting(commands.Cog):
         
         return message
 
+    @commands.Cog.listener()
+    async def on_button_click(self, interaction):
+        msg_id = interaction.message.id
+        user   = interaction.user
+
+        v_id = interaction.custom_id
+    
+        if "verdict" in v_id:
+            
+            is_good = ("accept" in v_id or "deny" in v_id)
+            
+            vote = self.client.db.get_user_vote(msg_id, user.id)
+            if vote != None:
+                keywords = [["Innocent", "Guilty"],["Deny", "Accept"]]
+                await interaction.send(f"You have already voted '{keywords[is_good][vote]}' in this poll.")
+                return
+            
+            suffix = v_id[len("verdict")+1:].capitalize()
+            await interaction.send(f"You have voted: {suffix}")
+            
+            if v_id == "verdict_deny" or v_id == "verdict_innocent":
+                self.client.db.set_user_vote(msg_id, user, 0) 
+            elif v_id == "verdict_accept" or v_id == "verdict_guilty":
+                self.client.db.set_user_vote(msg_id, user, 1)
+                
 
 def setup(client):
     client.add_cog(CreditVoting(client))
