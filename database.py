@@ -24,7 +24,9 @@ class Database():
             return
         self._connect()
 
+#------------------------------------------------------------------------------
     # Users table functions
+#------------------------------------------------------------------------------
 
     def get_valorant_username(self, user_id):
         self._refresh_connection()
@@ -188,7 +190,15 @@ class Database():
             result = cursor.fetchone()
             return result is not None and result[0]
 
+#------------------------------------------------------------------------------
     # Messages table functions
+#------------------------------------------------------------------------------
+
+# MESSAGE TYPES:
+# 0: Misc
+# 1: Game Request
+# 2: Check In
+
 
     def add_message(self, message, trigger, message_type = 0):
         author = trigger.author
@@ -274,7 +284,6 @@ class Database():
             ''', (message_id, guild_id, channel_id, user_id, trigger_id, message_type))
         self.connection.commit()
 
-#------------------------------------------------------------------------------
     def get_current_time_reactions(self, react_stamp):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
@@ -323,8 +332,10 @@ class Database():
             ''', (message_id,))
             result = cursor.fetchone()
             return result and result[0]
+        
 #------------------------------------------------------------------------------
     # Reactions table functions
+#------------------------------------------------------------------------------
 
     def get_user_reaction(self, message_id, user_id):
         reaction = self._get_user_reaction(message_id, user_id)
@@ -407,8 +418,10 @@ class Database():
                     AND react_stamp = %s
             ''', (message_id, user_id, react_stamp))
         self.connection.commit()
+        
 # -----------------------------------------------------------------------------
     # VoiceChannelLog table functions
+# -----------------------------------------------------------------------------
 
     def user_join(self, user, channel):
         if not self._get_user(user.id):
