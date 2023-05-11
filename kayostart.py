@@ -7,7 +7,6 @@ import toml
 from git import Repo
 import requests
 import asyncio
-from checks import is_admin
 
 import nest_asyncio
 nest_asyncio.apply()
@@ -15,7 +14,15 @@ nest_asyncio.apply()
 with open('config.toml', 'r') as f:
     config = toml.loads(f.read())
 
-client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
+class RobustBot(commands.Bot):
+    def __init__(self):
+        super().__init__(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
+    async def setup_hook(self):
+        pass
+    #self.add_view(CV.CreditVoteButton(self.client, 0, 0))
+
+#client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord.Intents.all())
+client = RobustBot()
 
 client.db = Database()
 
