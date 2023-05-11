@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import sys
 from checks import is_admin
-from discord.ui import Button, Select
+from discord.ui import Button, Select, View
 from discord import SelectOption, ButtonStyle, ActionRow
 
 CREDIT_NAME = "social credits"
@@ -14,8 +14,13 @@ class CreditVoting(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(sys.argv[0])
+        self.view_penalty = self.CreditVoteView(self.client, 0)
+        self.view_reward  = self.CreditVoteView(self.client, 1)
+        print("creditvoting.py loaded")
         
+    def get_view(self, is_reward):
+        return self.view_reward if is_reward else self.view_penalty
+
     @commands.command(help = f"Starts a {CREDIT_NAME} vote")
     @commands.guild_only()
     @commands.check(is_admin)
@@ -30,13 +35,75 @@ class CreditVoting(commands.Cog):
             
         await ctx.send(content="Select a Category", components = [Select(placeholder= "Categories", options=option_list)])
         #await self.post_vote(ctx, 273795229264642048, "Misc", int(num))
+
+    class CreditVoteView(View):
+        def __init__(self, client, is_reward):           
+            self.client = client
+            self.is_reward = is_reward
+            super().__init__(timeout=None)
+            
+            self.make_buttons()
+            
+        def get_bad_button(self):
+            return self.children[0]
+        
+        def get_good_button(self):
+            return self.children[1]
+        
+        def get_yes_button(self):
+            return self.children[not self.is_reward]
+        
+        def get_no_button(self):
+            return self.children[self.is_reward]
+            
+        def make_buttons(self):
+            
+            button_bad  = self.CreditVoteButton(self.is_reward, not self.is_reward)
+            button_good = self.CreditVoteButton(self.is_reward, self.is_reward)
+            
+            self.add_item(button_bad)
+            self.add_item(button_good)
+            
+        class CreditVoteButton(Button):
+            keywords = [["Innocent", "Guilty"],["Deny", "Accept"]]
+            
+            def __init__(self, is_reward: bool, verdict: bool):
+                self.is_reward = is_reward
+                self.verdict = verdict
+                
+                is_good = (is_reward ^ (not verdict))
+                button_label = self.keywords[is_reward][verdict]
+                button_style = ButtonStyle.green if is_good else ButtonStyle.red
+                
+                super().__init__(style=button_style, label=button_label, custom_id=f"creditvote_{button_label}")
+                
+            async def callback(self, interaction):
+                msg     = interaction.message
+                user    = interaction.user
+                verdict = self.verdict
+                vote    = self.view.client.db.get_user_vote(msg.id, user.id)
+                
+                if vote != None:
+                    await interaction.response.send_message(f"You have already voted '{self.keywords[self.is_reward][vote]}' in this poll.")
+                    return
+                
+                self.view.client.db.set_user_vote(msg.id, user, verdict) 
+                
+                await interaction.response.send_message(f"You have voted: {self.label}")
+                
+            
+    @commands.command(help = f"Starts {CREDIT_NAME} votes")
+    async def test1(self, ctx):
+        await self.post_vote(ctx, ctx.author.id, "Good", 50)
+        await self.post_vote(ctx, ctx.author.id, "Bad", -50)
     
     async def post_vote(self, ctx, user_id, feat, value):
         
         is_reward = value > 0
         
-        new_embed = discord.Embed(title=("__Reward Vote__" if is_reward else "__Fine Vote__"), 
+        new_embed = discord.Embed(title=("__Reward Vote__" if is_reward else "__Penalty Vote__"), 
                                   color=(0x00ff00 if is_reward else 0xff0000))
+        
         
         title_text = "nominated for" if is_reward else "accused of"
         inner_text = f"If supported, <@{user_id}> would receive" if is_reward else f"If found guilty, <@{user_id}> would be fined"
@@ -46,21 +113,14 @@ class CreditVoting(commands.Cog):
                                         {inner_text} {abs(value)} {CREDIT_NAME}.
                                         Please note that your vote cannot be changed once selected.''',
                             inline=False)
-        
-        new_embed.add_field(name="__Deny__",  value="0")
-        new_embed.add_field(name="__Accept__",  value="0")
-        
-        button_bad, button_good = None, None
-        if is_reward:
-            button_bad  = Button(label="Deny",      style=ButtonStyle(4), custom_id="verdict_deny")
-            button_good = Button(label="Accept",    style=ButtonStyle(3), custom_id="verdict_accept")
-        else:
-            button_good = Button(label="Innocent",  style=ButtonStyle(3), custom_id="verdict_innocent")
-            button_bad  = Button(label="Guilty",    style=ButtonStyle(4), custom_id="verdict_guilty")
             
-        button_row = ActionRow(button_bad, button_good)
-    
-        message = await ctx.send(embed=new_embed, components=[button_row])
+        view = self.get_view(is_reward)
+        
+        new_embed.add_field(name=f"__{view.get_bad_button().label}__",  value="0")
+        new_embed.add_field(name=f"__{view.get_good_button().label}__",  value="0")
+        
+        
+        message = await ctx.send(embed=new_embed, view=view)
         
         return message
 
@@ -100,40 +160,15 @@ class CreditVoting(commands.Cog):
 
         message = await ctx.send(embed=new_embed)
         return message
-        
-    @commands.Cog.listener()
-    async def on_button_click(self, interaction):
-        msg_id = interaction.message.id
-        user   = interaction.user
-
-        v_id = interaction.custom_id
-    
-        if "verdict" in v_id:
-            
-            is_good = ("accept" in v_id or "deny" in v_id)
-            
-            vote = self.client.db.get_user_vote(msg_id, user.id)
-            if vote != None:
-                keywords = [["Innocent", "Guilty"],["Deny", "Accept"]]
-                await interaction.send(f"You have already voted '{keywords[is_good][vote]}' in this poll.")
-                return
-            
-            suffix = v_id[len("verdict")+1:].capitalize()
-            await interaction.send(f"You have voted: {suffix}")
-            
-            if v_id == "verdict_deny" or v_id == "verdict_innocent":
-                self.client.db.set_user_vote(msg_id, user, 0) 
-            elif v_id == "verdict_accept" or v_id == "verdict_guilty":
-                self.client.db.set_user_vote(msg_id, user, 1)
                 
                 
     @commands.Cog.listener()
     async def on_select_option(self, interaction):
         val = interaction.values[0]              
         if "voteoption" in val:
-           _, process_type, process_name = val.split("_")
+            _, process_type, process_name = val.split("_")
             
-           if process_type == "category":
+            if process_type == "category":
                 event_types = self.client.db.get_event_types_from_category(process_name)
                 option_list = []
                 for event in event_types:   
@@ -142,13 +177,11 @@ class CreditVoting(commands.Cog):
                     option_list.append(new_select)
                     
                 await interaction.send(content="Select an offense", components = [Select(placeholder= "offenses", options=option_list)])
-               
-           elif process_type == "event":
-               details = self.client.db.get_event_details(process_name)
-               
-               await self.post_vote(interaction, 1, process_name, details['default_value'])
-               
                 
+            elif process_type == "event":
+                details = self.client.db.get_event_details(process_name)
+                
+                await self.post_vote(interaction, 1, process_name, details['default_value'])
 
 
 async def setup(client):
