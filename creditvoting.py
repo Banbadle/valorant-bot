@@ -55,6 +55,25 @@ class CreditVoting(commands.Cog):
         
         def get_no_button(self):
             return self.children[self.is_reward]
+        
+        async def update_vote_embed(self, message):
+            votes   = self.client.db.get_votes(message.id)
+            num_yes = sum(votes)
+            num_no  = len(votes)-num_yes
+            
+            yes_i   = (self.is_reward)      + 1
+            no_i    = (not self.is_reward)  + 1
+            
+            old_embed   = message.embeds[0]
+            embed_dict  = old_embed.to_dict()
+            fields      = embed_dict['fields']
+            
+            fields[yes_i]['value'] = num_yes
+            fields[no_i]['value']  = num_no
+            
+            new_embed = discord.Embed.from_dict(embed_dict)
+            
+            await message.edit(embed=new_embed)
             
         def make_buttons(self):
             
@@ -88,6 +107,8 @@ class CreditVoting(commands.Cog):
                     return
                 
                 self.view.client.db.set_user_vote(msg.id, user, verdict) 
+                
+                await self.view.update_vote_embed(msg)
                 
                 await interaction.response.send_message(f"You have voted: {self.label}")
                 
