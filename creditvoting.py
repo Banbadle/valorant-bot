@@ -1,8 +1,9 @@
 import discord
-from discord_components import Button, ActionRow, ButtonStyle, SelectOption, Select
 from discord.ext import commands
 import sys
 from checks import is_admin
+from discord.ui import Button, Select
+from discord import SelectOption, ButtonStyle, ActionRow
 
 CREDIT_NAME = "social credits"
 
