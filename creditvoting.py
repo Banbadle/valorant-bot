@@ -157,7 +157,7 @@ class CreditVoting(commands.Cog):
         is_reward = value > 0
         is_good =  (not is_reward ^ pass_condition)
 
-        new_embed = discord.Embed(title=("__Reward Result__" if is_reward else "__Fine Result__"), 
+        new_embed = discord.Embed(title=("__Reward Result__" if is_reward else "__Penalty Result__"), 
                                   color=(0x00ff00 if is_good else 0xff0000))
 
         title_text = None
