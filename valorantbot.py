@@ -173,16 +173,12 @@ class ValorantBot(commands.Cog):
         discord_rank_id = discord_rank.mention
         discord_rank_color = discord_rank.color
         
-        new_embed = discord.Embed(title=f"__{rank_name} Request__", color=discord_rank_color)
-        new_embed.add_field(name=f"{author_name} wants to play", 
-                            value="Please respond using the appropriate button.",
-                            inline=False)
+        new_embed = self.get_blank_request_embed(
+            author_name, 
+            rank= rank_name.capitalize(),
+            embed_color= discord_rank_color)
 
-        button_yes = Button(label="Select a Time", style=ButtonStyle(3), custom_id="rqst_yes")
-        button_no  = Button(label="Unavailable", style=ButtonStyle(4), custom_id="rqst_no")
-        button_row = ActionRow(button_no, button_yes)
-
-        message = await ctx.reply(discord_rank_id, embed=new_embed, components=[button_row])
+        message = await ctx.reply(content=discord_rank_id, embed=new_embed, view=self.request_view)
     
         self.client.db.add_message(message, ctx.message, 1)
 
