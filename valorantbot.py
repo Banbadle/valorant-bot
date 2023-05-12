@@ -24,6 +24,7 @@ class ValorantBot(commands.Cog):
         '''called when cog is loaded'''
         print(sys.argv[0])
         self.request_view = self.RequestView(self)
+        self.client.add_view(self.request_view)
 
     async def update_request_embed(self, message):
         '''Updates the request embed of message'''
