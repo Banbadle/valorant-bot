@@ -1,11 +1,12 @@
 import discord
-from discord_components import Select, SelectOption, Button, ActionRow, ButtonStyle
 import datetime
 import time
 import re
 import sys
 import pytz
 from discord.ext import commands, tasks
+from discord.ui import Button, Select, View
+from discord import SelectOption, ButtonStyle
 from collections import defaultdict
 
 import authordetails
@@ -28,6 +29,7 @@ class ValorantBot(commands.Cog):
     async def on_ready(self):
         '''called when cog is loaded'''
         print(sys.argv[0])
+        self.request_view = self.RequestView(self)
         await self.checkin_loop() # Inital pass of checkin
 
     @tasks.loop(minutes = 15)
@@ -194,6 +196,34 @@ class ValorantBot(commands.Cog):
     
         self.client.db.add_message(message, ctx.message, 1)
 
+    class RequestView(View):
+        
+        def __init__(self, base_cog):
+            self.base_cog = base_cog
+            super().__init__(timeout=None)
+            
+            unavailable_button = self.base_cog.UnavailableRequestButton()
+            select_time_button = self.base_cog.TimeRequestButton()
+            
+            self.add_item(unavailable_button)
+            self.add_item(select_time_button)
+
+    class UnavailableRequestButton(Button):
+        
+        def __init__(self):
+            super().__init__(style=ButtonStyle.red, label="Unavailable", custom_id="request_Unavailable")
+        
+        async def callback(self, interaction):
+            await self.view.base_cog.update_reaction(interaction, interaction.message, -1) 
+        
+    class TimeRequestButton(Button):
+        
+        def __init__(self):
+            super().__init__(style=ButtonStyle.green, label="Select a Time", custom_id="request_Select_Time")
+        
+        async def callback(self, interaction):
+            await self.view.base_cog.send_request_time_list(interaction)
+
     @commands.command(help = "Creates a valorant request message")
     @commands.guild_only()
     async def valorant(self, ctx):
@@ -201,12 +231,8 @@ class ValorantBot(commands.Cog):
         new_embed = self.get_blank_request_embed(ctx.author.name)
 
         agentsID = discord.utils.get(ctx.guild.roles,name="Agents").mention
-        
-        button_yes = Button(label="Select a Time", style=ButtonStyle(3), custom_id="rqst_yes")
-        button_no  = Button(label="Unavailable", style=ButtonStyle(4), custom_id="rqst_no")
-        button_row = ActionRow(button_no, button_yes)
 
-        message = await ctx.reply(agentsID, embed=new_embed, components=[button_row])
+        message = await ctx.reply(content=agentsID, embed=new_embed, view=self.request_view)
         print("MESSAGE SENT")
     
         self.client.db.add_message(message, ctx.message, 1)
@@ -219,7 +245,7 @@ class ValorantBot(commands.Cog):
         old_timestamp = self.client.db.get_user_reaction(message_id, user.id)
         old_str = self.interact_val_to_str(old_timestamp)
         if old_timestamp == new_timestamp:
-            await interaction.send(content=f"You have already selected {old_str}")
+            await interaction.response.send_message(content=f"You have already selected {old_str}")
             return
             
         if old_timestamp != None:
@@ -228,7 +254,7 @@ class ValorantBot(commands.Cog):
         self.client.db.add_reaction(message_id, user, new_timestamp)
         
         extra_string = f"\nYour previous response was: {old_str}" * (old_timestamp!=None)
-        await interaction.send(content=f"You have responded with: {new_str}" + extra_string)
+        await interaction.response.send_message(content=f"You have responded with: {new_str}" + extra_string)
         
         await self.update_request_embed(message)
     
