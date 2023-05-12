@@ -212,7 +212,8 @@ class ValorantBot(commands.Cog):
                 custom_id="request_Unavailable")
         
         async def callback(self, interaction):
-            await self.view.base_cog.update_reaction(interaction, interaction.message, -1) 
+            msg = interaction.message
+            await self.base_cog.update_reaction(interaction, msg, -1) 
         
     class TimeRequestButton(Button):
         
@@ -277,6 +278,7 @@ class ValorantBot(commands.Cog):
         new_str = self.interact_val_to_str(new_timestamp)
         old_timestamp = self.client.db.get_user_reaction(message_id, user.id)
         old_str = self.interact_val_to_str(old_timestamp)
+
         if old_timestamp == new_timestamp:
             await interaction.response.send_message(content=f"You have already selected {old_str}")
             return
@@ -320,22 +322,6 @@ class ValorantBot(commands.Cog):
             return "Unavailable"
         
         return f"<t:{val}:t>"
-    
-    @commands.Cog.listener()
-    async def on_select_option(self, interaction):
-        val = interaction.values[0]
-        
-        RQST_PREFIX = "rqst_time"
-        if val[0:len(RQST_PREFIX)] == RQST_PREFIX:
-            _,_,timestamp,message_id = val.split("_")
-            
-            message = await interaction.channel.fetch_message(message_id)
-            await self.update_reaction(interaction, message, timestamp)
-            return
-            
-        message_id = interaction.message.id
-        if self.is_checkin(message_id):
-            pass
 
     @commands.command(help = '''Sets valorant username and tag.
                       parameters:
