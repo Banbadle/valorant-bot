@@ -184,7 +184,7 @@ class ValorantBot(commands.Cog):
         old_str = self.interact_val_to_str(old_timestamp)
 
         if old_timestamp == new_timestamp:
-            await interaction.response.send_message(content=f"You have already selected {old_str}")
+            await interaction.response.send_message(content=f"You have already selected {old_str}", ephemeral=True)
             return
             
         if old_timestamp != None:
@@ -193,7 +193,7 @@ class ValorantBot(commands.Cog):
         self.client.db.add_reaction(message_id, user, new_timestamp)
         
         extra_string = f"\nYour previous response was: {old_str}" * (old_timestamp!=None)
-        await interaction.response.send_message(content=f"You have responded with: {new_str}" + extra_string)
+        await interaction.response.send_message(content=f"You have responded with: {new_str}" + extra_string, ephemeral=True)
         
         await self.update_request_embed(message)
     
