@@ -1,4 +1,3 @@
-from discord_components import Select, SelectOption, Button, ActionRow, ButtonStyle
 from discord.ext import commands
 
 class Notifications(commands.Cog):
@@ -18,9 +17,11 @@ class Notifications(commands.Cog):
         
         return f"<t:{val}:t>"
         
-    @commands.command(help = "View and change whether you recieve notifications from KAY/O.\n"+\
-                      "With notifications on, KAY/O will send private messages to you when someone responds to a message you have expressed interest in.\n"
-                      "parameters:\n    arg: 'on', 'off', or None")
+    @commands.command(
+        help = '''View and change whether you recieve notifications from KAY/O.
+        With notifications on, KAY/O will send private messages to you when someone responds to a message you have expressed interest in.
+        parameters:
+            arg: 'on', 'off', or None''')
     async def notifications(self, ctx, arg=""):
         '''View and change whether you recieve notifications from KAY/O.'''
         if arg.lower() == "on":
@@ -32,7 +33,9 @@ class Notifications(commands.Cog):
         else:
             status_bool = self.client.db.get_notifications(ctx.author)
             status = "on" if status_bool == 1 else "off"
-            await ctx.reply(f"Your notifications are currently turned {status}.\nYou can change this setting using '?notifications on' or '?notifications off'")
+            await ctx.reply(
+                f"Your notifications are currently turned {status}." + "\n" +
+                "You can change this setting using '?notifications on' or '?notifications off'")
 
     async def notify_react(self, poster_user_id, poster_react_stamp, message_id,  guild_name):
         user_list = self.client.db.get_users_to_notify(message_id)
@@ -78,30 +81,6 @@ class Notifications(commands.Cog):
         
     #     if new_channel != None:
     #         await self.notify_join(user.id, new_channel)
-    
-    @commands.Cog.listener()
-    async def on_select_option(self, interaction):
-        val = interaction.values[0]
         
-        RQST_PREFIX = "rqst_time"
-        if val[0:len(RQST_PREFIX)] == RQST_PREFIX:
-            _,_,timestamp,message_id = val.split("_")
-            poster_user_id = interaction.user.id
-            guild_name = interaction.guild.name
-            await self.notify_react(poster_user_id, timestamp, message_id, guild_name)    
-            
-    @commands.Cog.listener()
-    async def on_button_click(self, interaction):
-        
-        message_id = interaction.message.id
-        guild_name = interaction.guild.name
-        user_id = interaction.user.id
-        
-        old_timestamp = self.client.db.get_user_reaction(message_id, interaction.user.id)
-        
-        if interaction.custom_id == "rqst_no":
-            if old_timestamp != -1:
-                await self.notify_react(user_id, -1, message_id, guild_name) 
-        
-def setup(client):
-    client.add_cog(Notifications(client))
+async def setup(client):
+    await client.add_cog(Notifications(client))
