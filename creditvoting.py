@@ -14,7 +14,9 @@ class CreditVoting(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.view_penalty = self.CreditVoteView(self.client, 0)
+        self.client.add_view(self.view_penalty)
         self.view_reward  = self.CreditVoteView(self.client, 1)
+        self.client.add_view(self.view_reward)
         print("creditvoting.py loaded")
         
     def get_view(self, is_reward):
