@@ -316,10 +316,11 @@ class ValorantBot(commands.Cog):
         
         return f"<t:{val}:t>"
 
-    @commands.command(help = '''Sets valorant username and tag.
-                      parameters:
-                          username: the username and tag, separated by '#'
-                      Example: ?username FootGirl420#Euw"''')
+    @commands.command(
+        help = '''Sets valorant username and tag.
+        parameters:
+            username: the username and tag, separated by '#'
+        Example: ?username FootGirl420#Euw"''')
     async def username(self, ctx, username):
         '''Sets valorant username and tag.'''
         print(username)
