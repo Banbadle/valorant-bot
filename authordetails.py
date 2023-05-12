@@ -64,6 +64,14 @@ agent_details = {'Astra':       {'image': 'https://static.wikia.nocookie.net/val
                                  'phrase': '"Run, little man."',
                                  'role': "Controller"}}
     
+agent_roles = {"Controller":    {'image': 'https://static.wikia.nocookie.net/valorant/images/0/04/ControllerClassSymbol.png/',
+                                 'colour': 0x00bc00},
+               "Duelist":       {'image': 'https://static.wikia.nocookie.net/valorant/images/f/fd/DuelistClassSymbol.png/',
+                                 'colour': 0xf00000},
+               "Initiator":     {'image': 'https://static.wikia.nocookie.net/valorant/images/7/77/InitiatorClassSymbol.png/',
+                                 'colour': 0xffff00},
+               "Sentinel":      {'image': 'https://static.wikia.nocookie.net/valorant/images/4/43/SentinelClassSymbol.png/',
+                                 'colour': 0x00ffff}}
 
 map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven", "Pearl", "Lotus")
 
