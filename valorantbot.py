@@ -284,14 +284,6 @@ class ValorantBot(commands.Cog):
         return f"<t:{val}:t>"
     
     @commands.Cog.listener()
-    async def on_button_click(self, interaction):
-
-        if interaction.custom_id == "rqst_yes":
-            await self.send_request_time_list(interaction)
-        elif interaction.custom_id == "rqst_no":
-            await self.update_reaction(interaction, interaction.message, -1)          
-    
-    @commands.Cog.listener()
     async def on_select_option(self, interaction):
         val = interaction.values[0]
         
