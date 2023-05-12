@@ -28,8 +28,6 @@ class ValorantBot(commands.Cog):
     async def update_request_embed(self, message):
         '''Updates the request embed of message'''
         message_id = message.id
-        start_datetime = self.client.db.get_creation_time(message_id)
-        start_time = int(time.mktime(start_datetime.timetuple()))
 
         base_embed      = message.embeds[0]
         embed_dict      = base_embed.to_dict()
@@ -47,9 +45,7 @@ class ValorantBot(commands.Cog):
             
             if react_stamp != last_react_stamp:
                 time_str = self.interact_val_to_str(react_stamp)
-                e = "🕘" # ADJUST TO CLOSEST TIME EMOJI
-                if time_str == "Now":
-                    e = "✅"
+                e = "✅" if time_str == "Now" else "🕘"
                 new_field_list.append({'inline': False, 'name': f"{e} ({time_str})", 'value': ""})
                 
                 last_react_stamp = react_stamp
