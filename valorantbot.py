@@ -199,6 +199,7 @@ class ValorantBot(commands.Cog):
     class UnavailableRequestButton(Button):
         
         def __init__(self, base_cog):
+            self.base_cog = base_cog
             super().__init__(
                 style=ButtonStyle.red, 
                 label="Unavailable", 
