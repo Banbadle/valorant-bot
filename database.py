@@ -501,11 +501,11 @@ class Database():
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO crediteventtypes (
-                    event_name, default_value, public
+                    event_name, default_value, event_category, public
                 ) VALUES (
-                    %s, %s, %s
+                    %s, %s, %s, %s
                 )
-            ''', (event_name, default_value, public))
+            ''', (event_name, default_value, event_category, public))
         self.connection.commit()
         
     def get_event_categories(self):
