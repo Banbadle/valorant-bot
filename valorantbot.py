@@ -197,24 +197,31 @@ class ValorantBot(commands.Cog):
             self.base_cog = base_cog
             super().__init__(timeout=None)
             
-            unavailable_button = self.base_cog.UnavailableRequestButton()
-            select_time_button = self.base_cog.TimeRequestButton()
+            unavailable_button = self.base_cog.UnavailableRequestButton(self.base_cog)
+            select_time_button = self.base_cog.TimeRequestButton(self.base_cog)
             
             self.add_item(unavailable_button)
             self.add_item(select_time_button)
 
     class UnavailableRequestButton(Button):
         
-        def __init__(self):
-            super().__init__(style=ButtonStyle.red, label="Unavailable", custom_id="request_Unavailable")
+        def __init__(self, base_cog):
+            super().__init__(
+                style=ButtonStyle.red, 
+                label="Unavailable", 
+                custom_id="request_Unavailable")
         
         async def callback(self, interaction):
             await self.view.base_cog.update_reaction(interaction, interaction.message, -1) 
         
     class TimeRequestButton(Button):
         
-        def __init__(self):
-            super().__init__(style=ButtonStyle.green, label="Select a Time", custom_id="request_Select_Time")
+        def __init__(self, base_cog):
+            self.base_cog = base_cog
+            super().__init__(
+                style=ButtonStyle.green, 
+                label="Select a Time", 
+                custom_id="request_Select_Time")
         
         async def callback(self, interaction):
             time_select = self.base_cog.TimeListSelect(self.base_cog, interaction)
