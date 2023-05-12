@@ -253,7 +253,7 @@ class ValorantBot(commands.Cog):
         
         await self.update_request_embed(message)
     
-    async def send_request_time_list(self, interaction):
+    def get_request_time_list(self, interaction):
         t_step          = 15 * 60 #time step in seconds
         
         message_id      = interaction.message.id
@@ -264,16 +264,16 @@ class ValorantBot(commands.Cog):
         
         first_timestamp = (int(creation_unix // t_step) + 1) * t_step
         
-        option_list = [SelectOption(label = "Now", value = f"rqst_time_0_{message_id}")]
+        option_list = [SelectOption(label = "Now", value = 0)]
         for i in range(0,24):   
             new_timestamp = first_timestamp + t_step * i
             local_time = datetime.datetime.fromtimestamp(new_timestamp, user_timezone)
             
             time_str = local_time.strftime("%H:%M")
-            new_select = SelectOption(label = f"{time_str}", value = f"rqst_time_{new_timestamp}_{message_id}")
+            new_select = SelectOption(label=time_str, value=new_timestamp)
             option_list.append(new_select)
     
-        await interaction.send(content=f"Please select a time from the list.\nAll times are in '{user_timezone}' time. To change this, use '?timezone'", components = [Select(placeholder= "Select a time", options=option_list)])
+        return option_list
     
     def interact_val_to_str(self, val):
         if val == "0" or val == 0:  
