@@ -148,12 +148,14 @@ class ValorantBot(commands.Cog):
     def is_checkin(self, message_id):
         return self.client.db.get_message_type(message_id) == 2
 
-    def get_blank_request_embed(self, author_name):
-        new_embed = discord.Embed(title="__Valorant Request__", color=0xff0000)
-        new_embed.add_field(name=f"{author_name} wants to play Valorant", 
+    def get_blank_request_embed(self, author_name, rank="Valorant", embed_color=0xff0000):
+        new_embed = discord.Embed(title=f"__{rank} Request__", color=embed_color)
+        new_embed.add_field(name=f"{author_name} wants to play", 
                             value="Please respond using the appropriate button.",
                             inline=False)
-        new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
+        
+        if rank == "Valorant":
+            new_embed.set_thumbnail(url="https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc")
 
         return new_embed
 
