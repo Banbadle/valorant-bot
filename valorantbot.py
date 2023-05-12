@@ -218,6 +218,22 @@ class ValorantBot(commands.Cog):
         
         async def callback(self, interaction):
             await self.view.base_cog.send_request_time_list(interaction)
+    class TimeListSelect(Select):
+        def __init__(self, base_cog, interaction):
+            self.base_cog   = base_cog
+            self.message_id = interaction.message.id
+            option_list = self.base_cog.get_request_time_list(interaction)
+                
+            super().__init__(
+                placeholder="Select a Time", 
+                min_values=1, 
+                max_values=1, 
+                options=option_list)
+        
+        async def callback(self, interaction):
+            message = await interaction.channel.fetch_message(self.message_id)
+            timestamp = self.values[0]
+            await self.base_cog.update_reaction(interaction, message, timestamp)
 
     @commands.command(help = "Creates a valorant request message")
     @commands.guild_only()
