@@ -24,17 +24,13 @@ class CreditVoting(commands.Cog):
     @commands.command(help = f"Starts a {CREDIT_NAME} vote")
     @commands.guild_only()
     @commands.check(is_admin)
-    async def ASCvoting(self, ctx, num):
+    async def ASCvote(self, ctx):
         
-        category_list = self.client.db.get_event_categories()
-        option_list = []
-        for categ in category_list:   
+        select_categ = self.SelectCategory(self, 817415777442857020)
+        select_view = View()
+        select_view.add_item(select_categ)
             
-            new_select = SelectOption(label = f"{categ}", value = f"voteoption_category_{categ}")
-            option_list.append(new_select)
-            
-        await ctx.send(content="Select a Category", components = [Select(placeholder= "Categories", options=option_list)])
-        #await self.post_vote(ctx, 273795229264642048, "Misc", int(num))
+        await ctx.send(content="Select a Category", view=select_view)
 
     class CreditVoteView(View):
         def __init__(self, client, is_reward):           
@@ -111,14 +107,9 @@ class CreditVoting(commands.Cog):
                 await self.view.update_vote_embed(msg)
                 
                 await interaction.response.send_message(f"You have voted: {self.label}")
-                
-            
-    @commands.command(help = f"Starts {CREDIT_NAME} votes")
-    async def test1(self, ctx):
-        await self.post_vote(ctx, ctx.author.id, "Good", 50)
-        await self.post_vote(ctx, ctx.author.id, "Bad", -50)
+
     
-    async def post_vote(self, ctx, user_id, feat, value):
+    async def post_vote(self, interaction, user_id, feat, value):
         
         is_reward = value > 0
         
@@ -141,7 +132,7 @@ class CreditVoting(commands.Cog):
         new_embed.add_field(name=f"__{view.get_good_button().label}__",  value="0")
         
         
-        message = await ctx.send(embed=new_embed, view=view)
+        message = await interaction.response.send_message(embed=new_embed, view=view)
         
         return message
 
@@ -181,29 +172,55 @@ class CreditVoting(commands.Cog):
 
         message = await ctx.send(embed=new_embed)
         return message
-                
-                
-    @commands.Cog.listener()
-    async def on_select_option(self, interaction):
-        val = interaction.values[0]              
-        if "voteoption" in val:
-            _, process_type, process_name = val.split("_")
-            
-            if process_type == "category":
-                event_types = self.client.db.get_event_types_from_category(process_name)
-                option_list = []
-                for event in event_types:   
-                    
-                    new_select = SelectOption(label = f"{event}", value = f"voteoption_event_{event}")
-                    option_list.append(new_select)
-                    
-                await interaction.send(content="Select an offense", components = [Select(placeholder= "offenses", options=option_list)])
-                
-            elif process_type == "event":
-                details = self.client.db.get_event_details(process_name)
-                
-                await self.post_vote(interaction, 1, process_name, details['default_value'])
 
+    class SelectCategory(Select):
+
+        def __init__(self, base_cog, user_id):
+            self.base_cog   = base_cog
+            self.user_id    = user_id
+            
+            category_list = self.base_cog.client.db.get_event_categories()
+            
+            option_list = list(
+                SelectOption(label=categ, value=categ) 
+                for categ in category_list)  
+                
+            super().__init__(placeholder="Select a category", 
+                             min_values=1, 
+                             max_values=1, 
+                             options=option_list)
+                
+        async def callback(self, interaction):
+            category        = self.values[0]
+            select_event    = self.base_cog.SelectEventType(self.base_cog, self.user_id, category)
+            select_view     = View()
+            
+            select_view.add_item(select_event)
+            await interaction.response.send_message(view=select_view, ephemeral=True)
+            
+    class SelectEventType(Select):
+        
+        def __init__(self, base_cog, user_id, category):
+            self.base_cog   = base_cog
+            self.user_id    = user_id
+            self.category   = category
+            
+            event_types = self.base_cog.client.db.get_event_types_from_category(category)
+            
+            option_list = list(
+                SelectOption(label=event, value=event) 
+                for event in event_types)  
+                
+            super().__init__(placeholder="Select an offense", 
+                             min_values=1, 
+                             max_values=1, 
+                             options=option_list)
+        
+        async def callback(self, interaction):
+            event_name = self.values[0]
+            details = self.base_cog.client.db.get_event_details(event_name)
+            num_credits = details['default_value']
+            await self.base_cog.post_vote(interaction, self.user_id, event_name, num_credits)
 
 async def setup(client):
     await client.add_cog(CreditVoting(client))
