@@ -217,7 +217,22 @@ class ValorantBot(commands.Cog):
             super().__init__(style=ButtonStyle.green, label="Select a Time", custom_id="request_Select_Time")
         
         async def callback(self, interaction):
-            await self.view.base_cog.send_request_time_list(interaction)
+            time_select = self.base_cog.TimeListSelect(self.base_cog, interaction)
+            
+            view = View()
+            view.add_item(time_select)
+            
+            user            = interaction.user
+            user_tz_str     = self.base_cog.client.db.get_timezone(user)
+            user_tz         = pytz.timezone(user_tz_str)
+            
+            await interaction.response.send_message(
+                content="Please select a time from the list." +"\n" 
+                +f"All times are in '{user_tz}' time." + "\n" 
+                +"To change this, use '?timezone'", 
+                view= view,
+                ephemeral=True)
+            
     class TimeListSelect(Select):
         def __init__(self, base_cog, interaction):
             self.base_cog   = base_cog
