@@ -317,5 +317,5 @@ class ValorantBot(commands.Cog):
         message = await ctx.channel.fetch_message(msg['id'])
         await message.delete()
 
-def setup(client):
-    client.add_cog(ValorantBot(client))
+async def setup(client):
+    await client.add_cog(ValorantBot(client))
