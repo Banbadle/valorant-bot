@@ -195,6 +195,9 @@ class ValorantBot(commands.Cog):
         extra_string = f"\nYour previous response was: {old_str}" * (old_timestamp!=None)
         await interaction.response.send_message(content=f"You have responded with: {new_str}" + extra_string, ephemeral=True)
         
+        nt = self.client.get_cog("Notifications")
+        await nt.notify_react(interaction.user.id, new_timestamp, message.id, message.guild.name)
+        
         await self.update_request_embed(message)
     
     def get_request_time_list(self, interaction):
