@@ -98,14 +98,14 @@ class CreditVoting(commands.Cog):
                 vote    = self.view.client.db.get_user_vote(msg.id, user.id)
                 
                 if vote != None:
-                    await interaction.response.send_message(f"You have already voted '{self.keywords[self.is_reward][vote]}' in this poll.")
+                    await interaction.response.send_message(f"You have already voted '{self.keywords[self.is_reward][vote]}' in this poll.", ephemeral=True)
                     return
                 
                 self.view.client.db.set_user_vote(msg.id, user, verdict) 
                 
                 await self.view.update_vote_embed(msg)
                 
-                await interaction.response.send_message(f"You have voted: {self.label}")
+                await interaction.response.send_message(f"You have voted: {self.label}", ephemeral=True)
 
     
     async def post_vote(self, interaction, user_id, feat, value):
