@@ -145,7 +145,7 @@ class Database():
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 UPDATE users
-                SET social_credit = social_credit + %s,
+                SET social_credit = social_credit + %s
                 WHERE id = %s
             ''', (num, user.id))
         self.connection.commit()
