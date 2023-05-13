@@ -360,7 +360,7 @@ class Database():
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
-                SELECT r.react_stamp, u.id as user
+                SELECT r.react_stamp, u.id as user, r.created as timestamp
                 FROM messages m
                 JOIN reactions r
                     ON m.id = r.message_id
@@ -368,7 +368,7 @@ class Database():
                     ON r.user_id = u.id
                 WHERE m.id = %s
                     AND r.removed IS NULL
-                ORDER BY r.react_stamp
+                ORDER BY r.react_stamp, r.created
             ''', (message_id,))
             return cursor.fetchall()
 
