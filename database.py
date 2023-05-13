@@ -601,6 +601,16 @@ class Database():
             ''', (user_id, event_name, change_value, vote_msg_id, cause_user_id, processed, cooldown))
         self.connection.commit()
         
+    def process_credit_change(self, vote_msg_id, processed, verdict_msg_id):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE creditchanges
+                SET processed = %s,
+                    verdict_msg_id = %s
+                WHERE vote_msg_id = %s
+            ''', (processed, verdict_msg_id, vote_msg_id))
+        self.connection.commit()
+        
 #------------------------------------------------------------------------------
     # CreditVotes table functions
 #------------------------------------------------------------------------------    
