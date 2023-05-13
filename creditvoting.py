@@ -3,6 +3,7 @@ from discord.ext import commands
 from checks import is_admin
 from discord.ui import Button, Select, View
 from discord import SelectOption, ButtonStyle
+import asyncio
 
 CREDIT_NAME = "social credits"
 
@@ -110,7 +111,7 @@ class CreditVoting(commands.Cog):
             await interaction.response.send_message(f"You have voted: {self.label}", ephemeral=True)
 
     
-    async def post_vote(self, interaction, user_id, feat, value):
+    async def post_vote(self, interaction, user_id, feat, value, duration):
         
         is_reward = value > 0
         
@@ -132,9 +133,10 @@ class CreditVoting(commands.Cog):
         new_embed.add_field(name=f"__{view.get_bad_button().label}__",  value="0")
         new_embed.add_field(name=f"__{view.get_good_button().label}__",  value="0")
         
+        message = await interaction.response.send_message(embed=new_embed, view=view, delete_after=duration)
         
-        message = await interaction.response.send_message(embed=new_embed, view=view)
-        
+        await asyncio.sleep(duration)
+
         return message
 
     async def post_result(self, ctx, user_id, feat, value, v_yes, v_no):
@@ -221,7 +223,8 @@ class CreditVoting(commands.Cog):
             event_name = self.values[0]
             details = self.base_cog.client.db.get_event_details(event_name)
             num_credits = details['default_value']
-            await self.base_cog.post_vote(interaction, self.user_id, event_name, num_credits)
+            duration = details['cooldown'] * 60
+            await self.base_cog.post_vote(interaction, self.user_id, event_name, num_credits, duration)
 
 async def setup(client):
     await client.add_cog(CreditVoting(client))
