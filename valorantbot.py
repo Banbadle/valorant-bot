@@ -132,7 +132,7 @@ class ValorantBot(commands.Cog):
         def __init__(self, base_cog):
             self.base_cog = base_cog
             super().__init__(
-                style=ButtonStyle.green, 
+                style=ButtonStyle.blurple, 
                 label="Select a Time", 
                 custom_id="request_Select_Time")
         
@@ -219,7 +219,7 @@ class ValorantBot(commands.Cog):
         
         first_timestamp = (int(creation_unix // t_step) + 1) * t_step
         
-        option_list = [SelectOption(label = "Now", value = 0)]
+        option_list = []
         for i in range(0,24):   
             new_timestamp = first_timestamp + t_step * i
             local_time = datetime.datetime.fromtimestamp(new_timestamp, user_timezone)
