@@ -75,8 +75,12 @@ class CreditVoting(commands.Cog):
             
         def make_buttons(self):
             
-            button_bad  = self.base_cog.CreditVoteButton(self.is_reward, not self.is_reward)
-            button_good = self.base_cog.CreditVoteButton(self.is_reward, self.is_reward)
+            button_bad  = self.base_cog.CreditVoteButton(self.base_cog, 
+                                                         self.is_reward, 
+                                                         not self.is_reward)
+            button_good = self.base_cog.CreditVoteButton(self.base_cog, 
+                                                         self.is_reward, 
+                                                         self.is_reward)
             
             self.add_item(button_bad)
             self.add_item(button_good)
@@ -84,9 +88,10 @@ class CreditVoting(commands.Cog):
     class CreditVoteButton(Button):
         keywords = [["Innocent", "Guilty"],["Deny", "Accept"]]
         
-        def __init__(self, is_reward: bool, verdict: bool):
+        def __init__(self, base_cog, is_reward: bool, verdict: bool):
             self.is_reward = is_reward
             self.verdict = verdict
+            self.base_cog = base_cog
             
             is_good = (is_reward ^ (not verdict))
             button_label = self.keywords[is_reward][verdict]
@@ -98,13 +103,13 @@ class CreditVoting(commands.Cog):
             msg     = interaction.message
             user    = interaction.user
             verdict = self.verdict
-            vote    = self.view.client.db.get_user_vote(msg.id, user.id)
+            vote    = self.base_cog.client.db.get_user_vote(msg.id, user.id)
             
             if vote != None:
                 await interaction.response.send_message(f"You have already voted '{self.keywords[self.is_reward][vote]}' in this poll.", ephemeral=True)
                 return
             
-            self.view.client.db.set_user_vote(msg.id, user, verdict) 
+            self.base_cog.client.db.set_user_vote(msg.id, user, verdict) 
             
             await self.view.update_vote_embed(msg)
             
