@@ -69,11 +69,12 @@ CREATE TABLE IF NOT EXISTS creditchanges (
   change_value BIGINT NOT NULL,
   start_time TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   vote_msg_id BIGINT, -- Discord message id
+  cause_user_id BIGINT DEFAULT NULL, -- Discord user id
   processed BOOL DEFAULT 1,
   end_time TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),  -- alt: ADDTIME(UTC_TIMESTAMP(), "0:30:0"),
   verdict_msg_id BIGINT, -- Discord message id
   PRIMARY KEY (id),
-  FOREIGN KEY `fk_creditchanges_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY `fk_creditchanges_user_id` (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS creditvotes (
@@ -83,6 +84,5 @@ CREATE TABLE IF NOT EXISTS creditvotes (
   vote BOOL NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT UTC_TIMESTAMP(),
   PRIMARY KEY (id),
-  UNIQUE `message_user_time` (message_id, user_id),
--- FOREIGN KEY `fk_message_id` (message_id) REFERENCES messages(id) ON DELETE CASCADE
+  UNIQUE `message_user_time` (message_id, user_id)
 );
