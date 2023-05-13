@@ -138,12 +138,21 @@ class CreditVoting(commands.Cog):
         new_embed.add_field(name=f"__{view.get_bad_button().label}__",  value="0")
         new_embed.add_field(name=f"__{view.get_good_button().label}__",  value="0")
         
-        message = await interaction.response.send_message(embed=new_embed, view=view, delete_after=duration)
         
-        await asyncio.sleep(duration)
-
-        return message
-
+        await interaction.response.defer()
+        msg = await interaction.followup.send(embed=new_embed, view=view)
+        
+        self.client.db.record_credit_change(user_id, 
+                                            feat, 
+                                            value,
+                                            cooldown=duration, 
+                                            vote_msg_id=msg.id,
+                                            cause_user_id=interaction.user.id)
+        
+        await asyncio.sleep(5)#duration)
+        
+        await msg.delete()
+        
     async def post_result(self, ctx, user_id, feat, value, v_yes, v_no):
         
         ## TEMP TO ALLOW TESTING IN DISCORD, DELETE BEFORE PUSHING
