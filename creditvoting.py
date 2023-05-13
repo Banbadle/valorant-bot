@@ -26,9 +26,10 @@ class CreditVoting(commands.Cog):
     @commands.command(help = f"Starts a {CREDIT_NAME} vote")
     @commands.guild_only()
     @commands.check(is_admin)
-    async def ASCvote(self, ctx):
+    async def ASCvote(self, ctx, user_mention):
         
-        select_categ = self.SelectCategory(self, 817415777442857020)
+        user_id = int(user_mention[2:-1])
+        select_categ = self.SelectCategory(self, user_id)
         select_view = View()
         select_view.add_item(select_categ)
             
