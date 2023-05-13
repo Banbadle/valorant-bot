@@ -206,9 +206,9 @@ class CreditVoting(commands.Cog):
             
             category_list = self.base_cog.client.db.get_event_categories()
             
-            option_list = list(
-                SelectOption(label=categ, value=categ) 
-                for categ in category_list)  
+            option_list = []
+            for categ in category_list:
+                option_list.append(SelectOption(label=categ, value=categ))
                 
             super().__init__(placeholder="Select a category", 
                              min_values=1, 
