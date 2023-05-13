@@ -51,7 +51,13 @@ class ValorantBot(commands.Cog):
                 
                 last_react_stamp = react_stamp
                 
-            new_field_list[-1]["value"] += f"\n> <@{reaction['user']}>"
+            extra_str = ""     
+            if react_stamp == 0:
+                stamp = (reaction['timestamp'])
+                unix_timestamp = int(datetime.datetime.timestamp(stamp))
+                extra_str = f" -(<t:{unix_timestamp}:t>)"
+                
+            new_field_list[-1]["value"] += f"\n> <@{reaction['user']}>" + extra_str
             
         if unavailable_field['value'] != "":
             new_field_list.append(unavailable_field)
