@@ -80,34 +80,34 @@ class CreditVoting(commands.Cog):
             self.add_item(button_bad)
             self.add_item(button_good)
             
-        class CreditVoteButton(Button):
-            keywords = [["Innocent", "Guilty"],["Deny", "Accept"]]
+    class CreditVoteButton(Button):
+        keywords = [["Innocent", "Guilty"],["Deny", "Accept"]]
+        
+        def __init__(self, is_reward: bool, verdict: bool):
+            self.is_reward = is_reward
+            self.verdict = verdict
             
-            def __init__(self, is_reward: bool, verdict: bool):
-                self.is_reward = is_reward
-                self.verdict = verdict
-                
-                is_good = (is_reward ^ (not verdict))
-                button_label = self.keywords[is_reward][verdict]
-                button_style = ButtonStyle.green if is_good else ButtonStyle.red
-                
-                super().__init__(style=button_style, label=button_label, custom_id=f"creditvote_{button_label}")
-                
-            async def callback(self, interaction):
-                msg     = interaction.message
-                user    = interaction.user
-                verdict = self.verdict
-                vote    = self.view.client.db.get_user_vote(msg.id, user.id)
-                
-                if vote != None:
-                    await interaction.response.send_message(f"You have already voted '{self.keywords[self.is_reward][vote]}' in this poll.", ephemeral=True)
-                    return
-                
-                self.view.client.db.set_user_vote(msg.id, user, verdict) 
-                
-                await self.view.update_vote_embed(msg)
-                
-                await interaction.response.send_message(f"You have voted: {self.label}", ephemeral=True)
+            is_good = (is_reward ^ (not verdict))
+            button_label = self.keywords[is_reward][verdict]
+            button_style = ButtonStyle.green if is_good else ButtonStyle.red
+            
+            super().__init__(style=button_style, label=button_label, custom_id=f"creditvote_{button_label}")
+            
+        async def callback(self, interaction):
+            msg     = interaction.message
+            user    = interaction.user
+            verdict = self.verdict
+            vote    = self.view.client.db.get_user_vote(msg.id, user.id)
+            
+            if vote != None:
+                await interaction.response.send_message(f"You have already voted '{self.keywords[self.is_reward][vote]}' in this poll.", ephemeral=True)
+                return
+            
+            self.view.client.db.set_user_vote(msg.id, user, verdict) 
+            
+            await self.view.update_vote_embed(msg)
+            
+            await interaction.response.send_message(f"You have voted: {self.label}", ephemeral=True)
 
     
     async def post_vote(self, interaction, user_id, feat, value):
