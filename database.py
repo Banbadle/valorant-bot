@@ -576,7 +576,8 @@ class Database():
     # CreditChanges table functions
 #------------------------------------------------------------------------------
 
-    def record_credit_change(self, user_id, 
+    def record_credit_change(self, 
+                             user_id, 
                              event_name, 
                              change_value,
                              cooldown=0, 
