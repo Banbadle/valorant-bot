@@ -13,9 +13,9 @@ class CreditVoting(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.view_penalty = self.CreditVoteView(self.client, 0)
+        self.view_penalty = self.CreditVoteView(self, 0)
         self.client.add_view(self.view_penalty)
-        self.view_reward  = self.CreditVoteView(self.client, 1)
+        self.view_reward  = self.CreditVoteView(self, 1)
         self.client.add_view(self.view_reward)
         print("creditvoting.py loaded")
         
@@ -34,8 +34,8 @@ class CreditVoting(commands.Cog):
         await ctx.send(content="Select a Category", view=select_view)
 
     class CreditVoteView(View):
-        def __init__(self, client, is_reward):           
-            self.client = client
+        def __init__(self, base_cog, is_reward):           
+            self.base_cog = base_cog
             self.is_reward = is_reward
             super().__init__(timeout=None)
             
@@ -54,7 +54,7 @@ class CreditVoting(commands.Cog):
             return self.children[self.is_reward]
         
         async def update_vote_embed(self, message):
-            votes   = self.client.db.get_votes(message.id)
+            votes   = self.base_cog.client.db.get_votes(message.id)
             num_yes = sum(votes)
             num_no  = len(votes)-num_yes
             
@@ -74,8 +74,8 @@ class CreditVoting(commands.Cog):
             
         def make_buttons(self):
             
-            button_bad  = self.CreditVoteButton(self.is_reward, not self.is_reward)
-            button_good = self.CreditVoteButton(self.is_reward, self.is_reward)
+            button_bad  = self.base_cog.CreditVoteButton(self.is_reward, not self.is_reward)
+            button_good = self.base_cog.CreditVoteButton(self.is_reward, self.is_reward)
             
             self.add_item(button_bad)
             self.add_item(button_good)
