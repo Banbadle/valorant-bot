@@ -571,6 +571,35 @@ class Database():
             result = cursor.fetchone()
             if result is not None:
                 return int(result[0])
+            
+#------------------------------------------------------------------------------
+    # CreditChanges table functions
+#------------------------------------------------------------------------------
+
+    def record_credit_change(self, user_id, 
+                             event_name, 
+                             change_value,
+                             cooldown=0, 
+                             vote_msg_id=None,
+                             cause_user_id=None, 
+                             processed=None):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO creditchanges (
+                    user_id, 
+                    event_name, 
+                    change_value,
+                    vote_msg_id,
+                    cause_user_id,
+                    processed,
+                    end_time
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP() + INTERVAL %s MINUTE
+                )
+            ''', (user_id, event_name, change_value, vote_msg_id, cause_user_id, processed, cooldown))
+        self.connection.commit()
         
 #------------------------------------------------------------------------------
     # CreditVotes table functions
