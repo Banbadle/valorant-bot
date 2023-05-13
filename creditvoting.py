@@ -142,17 +142,24 @@ class CreditVoting(commands.Cog):
         
         await interaction.response.defer()
         msg = await interaction.followup.send(embed=new_embed, view=view)
+        msg_id = msg.id
         
         self.client.db.record_credit_change(user_id, 
                                             feat, 
                                             value,
                                             cooldown=duration, 
-                                            vote_msg_id=msg.id,
+                                            vote_msg_id=msg_id,
                                             cause_user_id=interaction.user.id)
         
         await asyncio.sleep(5)#duration)
         
+        results = self.client.db.get_votes(msg_id)
+        v_yes = sum(results)
+        v_no  = len(results) - v_yes
+        
         await msg.delete()
+        
+        await self.post_result(interaction, user_id, feat, value, v_yes, v_no) 
         
     async def post_result(self, interaction, user_id, feat, value, v_yes, v_no):
         
