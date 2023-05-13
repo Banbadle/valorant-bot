@@ -177,7 +177,7 @@ class CreditVoting(commands.Cog):
                             They have been awarded {value} {CREDIT_NAME}'''
             else:
                 title_text = f'''<@{user_id}> has been found guilty of {feat}.
-                            They have been fined {value} {CREDIT_NAME}.'''
+                            They have been fined {abs(value)} {CREDIT_NAME}.'''
         else:
             if is_reward:
                 title_text = f"The reward for {feat} has been denied to <@{user_id}>."
