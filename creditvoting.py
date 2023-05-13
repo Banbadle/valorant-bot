@@ -19,7 +19,7 @@ class CreditVoting(commands.Cog):
         self.client.add_view(self.view_reward)
         print("creditvoting.py loaded")
         
-    def get_view(self, is_reward):
+    def get_vote_view(self, is_reward):
         return self.view_reward if is_reward else self.view_penalty
 
     @commands.command(help = f"Starts a {CREDIT_NAME} vote")
@@ -127,7 +127,7 @@ class CreditVoting(commands.Cog):
                                         Please note that your vote cannot be changed once selected.''',
                             inline=False)
             
-        view = self.get_view(is_reward)
+        view = self.get_vote_view(is_reward)
         
         new_embed.add_field(name=f"__{view.get_bad_button().label}__",  value="0")
         new_embed.add_field(name=f"__{view.get_good_button().label}__",  value="0")
