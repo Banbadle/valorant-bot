@@ -154,7 +154,7 @@ class CreditVoting(commands.Cog):
         
         await msg.delete()
         
-    async def post_result(self, ctx, user_id, feat, value, v_yes, v_no):
+    async def post_result(self, interaction, user_id, feat, value, v_yes, v_no):
         
         ## TEMP TO ALLOW TESTING IN DISCORD, DELETE BEFORE PUSHING
         user_id = int(user_id)
@@ -188,7 +188,7 @@ class CreditVoting(commands.Cog):
 
         new_embed.add_field(name=f"{feat}",  value=title_text + "\n" + vote_str,  inline=False)
 
-        message = await ctx.send(embed=new_embed)
+        message = await interaction.followup.send(embed=new_embed)
         return message
 
     class SelectCategory(Select):
