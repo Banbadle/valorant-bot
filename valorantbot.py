@@ -8,8 +8,6 @@ from discord.ext import commands
 from discord.ui import Button, Select, View
 from discord import SelectOption, ButtonStyle
 
-import authordetails
-
 import asyncio
 import nest_asyncio
 nest_asyncio.apply()
