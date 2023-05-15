@@ -20,6 +20,11 @@ client.db = Database()
 
 @client.command()
 @commands.check(is_admin)
+async def sync(ctx):
+    await client.tree.sync()
+
+@client.command()
+@commands.check(is_admin)
 async def load(ctx, extension):
     client.load_extension(extension)
 
