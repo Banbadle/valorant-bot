@@ -496,6 +496,16 @@ class Database():
     # CreditEventTypes table functions
 #------------------------------------------------------------------------------
 
+    def modify_event(self, event_name, column_name, new_value):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute(f'''
+                UPDATE crediteventtypes
+                SET {column_name} = %s
+                WHERE event_name = %s;
+            ''', (new_value, event_name))
+        self.connection.commit()
+
 
     def add_credit_event_type(self, event_name, default_value, event_category="Misc", cooldown=10, public="TRUE"):
         self._refresh_connection()

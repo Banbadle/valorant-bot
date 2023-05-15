@@ -12,5 +12,10 @@ class VoteCommands(commands.Cog):
     async def on_ready(self):
         
         print("votecommands.py loaded")
+    @commands.command()
+    @commands.check(is_admin)
+    async def modifyevent(self, ctx, event_name, column_name, new_value):
+        self.client.db.modify_event(event_name, column_name, new_value)
+        
 async def setup(client):
     await client.add_cog(VoteCommands(client))
