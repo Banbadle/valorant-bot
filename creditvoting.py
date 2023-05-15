@@ -46,6 +46,12 @@ class CreditVoting(commands.Cog):
         select_categ = self.SelectCategory(self, user, is_reward)
         select_view = View()
         select_view.add_item(select_categ)
+        
+        channel = interaction.channel
+        if channel.name != "credit-votes":
+            await interaction.response.send_message(
+                content="You must be in a channel called 'credit-votes' to report or nominate someone.",
+                ephemeral=True) 
             
         await interaction.response.send_message(content="Select a Category", view=select_view, ephemeral=True)
 
