@@ -46,7 +46,7 @@ class Notifications(commands.Cog):
                 react_stamp_str = self.interact_val_to_str(poster_react_stamp)
                 if react_stamp_str == "Unavailable":
                     await notify_user.send(f"<@{poster_user_id}> is now Unavailable.")
-                    return
+                    continue
                 await notify_user.send(f"<@{poster_user_id}> also wants to play " + "at "*(react_stamp_str!="Now") + f"{react_stamp_str} in {guild_name}.")
                 
     # async def notify_join(self, join_user_id, join_channel):

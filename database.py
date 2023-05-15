@@ -116,7 +116,7 @@ class Database():
                     AND u.notify = 1
             ''', (message_id,))
             result = cursor.fetchall()
-            return result and result[0]
+            return result and list(r[0] for r in result)
 
     def _get_user(self, user_id):
         self._refresh_connection()
@@ -404,7 +404,7 @@ class Database():
                     message_id, user_id, react_stamp
                 ) VALUES (
                     %s, %s, %s
-                ) ON DUPLICATE KEY UPDATE removed = NULL
+                ) ON DUPLICATE KEY UPDATE removed = NULL, created = UTC_TIMESTAMP();
             ''', (message_id, user_id, react_stamp))
         self.connection.commit()
 
