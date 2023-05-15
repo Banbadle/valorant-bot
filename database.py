@@ -508,11 +508,17 @@ class Database():
             ''', (event_name, default_value, event_category, public))
         self.connection.commit()
         
-    def get_event_categories(self):
+    def get_event_categories(self, is_reward=None):
+        extra_str = ""
+        if is_reward == 1:
+            extra_str = "WHERE default_value > 0"
+        elif is_reward == 0:
+            extra_str = "WHERE default_value < 0"
+        
         self._refresh_connection()
         
         with self.connection.cursor() as cursor:
-            cursor.execute('SELECT DISTINCT event_category FROM crediteventtypes')
+            cursor.execute(f'SELECT DISTINCT event_category FROM crediteventtypes {extra_str}')
             
             results = cursor.fetchall()
             return list(r[0] for r in results)
