@@ -17,5 +17,10 @@ class VoteCommands(commands.Cog):
     async def modifyevent(self, ctx, event_name, column_name, new_value):
         self.client.db.modify_event(event_name, column_name, new_value)
         
+    @commands.command()
+    @commands.check(is_admin)
+    async def changecategoryname(self, ctx, category_name_old, category_name_new):
+        self.client.db.change_category_name(category_name_old, category_name_new)
+        
 async def setup(client):
     await client.add_cog(VoteCommands(client))

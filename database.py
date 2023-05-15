@@ -506,6 +506,19 @@ class Database():
             ''', (new_value, event_name))
         self.connection.commit()
 
+    def change_category_name(self, category_old, category_new):
+        print(category_old, category_new)
+        self._refresh_connection()
+        print("STARTING")
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE crediteventtypes
+                SET event_category = %s
+                WHERE event_category = %s;
+            ''', (category_new, category_old))
+            print("SET")
+        self.connection.commit()
+        print("ENDED")
 
     def add_credit_event_type(self, event_name, default_value, event_category="Misc", cooldown=10, public="TRUE"):
         self._refresh_connection()
