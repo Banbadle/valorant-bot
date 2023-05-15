@@ -592,10 +592,10 @@ class Database():
                              cause_user=None, 
                              processed=None):
         
-        if not self._get_user(user.id):
+        if user and not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
             
-        if not self._get_user(cause_user.id):
+        if cause_user and not self._get_user(cause_user.id):
             self._add_user(cause_user.name, cause_user.discriminator, cause_user.id)
 
         self._record_credit_change(user, 
