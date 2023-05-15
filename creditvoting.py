@@ -18,10 +18,28 @@ class CreditVoting(commands.Cog):
         self.client.add_view(self.view_penalty)
         self.view_reward  = self.CreditVoteView(self, 1)
         self.client.add_view(self.view_reward)
+        
+        self.report_menu = app_commands.ContextMenu(
+            name = "Report for fine",
+            callback=self.ASCvote_bad)
+        
+        self.commend_menu = app_commands.ContextMenu(
+            name = "Nominate for reward",
+            callback=self.ASCvote_good)
+            
+        self.client.tree.add_command(self.report_menu)
+        self.client.tree.add_command(self.commend_menu)
         print("creditvoting.py loaded")
+        
         
     def get_vote_view(self, is_reward):
         return self.view_reward if is_reward else self.view_penalty
+    
+    def ASCvote_good(self, interaction: Interaction, user: Member):
+        return self.ASCvote(interaction, user, 1)
+    
+    def ASCvote_bad(self, interaction: Interaction, user: Member):
+        return self.ASCvote(interaction, user, 0)
 
     async def ASCvote(self, interaction: Interaction, user: Member, is_reward: int):
         
