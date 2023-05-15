@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   val_username VARCHAR(255), -- Valorant username
   val_tag VARCHAR(255), -- Valorant tag
   val_rank TINYINT(8), -- Valorant rank
-  notify TINYINT(1) NOT NULL DEFAULT 0, -- Notify on message updates
+  notify TINYINT(1) NOT NULL DEFAULT 1, -- Notify on message updates
   is_admin TINYINT(1) NOT NULL DEFAULT 0,
   timezone VARCHAR(255) DEFAULT 'Europe/London',
   -- on time and not on time
