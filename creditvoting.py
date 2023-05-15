@@ -195,20 +195,24 @@ class CreditVoting(commands.Cog):
         if pass_condition:
             
             if is_reward:
-                title_text = f'''The reward for {feat} has been granted to <@{user.id}>.
+                title_text = f'''The reward for {feat} has been **GRANTED** to <@{user.id}>.
                             They have been awarded {value} {CREDIT_NAME}'''
             else:
-                title_text = f'''<@{user.id}> has been found guilty of {feat}.
+                title_text = f'''<@{user.id}> has been found **GUILTY** of {feat}.
                             They have been fined {abs(value)} {CREDIT_NAME}.'''
         else:
             if is_reward:
-                title_text = f"The reward for {feat} has been denied to <@{user.id}>."
+                title_text = f"The reward for {feat} has been **DENIED** to <@{user.id}>."
             else:
-                title_text = f"Charges of {feat} have been dropped against <@{user.id}>."
-                
-        vote_str = f"Denied ({v_no}) v ({v_yes}) Accepted" if is_reward else f"Guilty ({v_yes}) v ({v_no}) Innocent"
+                title_text = f"<@{user.id}> has been found **INNOCENT** of {feat}."
 
-        new_embed.add_field(name=f"{feat}",  value=title_text + "\n" + vote_str,  inline=False)
+        new_embed.add_field(name=f"{feat}",  value=title_text ,  inline=False)
+        
+        name_l, name_r = ("__Denied__", "__Accepted__") if is_reward else ("__Guilty__", "__Innocent__")
+        vote_l, vote_r = (v_no, v_yes)          if is_reward else (v_yes, v_no)
+        
+        new_embed.add_field(name=name_l, value=vote_l, inline=True)
+        new_embed.add_field(name=name_r, value=vote_r, inline=True)
 
         message = await interaction.followup.send(embed=new_embed)
         
