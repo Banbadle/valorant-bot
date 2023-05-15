@@ -496,16 +496,17 @@ class Database():
     # CreditEventTypes table functions
 #------------------------------------------------------------------------------
 
-    def add_credit_event_type(self, event_name, default_value, event_category="Misc", public="TRUE"):
+
+    def add_credit_event_type(self, event_name, default_value, event_category="Misc", cooldown=10, public="TRUE"):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
-            cursor.execute('''
+            cursor.execute(f'''
                 INSERT INTO crediteventtypes (
-                    event_name, default_value, event_category, public
+                    event_name, default_value, event_category, cooldown, public
                 ) VALUES (
-                    %s, %s, %s, %s
+                    %s, %s, %s, %s, {public}
                 )
-            ''', (event_name, default_value, event_category, public))
+            ''', (event_name, default_value, event_category, cooldown))
         self.connection.commit()
         
     def get_event_categories(self, is_reward=None):
