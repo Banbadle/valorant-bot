@@ -577,12 +577,35 @@ class Database():
 #------------------------------------------------------------------------------
 
     def record_credit_change(self, 
-                             user_id, 
+                             user, 
                              event_name, 
                              change_value,
                              cooldown=0, 
                              vote_msg_id=None,
-                             cause_user_id=None, 
+                             cause_user=None, 
+                             processed=None):
+        
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+            
+        if not self._get_user(cause_user.id):
+            self._add_user(cause_user.name, cause_user.discriminator, cause_user.id)
+
+        self._record_credit_change(user, 
+                                   event_name, 
+                                   change_value, 
+                                   cooldown, 
+                                   vote_msg_id, 
+                                   cause_user, 
+                                   processed)
+        
+    def _record_credit_change(self, 
+                             user, 
+                             event_name, 
+                             change_value,
+                             cooldown=0, 
+                             vote_msg_id=None,
+                             cause_user=None, 
                              processed=None):
         self._refresh_connection()
         
@@ -599,7 +622,7 @@ class Database():
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP() + INTERVAL %s MINUTE
                 )
-            ''', (user_id, event_name, change_value, vote_msg_id, cause_user_id, processed, cooldown))
+            ''', (user.id, event_name, change_value, vote_msg_id, cause_user.id, processed, cooldown))
         self.connection.commit()
         
     def process_credit_change(self, vote_msg_id, processed, verdict_msg_id):

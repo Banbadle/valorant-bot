@@ -144,12 +144,14 @@ class CreditVoting(commands.Cog):
         msg = await interaction.followup.send(embed=new_embed, view=view)
         msg_id = msg.id
         
-        self.client.db.record_credit_change(user_id, 
+        user = await interaction.guild.fetch_member(user_id)
+        
+        self.client.db.record_credit_change(user, 
                                             feat, 
                                             value,
                                             cooldown=duration, 
                                             vote_msg_id=msg_id,
-                                            cause_user_id=interaction.user.id)
+                                            cause_user=interaction.user)
         await asyncio.sleep(5)#duration)
         
         results = self.client.db.get_votes(msg_id)
@@ -162,11 +164,10 @@ class CreditVoting(commands.Cog):
         
         await self.process_vote_result(interaction, user_id, feat, value, msg_id, verdict, result_msg.id)
         
-    async def process_vote_result(self, interaction, user_id, feat, value, msg_id, verdict, result_msg_id):
+    async def process_vote_result(self, interaction, user, feat, value, msg_id, verdict, result_msg_id):
 
         self.client.db.process_credit_change(msg_id, verdict, result_msg_id)
         if verdict == 1:
-            user = await interaction.guild.fetch_member(user_id)
             self.client.db.add_social_credit(user, value)
         
     async def post_result(self, interaction, user_id, feat, value, v_yes, v_no):
