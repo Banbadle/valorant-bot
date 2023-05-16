@@ -12,6 +12,16 @@ class VoteCommands(commands.Cog):
     async def on_ready(self):
         
         print("votecommands.py loaded")
+        
+    @commands.command()
+    @commands.check(is_admin)
+    async def addevent(self, ctx, event_name, default_value, event_category="Misc", cooldown=10, public="TRUE"):
+        self.client.db.add_credit_event_type(event_name, 
+                                             default_value,
+                                             event_category=event_category,
+                                             cooldown=cooldown,
+                                             public=public)
+        
     @commands.command()
     @commands.check(is_admin)
     async def modifyevent(self, ctx, event_name, column_name, new_value):
