@@ -70,5 +70,37 @@ class VoteCommands(commands.Cog):
         
         await cv.process_vote_result(interaction, user, feat, value, msg_id, 1, msg_id)
         
+    @commands.command()
+    @commands.check(is_admin)
+    async def voidvote(self, ctx):
+        print("RUN:")
+        
+        db = self.client.db
+        result_msg_id = ctx.message.reference.message_id
+        details = db.get_credit_change(result_msg_id)
+        
+        if not details:
+            return
+        
+        user_id = int(details['user_id'])
+        user = self.client.get_user(user_id)
+        
+        if details['processed'] == 1:
+            inv_num = -int(details['change_value'])
+            
+            result_msg = await ctx.channel.fetch_message(result_msg_id)
+            base_embed = result_msg.embeds[0]
+            embed_dict = base_embed.to_dict()
+
+            field = embed_dict['fields'][-1]
+            field['value'] = f"~~{field['value']}~~" + "\n\n" + "__**VOIDED**__"
+            
+            new_embed = discord.Embed.from_dict(embed_dict)
+            
+            await result_msg.edit(embed=new_embed)
+            
+            db.void_credit_change(result_msg_id)
+            db.add_social_credit(user, inv_num)   
+        
 async def setup(client):
     await client.add_cog(VoteCommands(client))
