@@ -688,6 +688,18 @@ class Database():
             result = cursor.fetchone()
             return result
         
+    def void_credit_change(self, verdict_msg_id):
+        details = self.get_credit_change(verdict_msg_id)
+        
+        if details['processed'] == 1:
+            with self.connection.cursor() as cursor:
+                cursor.execute('''
+                    UPDATE creditchanges
+                    SET processed = NULL
+                    WHERE verdict_msg_id = %s
+                ''', (verdict_msg_id, ))
+            self.connection.commit()
+        
 #------------------------------------------------------------------------------
     # CreditVotes table functions
 #------------------------------------------------------------------------------    
