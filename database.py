@@ -677,6 +677,17 @@ class Database():
             ''', (processed, verdict_msg_id, vote_msg_id))
         self.connection.commit()
         
+    def get_credit_change(self, verdict_msg_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT *
+                FROM creditchanges
+                WHERE verdict_msg_id = %s
+            ''', (verdict_msg_id, ))
+            result = cursor.fetchone()
+            return result
+        
 #------------------------------------------------------------------------------
     # CreditVotes table functions
 #------------------------------------------------------------------------------    
