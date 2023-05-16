@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
   id BIGINT NOT NULL, -- Discord user id
   username VARCHAR(255) NOT NULL, -- Discord username
   tag SMALLINT(255) NOT NULL, -- Discord tag
-  social_credit INT NOT NULL DEFAULT 0,
+  social_credit INT NOT NULL DEFAULT 100,
   val_username VARCHAR(255), -- Valorant username
   val_tag VARCHAR(255), -- Valorant tag
   val_rank TINYINT(8), -- Valorant rank
