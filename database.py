@@ -646,8 +646,11 @@ class Database():
                              vote_msg_id=None,
                              cause_user=None, 
                              processed=None):
-        self._refresh_connection()
         
+        user_id = None if not user else user.id
+        cause_user_id = None if not cause_user else cause_user.id
+        
+        self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO creditchanges (
@@ -661,7 +664,7 @@ class Database():
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s, UTC_TIMESTAMP() + INTERVAL %s MINUTE
                 )
-            ''', (user.id, event_name, change_value, vote_msg_id, cause_user.id, processed, cooldown))
+            ''', (user_id, event_name, change_value, vote_msg_id, cause_user_id, processed, cooldown))
         self.connection.commit()
         
     def process_credit_change(self, vote_msg_id, processed, verdict_msg_id):
