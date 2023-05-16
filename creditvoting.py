@@ -137,7 +137,7 @@ class CreditVoting(commands.Cog):
             await interaction.response.send_message(f"You have voted: {self.label}", ephemeral=True)
 
     
-    async def post_vote(self, interaction, user, feat, value, duration):
+    async def post_vote(self, interaction, user, feat, value, cooldown):
         
         is_reward = value > 0
         
@@ -167,10 +167,10 @@ class CreditVoting(commands.Cog):
         self.client.db.record_credit_change(user, 
                                             feat, 
                                             value,
-                                            cooldown=duration, 
+                                            cooldown=cooldown, 
                                             vote_msg_id=msg_id,
                                             cause_user=interaction.user)
-        await asyncio.sleep(5)#duration)
+        await asyncio.sleep(5)#duration * 60)
         
         results = self.client.db.get_votes(msg_id)
         v_yes = sum(results)
@@ -271,8 +271,8 @@ class CreditVoting(commands.Cog):
             event_name = self.values[0]
             details = self.base_cog.client.db.get_event_details(event_name)
             num_credits = details['default_value']
-            duration = details['cooldown'] * 60
-            await self.base_cog.post_vote(interaction, self.user, event_name, num_credits, duration)
+            cooldown = details['cooldown']
+            await self.base_cog.post_vote(interaction, self.user, event_name, num_credits, cooldown)
 
 async def setup(client):
     await client.add_cog(CreditVoting(client))
