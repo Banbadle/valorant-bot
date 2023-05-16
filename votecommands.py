@@ -24,6 +24,11 @@ class VoteCommands(commands.Cog):
         
     @commands.command()
     @commands.check(is_admin)
+    async def deleteevent(self, ctx, event_name):
+        self.client.db.delete_credit_event_type(event_name)
+        
+    @commands.command()
+    @commands.check(is_admin)
     async def modifyevent(self, ctx, event_name, column_name, new_value):
         self.client.db.modify_event(event_name, column_name, new_value)
         

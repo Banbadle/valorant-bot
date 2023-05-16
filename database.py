@@ -532,6 +532,15 @@ class Database():
             ''', (event_name, default_value, event_category, cooldown))
         self.connection.commit()
         
+    def delete_credit_event_type(self, event_name):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                DELETE FROM crediteventtypes
+                WHERE event_name = %s
+            ''', (event_name, ))
+        self.connection.commit()
+        
     def get_event_categories(self, is_reward=None):
         extra_str = ""
         if is_reward == 1:
