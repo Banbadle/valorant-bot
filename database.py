@@ -695,6 +695,18 @@ class Database():
                     WHERE verdict_msg_id = %s
                 ''', (verdict_msg_id, ))
             self.connection.commit()
+            
+    def get_user_active_event(self, user_id, event_name):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT *
+                FROM creditchanges
+                WHERE user_id = %s
+                    AND event_name = %s
+                    AND end_time >  UTC_TIMESTAMP();
+            ''', (user_id, event_name))
+            result = cursor.fetchone()
+            return result
         
 #------------------------------------------------------------------------------
     # CreditVotes table functions
