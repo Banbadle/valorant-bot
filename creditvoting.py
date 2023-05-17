@@ -174,7 +174,7 @@ class CreditVoting(commands.Cog):
                                             cooldown=cooldown, 
                                             vote_msg_id=msg_id,
                                             cause_user=interaction.user)
-        await asyncio.sleep(5)#duration * 60)
+        await asyncio.sleep(cooldown * 60)
         
         results = self.client.db.get_votes(msg_id)
         v_yes = sum(results)
