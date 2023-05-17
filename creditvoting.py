@@ -138,6 +138,12 @@ class CreditVoting(commands.Cog):
 
     
     async def post_vote(self, interaction, user, feat, value, cooldown):
+        await interaction.response.defer()
+        
+        if self.client.db.get_user_active_event(user.id, feat):
+            await interaction.followup.send("This has been attempted by someone too recently. Try again later",
+                                            ephemeral=True)
+            return
         
         is_reward = value > 0
         
@@ -159,8 +165,6 @@ class CreditVoting(commands.Cog):
         new_embed.add_field(name=f"__{view.get_bad_button().label}__",  value="0")
         new_embed.add_field(name=f"__{view.get_good_button().label}__",  value="0")
         
-        
-        await interaction.response.defer()
         msg = await interaction.followup.send(embed=new_embed, view=view)
         msg_id = msg.id
         
