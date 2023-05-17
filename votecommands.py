@@ -20,7 +20,7 @@ class VoteCommands(commands.Cog):
     async def showcredits(self, ctx, user_mention: str):
         user_id = int(user_mention[2:-1])
         sc = self.client.db.get_social_credit(user_id)
-        if sc:
+        if sc != None:
             await ctx.channel.send(f"{user_mention} has {sc} social credits")
         else:
             await ctx.channel.send(f"I could not find a user in my database called {user_mention}")
