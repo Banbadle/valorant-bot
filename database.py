@@ -496,23 +496,58 @@ class Database():
     # CreditEventTypes table functions
 #------------------------------------------------------------------------------
 
-    def add_credit_event_type(self, event_name, default_value, event_category="Misc", public="TRUE"):
+    def modify_event(self, event_name, column_name, new_value):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute(f'''
+                UPDATE crediteventtypes
+                SET {column_name} = %s
+                WHERE event_name = %s;
+            ''', (new_value, event_name))
+        self.connection.commit()
+
+    def change_category_name(self, category_old, category_new):
         self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
+                UPDATE crediteventtypes
+                SET event_category = %s
+                WHERE event_category = %s;
+            ''', (category_new, category_old))
+        self.connection.commit()
+
+    def add_credit_event_type(self, event_name, default_value, event_category="Misc", cooldown=10, public="TRUE"):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute(f'''
                 INSERT INTO crediteventtypes (
-                    event_name, default_value, event_category, public
+                    event_name, default_value, event_category, cooldown, public
                 ) VALUES (
-                    %s, %s, %s, %s
+                    %s, %s, %s, %s, {public}
                 )
-            ''', (event_name, default_value, event_category, public))
+            ''', (event_name, default_value, event_category, cooldown))
         self.connection.commit()
         
-    def get_event_categories(self):
+    def delete_credit_event_type(self, event_name):
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                DELETE FROM crediteventtypes
+                WHERE event_name = %s
+            ''', (event_name, ))
+        self.connection.commit()
+        
+    def get_event_categories(self, is_reward=None):
+        extra_str = ""
+        if is_reward == 1:
+            extra_str = "WHERE default_value > 0"
+        elif is_reward == 0:
+            extra_str = "WHERE default_value < 0"
+        
         self._refresh_connection()
         
         with self.connection.cursor() as cursor:
-            cursor.execute('SELECT DISTINCT event_category FROM crediteventtypes')
+            cursor.execute(f'SELECT DISTINCT event_category FROM crediteventtypes {extra_str}')
             
             results = cursor.fetchall()
             return list(r[0] for r in results)
@@ -577,15 +612,41 @@ class Database():
 #------------------------------------------------------------------------------
 
     def record_credit_change(self, 
-                             user_id, 
+                             user, 
                              event_name, 
                              change_value,
                              cooldown=0, 
                              vote_msg_id=None,
-                             cause_user_id=None, 
+                             cause_user=None, 
                              processed=None):
-        self._refresh_connection()
         
+        if user and not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+            
+        if cause_user and not self._get_user(cause_user.id):
+            self._add_user(cause_user.name, cause_user.discriminator, cause_user.id)
+
+        self._record_credit_change(user, 
+                                   event_name, 
+                                   change_value, 
+                                   cooldown, 
+                                   vote_msg_id, 
+                                   cause_user, 
+                                   processed)
+        
+    def _record_credit_change(self, 
+                             user, 
+                             event_name, 
+                             change_value,
+                             cooldown=0, 
+                             vote_msg_id=None,
+                             cause_user=None, 
+                             processed=None):
+        
+        user_id = None if not user else user.id
+        cause_user_id = None if not cause_user else cause_user.id
+        
+        self._refresh_connection()
         with self.connection.cursor() as cursor:
             cursor.execute('''
                 INSERT INTO creditchanges (
@@ -611,6 +672,41 @@ class Database():
                 WHERE vote_msg_id = %s
             ''', (processed, verdict_msg_id, vote_msg_id))
         self.connection.commit()
+        
+    def get_credit_change(self, verdict_msg_id):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT *
+                FROM creditchanges
+                WHERE verdict_msg_id = %s
+            ''', (verdict_msg_id, ))
+            result = cursor.fetchone()
+            return result
+        
+    def void_credit_change(self, verdict_msg_id):
+        details = self.get_credit_change(verdict_msg_id)
+        
+        if details['processed'] == 1:
+            with self.connection.cursor() as cursor:
+                cursor.execute('''
+                    UPDATE creditchanges
+                    SET processed = NULL
+                    WHERE verdict_msg_id = %s
+                ''', (verdict_msg_id, ))
+            self.connection.commit()
+            
+    def get_user_active_event(self, user_id, event_name):
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                SELECT *
+                FROM creditchanges
+                WHERE user_id = %s
+                    AND event_name = %s
+                    AND end_time >  UTC_TIMESTAMP();
+            ''', (user_id, event_name))
+            result = cursor.fetchone()
+            return result
         
 #------------------------------------------------------------------------------
     # CreditVotes table functions

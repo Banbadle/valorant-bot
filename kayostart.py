@@ -20,6 +20,11 @@ client.db = Database()
 
 @client.command()
 @commands.check(is_admin)
+async def sync(ctx):
+    await client.tree.sync()
+
+@client.command()
+@commands.check(is_admin)
 async def load(ctx, extension):
     client.load_extension(extension)
 
@@ -64,7 +69,16 @@ async def on_command_completion(ctx):
     await ctx.message.add_reaction("✅")
 
 async def load_cogs():
-    load_list = ["valorantranks.py", "randomselections.py", "valorantbot.py", "timezones.py", "notifications.py", "stratroulette.py"]#, "creditvoting.py"]
+
+    load_list = ["valorantranks.py", 
+                 "randomselections.py", 
+                 "valorantbot.py", 
+                 "timezones.py", 
+                 "notifications.py", 
+                 "stratroulette.py", 
+                 "creditvoting.py",
+                 "votecommands.py"]
+    
     for filename in os.listdir(os.getcwd()):
         if filename in load_list:
             load_list.remove(filename)

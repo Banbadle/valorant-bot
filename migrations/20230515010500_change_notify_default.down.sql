@@ -1,0 +1,3 @@
+ALTER TABLE users ALTER COLUMN notify SET DEFAULT 0;
+UPDATE users
+SET notify = 0;

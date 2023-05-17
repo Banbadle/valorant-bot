@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from checks import is_admin
 from discord.ui import Button, Select, View
-from discord import SelectOption, ButtonStyle
+from discord import SelectOption, ButtonStyle, Interaction, Member, app_commands
 import asyncio
 
 CREDIT_NAME = "social credits"
@@ -18,22 +18,42 @@ class CreditVoting(commands.Cog):
         self.client.add_view(self.view_penalty)
         self.view_reward  = self.CreditVoteView(self, 1)
         self.client.add_view(self.view_reward)
+        
+        self.report_menu = app_commands.ContextMenu(
+            name = "Report",
+            callback=self.ASCvote_bad)
+        
+        self.commend_menu = app_commands.ContextMenu(
+            name = "Nominate",
+            callback=self.ASCvote_good)
+            
+        self.client.tree.add_command(self.report_menu)
+        self.client.tree.add_command(self.commend_menu)
         print("creditvoting.py loaded")
+        
         
     def get_vote_view(self, is_reward):
         return self.view_reward if is_reward else self.view_penalty
+    
+    def ASCvote_good(self, interaction: Interaction, user: Member):
+        return self.ASCvote(interaction, user, 1)
+    
+    def ASCvote_bad(self, interaction: Interaction, user: Member):
+        return self.ASCvote(interaction, user, 0)
 
-    @commands.command(help = f"Starts a {CREDIT_NAME} vote")
-    @commands.guild_only()
-    @commands.check(is_admin)
-    async def ASCvote(self, ctx, user_mention):
+    async def ASCvote(self, interaction: Interaction, user: Member, is_reward: int):
         
-        user_id = int(user_mention[2:-1])
-        select_categ = self.SelectCategory(self, user_id)
+        select_categ = self.SelectCategory(self, user, is_reward)
         select_view = View()
         select_view.add_item(select_categ)
+        
+        channel = interaction.channel
+        if channel.name != "credit-votes":
+            await interaction.response.send_message(
+                content="You must be in a channel called 'credit-votes' to report or nominate someone.",
+                ephemeral=True) 
             
-        await ctx.send(content="Select a Category", view=select_view)
+        await interaction.response.send_message(content="Select a Category", view=select_view, ephemeral=True)
 
     class CreditVoteView(View):
         def __init__(self, base_cog, is_reward):           
@@ -117,7 +137,13 @@ class CreditVoting(commands.Cog):
             await interaction.response.send_message(f"You have voted: {self.label}", ephemeral=True)
 
     
-    async def post_vote(self, interaction, user_id, feat, value, duration):
+    async def post_vote(self, interaction, user, feat, value, cooldown):
+        await interaction.response.defer()
+        
+        if self.client.db.get_user_active_event(user.id, feat):
+            await interaction.followup.send("This has been attempted by someone too recently. Try again later",
+                                            ephemeral=True)
+            return
         
         is_reward = value > 0
         
@@ -126,10 +152,10 @@ class CreditVoting(commands.Cog):
         
         
         title_text = "nominated for" if is_reward else "accused of"
-        inner_text = f"If supported, <@{user_id}> would receive" if is_reward else f"If found guilty, <@{user_id}> would be fined"
+        inner_text = f"If supported, <@{user.id}> would receive" if is_reward else f"If found guilty, <@{user.id}> would be fined"
 
         new_embed.add_field(name=f"{feat}", 
-                            value=f'''<@{user_id}> has been {title_text}: {feat} 
+                            value=f'''<@{user.id}> has been {title_text}: {feat} 
                                         {inner_text} {abs(value)} {CREDIT_NAME}.
                                         Please note that your vote cannot be changed once selected.''',
                             inline=False)
@@ -139,18 +165,16 @@ class CreditVoting(commands.Cog):
         new_embed.add_field(name=f"__{view.get_bad_button().label}__",  value="0")
         new_embed.add_field(name=f"__{view.get_good_button().label}__",  value="0")
         
-        
-        await interaction.response.defer()
         msg = await interaction.followup.send(embed=new_embed, view=view)
         msg_id = msg.id
         
-        self.client.db.record_credit_change(user_id, 
+        self.client.db.record_credit_change(user, 
                                             feat, 
                                             value,
-                                            cooldown=duration, 
+                                            cooldown=cooldown, 
                                             vote_msg_id=msg_id,
-                                            cause_user_id=interaction.user.id)
-        await asyncio.sleep(5)#duration)
+                                            cause_user=interaction.user)
+        await asyncio.sleep(cooldown * 60)
         
         results = self.client.db.get_votes(msg_id)
         v_yes = sum(results)
@@ -158,24 +182,17 @@ class CreditVoting(commands.Cog):
         
         await msg.delete()
         
-        result_msg, verdict = await self.post_result(interaction, user_id, feat, value, v_yes, v_no) 
+        result_msg, verdict = await self.post_result(interaction, user, feat, value, v_yes, v_no) 
         
-        await self.process_vote_result(interaction, user_id, feat, value, msg_id, verdict, result_msg.id)
+        await self.process_vote_result(interaction, user, feat, value, msg_id, verdict, result_msg.id)
         
-    async def process_vote_result(self, interaction, user_id, feat, value, msg_id, verdict, result_msg_id):
+    async def process_vote_result(self, interaction, user, feat, value, msg_id, verdict, result_msg_id):
 
         self.client.db.process_credit_change(msg_id, verdict, result_msg_id)
         if verdict == 1:
-            user = await interaction.guild.fetch_member(user_id)
             self.client.db.add_social_credit(user, value)
         
-    async def post_result(self, interaction, user_id, feat, value, v_yes, v_no):
-        
-        ## TEMP TO ALLOW TESTING IN DISCORD, DELETE BEFORE PUSHING
-        user_id = int(user_id)
-        v_yes = int(v_yes)
-        v_no = int(v_no)
-        value = int(value)
+    async def post_result(self, interaction, user, feat, value, v_yes, v_no):
         
         pass_condition = (v_yes > v_no) and v_yes > 1
         is_reward = value > 0
@@ -188,20 +205,24 @@ class CreditVoting(commands.Cog):
         if pass_condition:
             
             if is_reward:
-                title_text = f'''The reward for {feat} has been granted to <@{user_id}>.
+                title_text = f'''The reward for {feat} has been **GRANTED** to <@{user.id}>.
                             They have been awarded {value} {CREDIT_NAME}'''
             else:
-                title_text = f'''<@{user_id}> has been found guilty of {feat}.
+                title_text = f'''<@{user.id}> has been found **GUILTY** of {feat}.
                             They have been fined {abs(value)} {CREDIT_NAME}.'''
         else:
             if is_reward:
-                title_text = f"The reward for {feat} has been denied to <@{user_id}>."
+                title_text = f"The reward for {feat} has been **DENIED** to <@{user.id}>."
             else:
-                title_text = f"Charges of {feat} have been dropped against <@{user_id}>."
-                
-        vote_str = f"Denied ({v_no}) v ({v_yes}) Accepted" if is_reward else f"Guilty ({v_yes}) v ({v_no}) Innocent"
+                title_text = f"<@{user.id}> has been found **INNOCENT** of {feat}."
 
-        new_embed.add_field(name=f"{feat}",  value=title_text + "\n" + vote_str,  inline=False)
+        new_embed.add_field(name=f"{feat}",  value=title_text ,  inline=False)
+        
+        name_l, name_r = ("__Denied__", "__Accepted__") if is_reward else ("__Guilty__", "__Innocent__")
+        vote_l, vote_r = (v_no, v_yes)          if is_reward else (v_yes, v_no)
+        
+        new_embed.add_field(name=name_l, value=vote_l, inline=True)
+        new_embed.add_field(name=name_r, value=vote_r, inline=True)
 
         message = await interaction.followup.send(embed=new_embed)
         
@@ -209,11 +230,11 @@ class CreditVoting(commands.Cog):
 
     class SelectCategory(Select):
 
-        def __init__(self, base_cog, user_id):
+        def __init__(self, base_cog, user, is_reward=None):
             self.base_cog   = base_cog
-            self.user_id    = user_id
+            self.user       = user
             
-            category_list = self.base_cog.client.db.get_event_categories()
+            category_list = self.base_cog.client.db.get_event_categories(is_reward)
             
             option_list = []
             for categ in category_list:
@@ -226,7 +247,7 @@ class CreditVoting(commands.Cog):
                 
         async def callback(self, interaction):
             category        = self.values[0]
-            select_event    = self.base_cog.SelectEventType(self.base_cog, self.user_id, category)
+            select_event    = self.base_cog.SelectEventType(self.base_cog, self.user, category)
             select_view     = View()
             
             select_view.add_item(select_event)
@@ -234,9 +255,9 @@ class CreditVoting(commands.Cog):
             
     class SelectEventType(Select):
         
-        def __init__(self, base_cog, user_id, category):
+        def __init__(self, base_cog, user, category):
             self.base_cog   = base_cog
-            self.user_id    = user_id
+            self.user       = user
             self.category   = category
             
             event_types = self.base_cog.client.db.get_event_types_from_category(category)
@@ -254,8 +275,8 @@ class CreditVoting(commands.Cog):
             event_name = self.values[0]
             details = self.base_cog.client.db.get_event_details(event_name)
             num_credits = details['default_value']
-            duration = details['cooldown'] * 60
-            await self.base_cog.post_vote(interaction, self.user_id, event_name, num_credits, duration)
+            cooldown = details['cooldown']
+            await self.base_cog.post_vote(interaction, self.user, event_name, num_credits, cooldown)
 
 async def setup(client):
     await client.add_cog(CreditVoting(client))
