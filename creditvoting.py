@@ -20,11 +20,11 @@ class CreditVoting(commands.Cog):
         self.client.add_view(self.view_reward)
         
         self.report_menu = app_commands.ContextMenu(
-            name = "Report for fine",
+            name = "Report",
             callback=self.ASCvote_bad)
         
         self.commend_menu = app_commands.ContextMenu(
-            name = "Nominate for reward",
+            name = "Nominate",
             callback=self.ASCvote_good)
             
         self.client.tree.add_command(self.report_menu)
