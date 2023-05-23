@@ -23,6 +23,23 @@ class Database():
         if self.connection.is_connected():
             return
         self._connect()
+        
+#------------------------------------------------------------------------------
+    # GENERIC QUERIES
+#------------------------------------------------------------------------------
+
+    # Only use for database updates when automatic up.sql files don't run
+    def set_sql_query(self, query): 
+        self._refresh_connection()
+        with self.connection.cursor() as cursor:
+            cursor.execute(query)
+        self.connection.commit()
+        
+    def return_sql_query(self, query):
+        self._refresh_connection()
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute(query)
+            return cursor.fetchall()
 
 #------------------------------------------------------------------------------
     # Users table functions
