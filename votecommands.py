@@ -1,10 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction
-from checks import is_admin
+from checks import slash_is_admin
 import discord
-
-def slash_is_admin(interaction: Interaction):
-    return interaction.client.db.is_admin(interaction.user.id)
 
 class VoteCommands(commands.Cog):
     
