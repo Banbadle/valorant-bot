@@ -32,7 +32,9 @@ class Database():
     def set_sql_query(self, query): 
         self._refresh_connection()
         with self.connection.cursor() as cursor:
-            cursor.execute(query)
+            for res in cursor.execute(query, multi=True):
+                print('cursor:', res)
+                    
         self.connection.commit()
         
     def return_sql_query(self, query):
