@@ -2,7 +2,7 @@ import discord
 import os
 from discord.ext import commands
 from database import Database
-from checks import is_admin
+from checks import is_admin, slash_is_admin
 import toml
 from git import Repo
 import requests
@@ -55,6 +55,28 @@ async def sendmsg(ctx, *, msg):
 async def setbotimage(ctx, url):
     img = requests.get(url).content
     await client.user.edit(avatar=img)
+    
+@client.tree.command()
+@commands.check(slash_is_admin)
+async def sqlforce(interaction: discord.Interaction, query: str):
+    client.db.set_sql_query(query)
+    await interaction.response.send_message("Query Completed", ephemeral=True)
+
+@client.tree.command()
+@commands.check(slash_is_admin)
+async def sqlget(interaction: discord.Interaction, query: str):
+    output = client.db.return_sql_query(query)
+    if output:
+        output_dict = {key: [] for key in output[0]}
+            
+        for res in output:
+            for key, val in res.items():
+                output_dict[key].append(str(val))
+        new_embed = discord.Embed(title="Query Result")
+        for key, vals in output_dict.items():
+            new_embed.add_field(name=key, value="\n".join(vals), inline=True)
+        
+    await interaction.response.send_message(embed=new_embed, ephemeral=True)
 
 @client.event
 async def on_command_error(ctx, error):
