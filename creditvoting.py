@@ -24,7 +24,7 @@ class CreditVoting(commands.Cog):
             callback=self.ASCvote_bad)
         
         self.commend_menu = app_commands.ContextMenu(
-            name = "Nominate",
+            name = "Reward",
             callback=self.ASCvote_good)
             
         self.client.tree.add_command(self.report_menu)
@@ -50,7 +50,7 @@ class CreditVoting(commands.Cog):
         channel = interaction.channel
         if channel.name != "credit-votes":
             await interaction.response.send_message(
-                content="You must be in a channel called 'credit-votes' to report or nominate someone.",
+                content="You must be in a channel called 'credit-votes' to report or reward someone.",
                 ephemeral=True) 
             
         await interaction.response.send_message(content="Select a Category", view=select_view, ephemeral=True)
