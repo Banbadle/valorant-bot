@@ -66,17 +66,20 @@ async def sqlforce(interaction: discord.Interaction, query: str):
 @commands.check(slash_is_admin)
 async def sqlget(interaction: discord.Interaction, query: str):
     output = client.db.return_sql_query(query)
-    if output:
-        output_dict = {key: [] for key in output[0]}
-            
-        for res in output:
-            for key, val in res.items():
-                output_dict[key].append(str(val))
-        new_embed = discord.Embed(title="Query Result")
-        for key, vals in output_dict.items():
-            new_embed.add_field(name=key, value="\n".join(vals), inline=True)
+    if not output:
+        await interaction.response.send_message(content="Query returned nothing", ephemeral=True)
         
+    output_dict = {key: [] for key in output[0]}
+        
+    for res in output:
+        for key, val in res.items():
+            output_dict[key].append(str(val))
+    new_embed = discord.Embed(title="Query Result")
+    for key, vals in output_dict.items():
+        new_embed.add_field(name=key, value="\n".join(vals), inline=True)
+    
     await interaction.response.send_message(embed=new_embed, ephemeral=True)
+
 
 @client.event
 async def on_command_error(ctx, error):
