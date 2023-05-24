@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS crediteventtypes (
   default_value INT NOT NULL,
   cooldown INT NOT NULL DEFAULT 30,
   public BOOL NOT NULL DEFAULT TRUE,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE `unq_event_name` (event_name);
 );
 
 CREATE TABLE IF NOT EXISTS creditchanges (
