@@ -262,11 +262,14 @@ class CreditVoting(commands.Cog):
             
             event_types = self.base_cog.client.db.get_event_types_from_category(category)
             
-            option_list = list(
-                SelectOption(label=event, value=event) 
-                for event in event_types)  
+            option_list = []
+            for event in event_types:
+                name = event['event_name']
+                value = event['default_value']
+                new_button = SelectOption(label=name, description=f"credits: {value}", value=name) 
+                option_list.append(new_button)
                 
-            super().__init__(placeholder="Select an offense", 
+            super().__init__(placeholder="Select an event", 
                              min_values=1, 
                              max_values=1, 
                              options=option_list)

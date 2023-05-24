@@ -574,15 +574,15 @@ class Database():
     def get_event_types_from_category(self, category):
         self._refresh_connection()
         
-        with self.connection.cursor() as cursor:
+        with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
-                SELECT event_name
+                SELECT event_name, default_value
                 FROM crediteventtypes
                 WHERE event_category = %s
             ''', (category,))
             
             results = cursor.fetchall()
-            return list(r[0] for r in results)
+            return results
         
     def get_event_details(self, event_name):
         self._refresh_connection()
