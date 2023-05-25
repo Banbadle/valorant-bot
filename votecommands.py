@@ -113,9 +113,11 @@ class VoteCommands(commands.Cog):
             result_msg = await interaction.channel.fetch_message(result_msg_id)
             base_embed = result_msg.embeds[0]
             embed_dict = base_embed.to_dict()
-
-            field = embed_dict['fields'][-1]
-            field['value'] = f"~~{field['value']}~~" + "\n\n" + "__**VOIDED**__"
+            
+            for field in embed_dict['fields']:
+                field['value'] = f"~~{field['value']}~~"
+                
+            embed_dict['title'] = "__**VOIDED**__"
             
             new_embed = discord.Embed.from_dict(embed_dict)
             
