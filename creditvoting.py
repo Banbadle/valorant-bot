@@ -137,7 +137,7 @@ class CreditVoting(commands.Cog):
             await interaction.response.send_message(f"You have voted: {self.label}", ephemeral=True)
 
     
-    async def post_vote(self, interaction, user, feat, value, cooldown):
+    async def post_vote(self, interaction, user, feat, value, cooldown, explanation):
         await interaction.response.defer()
         
         if self.client.db.get_user_active_event(user.id, feat):
@@ -159,6 +159,13 @@ class CreditVoting(commands.Cog):
                                         {inner_text} {abs(value)} {CREDIT_NAME}.
                                         Please note that your vote cannot be changed once selected.''',
                             inline=False)
+        
+        if explanation:
+            new_embed.add_field(name="Explanation:",
+                                value= explanation,
+                                inline=False)
+            
+        new_embed.set_thumbnail(url=user.avatar)
             
         view = self.get_vote_view(is_reward)
         
@@ -294,11 +301,11 @@ class CreditVoting(commands.Cog):
                            max_length= 256)
             
         async def on_submit(self, interaction: Interaction):
-            reason = self.answer
+            explanation = self.answer.value
             details = self.base_cog.client.db.get_event_details(self.event_name)
             num_credits = details['default_value']
             cooldown = details['cooldown']
-            await self.base_cog.post_vote(interaction, self.user, self.event_name, num_credits, cooldown)#, reason)
+            await self.base_cog.post_vote(interaction, self.user, self.event_name, num_credits, cooldown, explanation)
     
 async def setup(client):
     await client.add_cog(CreditVoting(client))
