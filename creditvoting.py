@@ -79,9 +79,9 @@ class CreditVoting(commands.Cog):
             votes   = self.base_cog.client.db.get_votes(message.id)
             num_yes = sum(votes)
             num_no  = len(votes)-num_yes
-            
-            yes_i   = (self.is_reward)      + 1
-            no_i    = (not self.is_reward)  + 1
+           
+            no_i    = (not self.is_reward)  - 2
+            yes_i   = (self.is_reward)      - 2
             
             old_embed   = message.embeds[0]
             embed_dict  = old_embed.to_dict()
