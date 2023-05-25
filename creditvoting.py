@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
-from checks import is_admin
-from discord.ui import Button, Select, View
-from discord import SelectOption, ButtonStyle, Interaction, Member, app_commands
+from discord.ui import Button, Select, View, Modal, TextInput
+from discord import SelectOption, ButtonStyle, TextStyle
+from discord import Interaction, Member, app_commands
 import asyncio
 
 CREDIT_NAME = "social credits"
@@ -276,10 +276,29 @@ class CreditVoting(commands.Cog):
         
         async def callback(self, interaction):
             event_name = self.values[0]
-            details = self.base_cog.client.db.get_event_details(event_name)
+            new_modal = self.base_cog.ReasonModal(self.base_cog, self.user, event_name)
+            await interaction.response.send_modal(new_modal)
+
+    class ReasonModal(Modal):
+        def __init__(self, base_cog, user, event_name):
+            self.title = event_name
+            self.base_cog = base_cog
+            self.user = user
+            self.event_name = event_name
+            
+            super().__init__()
+            
+        answer = TextInput(label= "Give a short explanation:",
+                           style= TextStyle.short,
+                           required= False,
+                           max_length= 256)
+            
+        async def on_submit(self, interaction: Interaction):
+            reason = self.answer
+            details = self.base_cog.client.db.get_event_details(self.event_name)
             num_credits = details['default_value']
             cooldown = details['cooldown']
-            await self.base_cog.post_vote(interaction, self.user, event_name, num_credits, cooldown)
-
+            await self.base_cog.post_vote(interaction, self.user, self.event_name, num_credits, cooldown)#, reason)
+    
 async def setup(client):
     await client.add_cog(CreditVoting(client))
