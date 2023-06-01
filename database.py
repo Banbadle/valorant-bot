@@ -133,6 +133,7 @@ class Database():
                 WHERE r.message_id = %s
                     AND r.removed IS NULL
                     AND u.notify = 1
+                    AND r.react_stamp != -1
             ''', (message_id,))
             result = cursor.fetchall()
             return result and list(r[0] for r in result)
