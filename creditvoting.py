@@ -52,9 +52,8 @@ class CreditVoting(commands.Cog):
             await interaction.response.send_message(
                 content="You must be in a channel called 'credit-votes' to report or reward someone.",
                 ephemeral=True) 
-            
-        await interaction.response.send_message(content="Select a Category", view=select_view, ephemeral=True)
-
+        else:    
+            await interaction.response.send_message(content="Select a Category", view=select_view, ephemeral=True)
     class CreditVoteView(View):
         def __init__(self, base_cog, is_reward):           
             self.base_cog = base_cog
