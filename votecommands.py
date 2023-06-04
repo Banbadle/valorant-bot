@@ -106,12 +106,11 @@ class VoteCommands(commands.Cog):
         
         message, _ = await cv.post_result(interaction, user, feat, value, 99, 0)
         base_embed = message.embeds[0]
-        embed_dict = base_embed.to_dict()
-        embed_dict['fields'].pop()
-        embed_dict['fields'].pop()
-        new_embed = discord.Embed.from_dict(embed_dict)
-        
-        await message.edit(embed=new_embed)
+        base_embed.remove_field(-1)
+        base_embed.remove_field(-1)
+        base_embed.remove_field(-1)
+
+        await message.edit(embed=base_embed)
         msg_id = message.id
         
         self.client.db.record_credit_change(user,
