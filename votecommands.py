@@ -21,6 +21,39 @@ class VoteCommands(commands.Cog):
             await ctx.channel.send(f"{user_mention} has {sc} social credits")
         else:
             await ctx.channel.send(f"I could not find a user in my database called {user_mention}")
+            
+    @commands.command(help = "Shows a snippet of the social credit standings")
+    async def creditstandings(self, ctx):
+        user_list = self.client.db.get_all_social_credits()
+        
+        new_embed = discord.Embed(title="__Social Credits__", color=0xFFFFFF)
+        values = {'Rank': [], 'User': [], 'Social Credit': []}
+        
+        n = 10 # Number to show
+        size = len(user_list)
+        top_bound = min(size, n)
+        for i in range(0,top_bound):
+            values['Rank'].append(f"#{i+1}")
+            values['User'].append(f"<@{user_list[i]['id']}>")
+            values['Social Credit'].append(str(user_list[i]['social_credit']))
+        
+        bottom_bound = max(size-n, n)
+        if bottom_bound > top_bound:
+            for index in values:
+                values[index].append("⋮\n⋮")
+            
+        for j in range(bottom_bound, size):
+            values['Rank'].append(f"#{j+1}")
+            values['User'].append(f"<@{user_list[j]['id']}>")
+            values['Social Credit'].append(str(user_list[j]['social_credit']))
+            
+        value_strings = {key: "\n".join(vals) for key, vals in values.items()}
+        
+        new_embed.add_field(name="Rank", value=value_strings["Rank"], inline=True)
+        new_embed.add_field(name="User", value=value_strings["User"], inline=True)
+        new_embed.add_field(name="Social Credit", value=value_strings["Social Credit"], inline=True)
+    
+        await ctx.reply(embed=new_embed)
         
     @app_commands.command(name="addevent")
     @app_commands.check(slash_is_admin)
