@@ -192,6 +192,13 @@ class CreditVoting(commands.Cog):
         
         await self.process_vote_result(interaction, user, feat, value, msg_id, verdict, result_msg.id)
         
+        result_embed = result_msg.embeds[0]
+        sc = self.client.db.get_social_credit(user.id)
+        sc_str = f"<@{user.id}> has {sc} {CREDIT_NAME}"
+        
+        result_embed.add_field(name="", value=sc_str, inline=False)
+        await result_msg.edit(embed=result_embed)
+        
     async def process_vote_result(self, interaction, user, feat, value, msg_id, verdict, result_msg_id):
 
         self.client.db.process_credit_change(msg_id, verdict, result_msg_id)
@@ -212,7 +219,7 @@ class CreditVoting(commands.Cog):
             
             if is_reward:
                 title_text = f'''The reward for {feat} has been **GRANTED** to <@{user.id}>.
-                            They have been awarded {value} {CREDIT_NAME}'''
+                            They have been awarded {value} {CREDIT_NAME}.'''
             else:
                 title_text = f'''<@{user.id}> has been found **GUILTY** of {feat}.
                             They have been fined {abs(value)} {CREDIT_NAME}.'''
@@ -229,6 +236,8 @@ class CreditVoting(commands.Cog):
         
         new_embed.add_field(name=name_l, value=vote_l, inline=True)
         new_embed.add_field(name=name_r, value=vote_r, inline=True)
+        
+        new_embed.set_thumbnail(url=user.avatar)
 
         message = await interaction.followup.send(embed=new_embed)
         
