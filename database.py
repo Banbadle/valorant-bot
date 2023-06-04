@@ -80,7 +80,17 @@ class Database():
             ''', (user_id,))
             result = cursor.fetchone()
             return result and result['social_credit']
-
+        
+    def get_all_social_credits(self):
+        with self.connection.cursor(dictionary=True) as cursor:
+            cursor.execute('''
+                SELECT id, social_credit
+                FROM users
+                ORDER BY social_credit DESC
+            ''')
+            result = cursor.fetchall()
+            return result
+        
     def add_social_credit(self, user, num):
         if not self._get_user(user.id):
             self._add_user(user.name, user.discriminator, user.id)
@@ -580,6 +590,7 @@ class Database():
                 SELECT event_name, default_value
                 FROM crediteventtypes
                 WHERE event_category = %s
+                ORDER BY event_name
             ''', (category,))
             
             results = cursor.fetchall()
