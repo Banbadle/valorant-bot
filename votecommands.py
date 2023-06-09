@@ -29,7 +29,7 @@ class VoteCommands(commands.Cog):
         new_embed = discord.Embed(title="__Social Credits__", color=0xFFFFFF)
         values = {'Rank': [], 'User': [], 'Social Credit': []}
         
-        n = 10 # Number to show
+        n = 13 # Number to show
         size = len(user_list)
         top_bound = min(size, n)
         for i in range(0,top_bound):
