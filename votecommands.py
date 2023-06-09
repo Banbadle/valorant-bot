@@ -23,7 +23,7 @@ class VoteCommands(commands.Cog):
             await ctx.channel.send(f"I could not find a user in my database called {user_mention}")
             
     @commands.command(help = "Shows a snippet of the social credit standings")
-    async def creditstandings(self, ctx):
+    async def leaderboard(self, ctx):
         user_list = self.client.db.get_all_social_credits()
         
         new_embed = discord.Embed(title="__Social Credits__", color=0xFFFFFF)
@@ -37,8 +37,8 @@ class VoteCommands(commands.Cog):
             values['User'].append(f"<@{user_list[i]['id']}>")
             values['Social Credit'].append(str(user_list[i]['social_credit']))
         
-        bottom_bound = max(size-n, n)
-        if bottom_bound > top_bound:
+        bottom_bound = max(size-n, top_bound)
+        if bottom_bound != top_bound:
             for index in values:
                 values[index].append("⋮\n⋮")
             

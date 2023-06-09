@@ -41,7 +41,8 @@ class Database():
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute(query)
-            return cursor.fetchall()
+            results = cursor.fetchall()
+            return results
 
 #------------------------------------------------------------------------------
     # Users table functions
@@ -84,8 +85,10 @@ class Database():
     def get_all_social_credits(self):
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
-                SELECT id, social_credit
-                FROM users
+                SELECT DISTINCT u.id, u.social_credit
+                FROM users as u
+                JOIN creditchanges as c
+                ON c.user_id = u.id
                 ORDER BY social_credit DESC
             ''')
             result = cursor.fetchall()
