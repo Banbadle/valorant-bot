@@ -39,7 +39,10 @@ class StratRoulette(commands.Cog):
                     ["Eagle Eyed",              "You must stay aimed down sights for the entire round."],
                     ["Radio Silence",           "All living players must deafen their discord until the end of the round. Players may not communicate in-game other than pinging"],
                     ["Equality of Outcome",     "Everyone must equip the same guns and armor this round."],
-                    ["Social Distancing",       "Players must stay at least 10 meters apart at all times."]]
+                    ["Social Distancing",       "Players must stay at least 10 meters apart at all times."],
+                    ["I AM THE LAW",            "You may only buy the Judge, Sheriff, or Marshal."],
+                    ["Doppelgänger",            "If there is an enemy on the other team with the same agent as you, you must ignore all other enemies until you have killed your doppelgänger."],
+                    ["X-Ray Vision",            "You are only allowed to kill enemeies through walls."]]
                     
     player_strats = [["Clear Comms",            "Only {player} may speak."],
                      ["Blood Sacrifice",        "{player} must die (from your team's abilities, if possible) before anyone gets a kill."],
