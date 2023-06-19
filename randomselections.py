@@ -17,7 +17,7 @@ class Selects(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(sys.argv[0])
+        print("randomselections.py loaded")
         
     @commands.command(help = "Returns a random map.")
     async def randommap(self, ctx):

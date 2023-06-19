@@ -20,7 +20,7 @@ class ValorantBot(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         '''called when cog is loaded'''
-        print(sys.argv[0])
+        print("valorantbot.py loaded")
         self.request_view = self.RequestView(self)
         self.client.add_view(self.request_view)
 

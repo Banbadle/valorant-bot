@@ -14,7 +14,7 @@ class Valranks(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(sys.argv[0])
+        print("valorantranks.py loaded")
 
     def num_to_rank(self, num):
         return ranks[num]
