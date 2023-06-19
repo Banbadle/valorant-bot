@@ -102,15 +102,14 @@ async def load_cogs():
                  "notifications.py", 
                  "stratroulette.py", 
                  "creditvoting.py",
-                 "votecommands.py"]
+                 "votecommands.py",
+                 "games.blackjack.py"]
     
-    for filename in os.listdir(os.getcwd()):
-        if filename in load_list:
-            load_list.remove(filename)
+    for filename in load_list:
+        try:
             await client.load_extension(filename[:-3])
-            
-    if len(load_list) != 0:
-        print(f"The following cogs were not found in the current directory, and have not been loaded:\n{load_list}")
+        except commands.ExtensionNotFound:
+            print(f"Could not find {filename}")
 
 async def start():
     await load_cogs()
