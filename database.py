@@ -70,7 +70,7 @@ class Database():
             ''', (username, tag, user_id))
         self.connection.commit()
 
-    def get_social_credit(self, user_id):
+    def _get_social_credit(self, user_id):
         self._refresh_connection()
         with self.connection.cursor(dictionary=True) as cursor:
             cursor.execute('''
@@ -81,6 +81,12 @@ class Database():
             ''', (user_id,))
             result = cursor.fetchone()
             return result and result['social_credit']
+        
+    def get_social_credit(self, user):
+        if not self._get_user(user.id):
+            self._add_user(user.name, user.discriminator, user.id)
+
+        return self._get_social_credit(user.id)
         
     def get_all_social_credits(self):
         with self.connection.cursor(dictionary=True) as cursor:

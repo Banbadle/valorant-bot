@@ -193,7 +193,7 @@ class CreditVoting(commands.Cog):
         await self.process_vote_result(interaction, user, feat, value, msg_id, verdict, result_msg.id)
         
         result_embed = result_msg.embeds[0]
-        sc = self.client.db.get_social_credit(user.id)
+        sc = self.client.db.get_social_credit(user)
         sc_str = f"<@{user.id}> has {sc} {CREDIT_NAME}"
         
         result_embed.add_field(name="", value=sc_str, inline=False)
