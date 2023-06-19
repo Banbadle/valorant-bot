@@ -76,7 +76,7 @@ class Blackjack(CreditGame):
         pass
         
     @commands.command(help = "Starts a game of blackjack")
-    def blackjack(self, ctx, bet):
+    async def blackjack(self, ctx, bet):
         user = ctx.author
         game_embeds = self.get_base_embeds(5)
         user.send(embeds=game_embeds)
