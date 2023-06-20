@@ -270,10 +270,16 @@ class Blackjack(CreditGame):
             embed = msg.embeds[0]
 
             gamestate = BlackjackState.from_embed(embed)
-            gamestate.action(self.label)
-            new_embed = gamestate.to_embed()
-            
-            await interaction.response.edit_message(embed=new_embed)
+            relay = gamestate.action(self.label)
+            embed_list = [gamestate.to_embed()]
+            if relay:
+                error_embed = discord.Embed(title=relay, color=0xFF0000)
+                embed_list.append(error_embed)
+                
+            if gamestate.is_finished():
+                await interaction.response.edit_message(embeds=embed_list, view=None)
+            else:
+                await interaction.response.edit_message(embeds=embed_list)
 
     @commands.command(help="Starts a game of blackjack")
     async def blackjack(self, ctx, bet):
@@ -284,7 +290,10 @@ class Blackjack(CreditGame):
         gamestate = BlackjackState(bet, [player_hand], dealer_hand)
         gamestate.update()
         game_embed = gamestate.to_embed()
-        await user.send(embed=game_embed, view=self.blackjack_view)
+        if gamestate.is_finished():
+            await user.send(embed=game_embed)
+        else:
+            await user.send(embed=game_embed, view=self.blackjack_view)
 
 async def setup(client):
     await client.add_cog(Blackjack(client))
