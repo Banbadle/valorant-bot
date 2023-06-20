@@ -78,6 +78,65 @@ class Hand:
         card_list = list([Card(rank=c) for c in card_str_list])
         return Hand(card_list)
         
+class BlackjackState:
+    def __init__(self, bet, hand_num, player_hands, dealer_hand):
+        self.bet = bet
+        self.hand_num = hand_num
+        self.player_hands = player_hands
+        self.dealer_hand = dealer_hand
+    
+    def current_hand(self):
+        return self.player_hands[self.hand_num-1]
+    
+    def to_embed(self):
+        new_embed = discord.Embed(
+            title="__Welcome to KAsYn/O Blackjack__", 
+            color=0xFF0000)
+        
+        # SUMMARY FIELD
+        new_embed.add_field(
+            name=f"Initial Bet: {self.bet}", 
+            value=f"Current hand: {self.hand_num}", 
+            inline=False)
+
+        # PLAYER FIELDS
+        for i in range(0, len(self.player_hands)):
+            player_hand = self.player_hands[i]
+            new_embed.add_field(
+                name=f"**Hand {i+1}:**", 
+                value=str(player_hand), 
+                inline=(True if i == 0 else False))
+
+        # DEALER FIELD
+        dealer_hand = self.dealer_hand
+        new_embed.insert_field_at(
+            index=2, 
+            name="**Dealer's Hand**", 
+            value=str(dealer_hand), 
+            inline=True)
+
+        return new_embed
+    
+    def from_embed(self, embed):
+        fields = embed.fields
+        bet = re.search(r"Initial Bet: (\d+)", fields[0].name)
+        bet = bet.group(1)
+        hand_num = re.search(r"Current hand: (\d+)", fields[0].value)
+        hand_num = hand_num.group(1)
+        
+        hand_num = hand_num
+        player_hands = []
+        for i in range(1, len(fields)):
+            field = fields[i]
+            new_hand = Hand.from_field(field)
+            
+            if i == 2:
+                dealer_hand = new_hand
+                continue
+            player_hands.append(new_hand)
+            
+        return BlackjackState(bet, hand_num, player_hands, dealer_hand)
+            
 class Blackjack(CreditGame):
 
     @commands.Cog.listener()
