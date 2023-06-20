@@ -278,6 +278,11 @@ class Blackjack(CreditGame):
                 
             if gamestate.is_finished():
                 await interaction.response.edit_message(embeds=embed_list, view=None)
+    def check_credits(self, user, cost):
+        creds = self.client.db.get_social_credit(user)
+        if creds < cost:
+            return "You do not have enough Social Credit to do this"
+        
             else:
                 await interaction.response.edit_message(embeds=embed_list)
 
