@@ -6,14 +6,26 @@ import re
 
 class Card:    
     suit_list = ['♠️', '♥️', '♦️', '♣️']
-    rank_list = {"A": 11, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "J": 10, "Q": 10, "K": 10}
+    rank_list = {":regional_indicator_a:": 11,
+                 ":two:": 2, 
+                 ":three:": 3, 
+                 ":four:": 4, 
+                 ":five:": 5, 
+                 ":six:": 6, 
+                 ":seven:": 7, 
+                 ":eight:": 8, 
+                 ":nine:": 9, 
+                 ":keycap_ten:": 10, 
+                 ":regional_indicator_j:": 10, 
+                 ":regional_indicator_q:": 10, 
+                 ":regional_indicator_k:": 10}
     
     def __init__(self, suit=None, rank=None):
         self.suit = suit if suit != None else choice(self.suit_list)
         self.rank = rank if rank != None else choice(list(self.rank_list.keys()))
         
     def __str__(self):
-        return self.rank + self.suit
+        return self.rank# + self.suit
     
     def __int__(self):
         return self.rank_list[self.rank]
