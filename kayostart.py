@@ -80,7 +80,6 @@ async def sqlget(interaction: discord.Interaction, query: str):
     
     await interaction.response.send_message(embed=new_embed, ephemeral=True)
 
-
 @client.event
 async def on_command_error(ctx, error):
     if type(error) in [
