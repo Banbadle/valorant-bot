@@ -7,7 +7,7 @@ from random import choice
 import re
 
 class Card:    
-    suit_list = ['♠️', '♥️', '♦️', '♣️']
+    #suit_list = ['♠️', '♥️', '♦️', '♣️']
     rank_list = {":regional_indicator_a:": 1,
                  ":two:": 2,
                  ":three:": 3,
@@ -23,7 +23,7 @@ class Card:
                  ":regional_indicator_k:": 10}
 
     def __init__(self, rank=None, suit=None):
-        self.suit = suit if suit != None else choice(self.suit_list)
+        #self.suit = suit if suit != None else choice(self.suit_list)
         self.rank = rank if rank != None else choice(list(self.rank_list.keys()))
 
     def __str__(self):
