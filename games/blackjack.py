@@ -38,10 +38,11 @@ class Card:
         return NotImplemented
     
 class Hand:
-    def __init__(self, cards):
+    def __init__(self, cards, bet=None):
         self.cards = []
         self.value = 0
         self.is_soft = False
+        self.bet = bet
         for c in cards:
             self.add(c)
             
@@ -98,14 +99,16 @@ class Hand:
     
     @staticmethod
     def from_field(field):
+        bet = re.search(r"\(Bet (\d+)\)", field.name)
+        if bet:
+            bet = int(bet.group(1))
         cards_string = field.value.split("\n")[0]
         card_str_list = cards_string.split(", ")
         card_list = list([Card(rank=c) for c in card_str_list])
-        return Hand(card_list)
+        return Hand(card_list, bet=bet)
         
 class BlackjackState:
-    def __init__(self, bet, player_hands, dealer_hand, hand_num=1):
-        self.bet = bet
+    def __init__(self, player_hands, dealer_hand, hand_num=1):
         self.hand_num = int(hand_num)
         self.player_hands = player_hands
         self.dealer_hand = dealer_hand
@@ -124,17 +127,33 @@ class BlackjackState:
             color=0xFF0000)
         
         # SUMMARY FIELD
+        total_bet = sum(h.bet for h in self.player_hands)
         new_embed.add_field(
-            name=f"Initial Bet: {self.bet}", 
-            value=f"Current hand: {self.hand_num}", 
+            name=f"Total Bet: {total_bet}", 
+            value=f"Current hand: {self.hand_num}" * (not self.is_finished()), 
             inline=False)
 
         # PLAYER FIELDS
         for i in range(0, len(self.player_hands)):
             player_hand = self.player_hands[i]
+            bet = player_hand.bet
+            
+            base_str = f"**Hand {i+1}:**"
+            bet_str = f" (Bet {bet})" * (bet != None)
+            curr_str = " :point_left:" * (i == self.hand_num-1)
+            
+            win_str = ""
+            if self.is_finished():
+                if self.payouts[i] == player_hand.bet:
+                    win_str = f":yellow_square: (Push {self.payouts[i]})"   # Push
+                elif self.payouts[i] > 0:
+                    win_str = f":white_check_mark: (Win {self.payouts[i]})" # Win
+                else:
+                    win_str = ":x: (Lose)"                                  # Lose
+            
             new_embed.add_field(
-                name=f"**Hand {i+1}:**", 
-                value=str(player_hand), 
+                name= base_str + bet_str + curr_str, 
+                value=str(player_hand) + "\n" + win_str,
                 inline=(True if i == 0 else False))
 
         # DEALER FIELD
@@ -150,7 +169,7 @@ class BlackjackState:
     @staticmethod
     def from_embed(embed):
         fields = embed.fields
-        bet = re.search(r"Initial Bet: (\d+)", fields[0].name)
+        bet = re.search(r"Total Bet: (\d+)", fields[0].name)
         bet = bet.group(1)
         hand_num = re.search(r"Current hand: (\d+)", fields[0].value)
         hand_num = hand_num.group(1)
@@ -166,7 +185,7 @@ class BlackjackState:
                 continue
             player_hands.append(new_hand)
             
-        return BlackjackState(bet, player_hands, dealer_hand, hand_num=hand_num)
+        return BlackjackState(player_hands, dealer_hand, hand_num)
     
     def add(self, card):
         if not isinstance(card, Card):
@@ -186,6 +205,7 @@ class BlackjackState:
         if not has_cards:
             return "You may only double a hand when it has exactly 2 cards"
         self.hit()
+        hand.bet *= 2
         self.stand()
     
     def split(self):
@@ -199,7 +219,7 @@ class BlackjackState:
         card2 = hand.pop()
         hand.hit()
         
-        new_hand = Hand([card2])
+        new_hand = Hand([card2], bet=hand.bet)
         new_hand.hit()
         self.player_hands.append(new_hand)
     
@@ -268,12 +288,21 @@ class Blackjack(CreditGame):
         async def callback(self, interaction: Interaction):
             msg = interaction.message
             embed = msg.embeds[0]
-
+                
             gamestate = BlackjackState.from_embed(embed)
-            relay = gamestate.action(self.label)
+            
+            user = interaction.user
+            error_msg = None
+            bet = gamestate.current_hand().bet
+            if self.costs:
+                error_msg = self.base_cog.check_credits(user, bet)
+            
+            if error_msg == None:
+                error_msg = gamestate.action(self.label)
+
             embed_list = [gamestate.to_embed()]
-            if relay:
-                error_embed = discord.Embed(title=relay, color=0xFF0000)
+            if error_msg != None:
+                error_embed = discord.Embed(title=error_msg, color=0xFF0000)
                 embed_list.append(error_embed)
                 
             if gamestate.is_finished():
@@ -289,10 +318,10 @@ class Blackjack(CreditGame):
     @commands.command(help="Starts a game of blackjack")
     async def blackjack(self, ctx, bet):
         user = ctx.author
-        player_hand = Hand([Card(), Card()])
+        player_hand = Hand([Card(), Card()], bet=int(bet))
         dealer_hand = Hand([Card()])
         
-        gamestate = BlackjackState(bet, [player_hand], dealer_hand)
+        gamestate = BlackjackState([player_hand], dealer_hand)
         gamestate.update()
         game_embed = gamestate.to_embed()
         if gamestate.is_finished():
