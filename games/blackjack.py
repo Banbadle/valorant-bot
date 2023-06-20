@@ -8,7 +8,7 @@ import re
 
 class Card:    
     suit_list = ['♠️', '♥️', '♦️', '♣️']
-    rank_list = {":regional_indicator_a:": 11,
+    rank_list = {":regional_indicator_a:": 1,
                  ":two:": 2,
                  ":three:": 3,
                  ":four:": 4,
@@ -25,7 +25,7 @@ class Card:
     def __init__(self, rank=None, suit=None):
         self.suit = suit if suit != None else choice(self.suit_list)
         self.rank = rank if rank != None else choice(list(self.rank_list.keys()))
-        
+
     def __str__(self):
         return self.rank  # + self.suit
 
@@ -33,7 +33,9 @@ class Card:
         return self.rank_list[self.rank]
 
     def __add__(self, other):
-        return int(self) + int(other)
+        if isinstance(other, Card):
+            return int(self) + int(other)
+        return NotImplemented
 
 class Blackjack(CreditGame):
     
@@ -46,13 +48,12 @@ class Blackjack(CreditGame):
     def __init__(self, client):
         self.client = client
 
-        hand_string = r"Hand: {}"
+    async def hit(self, message):
+        new_card = Card()
+        pass
 
-        hand_regex = re.escape(hand_string)
-        hand_regex = re.sub(r"\\{\\}", r"([0-9]+)", hand_regex)
-
-        self.hand_string = hand_string
-        self.hand_regex = hand_regex
+    async def stand(self, message):
+        self.get_state_from_msg(message)
 
     def get_hand_values(self, string):
         regex = self.hand_regex
@@ -82,9 +83,9 @@ class Blackjack(CreditGame):
 
         return new_embed
     
-    def get_state_from_msg(self, msg):
+    async def split(self, message):
         pass
-        
+
     class BlackjackView(View):
         def __init__(self, base_cog):
             self.base_cog = base_cog
