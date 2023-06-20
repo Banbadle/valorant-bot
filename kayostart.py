@@ -18,6 +18,7 @@ client = commands.Bot(command_prefix='?', case_insensitive=True, intents=discord
 
 client.db = Database()
 
+
 @client.command()
 @commands.check(is_admin)
 async def sync(ctx):
