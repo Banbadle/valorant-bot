@@ -318,6 +318,22 @@ class Blackjack(CreditGame):
     @commands.command(help="Starts a game of blackjack")
     async def blackjack(self, ctx, bet):
         user = ctx.author
+        try:
+            bet = int(bet)
+        except:
+            await user.send("The bet amount must be a number")
+            return
+        if bet <= 0:
+            await user.send("You must bet a positive amount")
+            return
+        if bet > 10:
+            await user.send("Your bet must be 10 or less")
+            return
+        creds_msg = self.check_credits(user, bet)
+        if creds_msg:
+            await user.send(creds_msg)
+            return
+            
         player_hand = Hand([Card(), Card()], bet=int(bet))
         dealer_hand = Hand([Card()])
         
