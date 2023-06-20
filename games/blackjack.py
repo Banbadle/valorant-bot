@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from games.creditgame import CreditGame
 from discord.ui import Button, View
-from discord import ButtonStyle
+from discord import ButtonStyle, Interaction
 from random import choice
 import re
 
@@ -67,6 +67,9 @@ class Hand:
         elif self.value > 21 and self.is_soft:
             self.value -= 10
             self.is_soft = False 
+            
+    def is_blackjack(self):
+        return len(self) == 2 and int(self) == 21
 
     def __str__(self):
         cards = ", ".join([str(c) for c in self.cards])
@@ -77,6 +80,12 @@ class Hand:
     def __int__(self):
         return self.value
     
+    def __len__(self):
+        return len(self.cards)
+    
+    def __getitem__(self, index):
+        return self.cards[index]
+    
     @staticmethod
     def from_field(field):
         cards_string = field.value.split("\n")[0]
@@ -85,13 +94,15 @@ class Hand:
         return Hand(card_list)
         
 class BlackjackState:
-    def __init__(self, bet, hand_num, player_hands, dealer_hand):
+    def __init__(self, bet, player_hands, dealer_hand, hand_num=1):
         self.bet = bet
-        self.hand_num = hand_num
+        self.hand_num = int(hand_num)
         self.player_hands = player_hands
         self.dealer_hand = dealer_hand
     
     def current_hand(self):
+        if len(self.player_hands) < self.hand_num:
+            return None
         return self.player_hands[self.hand_num-1]
     
     def to_embed(self):
@@ -142,13 +153,46 @@ class BlackjackState:
                 continue
             player_hands.append(new_hand)
             
-        return BlackjackState(bet, hand_num, player_hands, dealer_hand)
+        return BlackjackState(bet, player_hands, dealer_hand, hand_num=hand_num)
     
     def add(self, card):
         if not isinstance(card, Card):
             raise TypeError(f"object of type 'Card' expected, {type(card)} was given")
         
-        self.current_hand().add(card)        
+        self.current_hand().add(card)
+    
+    def hit(self):
+        self.current_hand().hit()
+        
+    def stand(self):
+        self.hand_num += 1
+        
+    def can_double(self):
+        return len(self.current_hand()) == 2
+        
+    def double(self):
+        self.hit()
+        # DOUBLE BET
+        self.stand()
+        
+    def can_split(self):
+        hand = self.current_hand()
+        return len(hand) == 2 and (int(hand[0]) == int(hand[1]))
+    
+    def split(self):
+        pass
+    
+    def update(self):
+        while self.current_hand() and self.current_hand().value >= 21:
+            self.hand_num += 1
+    
+    def action(self, string):
+        if   string == "Hit": self.hit()
+        elif string == "Stand": self.stand()
+        elif string == "Double": self.double()
+        elif string == "Split": self.split()
+        
+        self.update()
             
 class Blackjack(CreditGame):
 
@@ -161,21 +205,6 @@ class Blackjack(CreditGame):
     def __init__(self, client):
         self.client = client
 
-    async def hit(self, gamestate):
-        new_card = Card()
-        pass
-
-    async def stand(self, gamestate):
-        pass
-
-    async def double(self, gamestate):
-        self.hit(gamestate)
-        self.stand(gamestate)
-        pass  # DOUBLE BET
-
-    async def split(self, gamestate):
-        pass
-
     class BlackjackView(View):
         def __init__(self, base_cog):
             self.base_cog = base_cog
@@ -185,43 +214,45 @@ class Blackjack(CreditGame):
         def _make_buttons(self):
             base_cog = self.base_cog
 
-            button_funcs = [base_cog.hit, base_cog.stand,
-                            base_cog.double, base_cog.split]
-            button_labels = ["Hit", "Stand", "Double", "Split"]
-            button_styles = [ButtonStyle.green, ButtonStyle.red,
-                             ButtonStyle.blurple, ButtonStyle.grey]
+            button_labels = ["Hit", 
+                             "Stand", 
+                             "Double", 
+                             "Split"]
+            button_styles = [ButtonStyle.green, 
+                             ButtonStyle.red, 
+                             ButtonStyle.blurple, 
+                             ButtonStyle.grey]
 
-            for func, label, style in zip(button_funcs, button_labels, button_styles):
-                new_button = base_cog.BlackjackButton(base_cog, func, label, style)
+            for label, style in zip(button_labels, button_styles):
+                new_button = base_cog.BlackjackButton(base_cog, label, style)
                 self.add_item(new_button)
 
     class BlackjackButton(Button):
 
-        def __init__(self, base_cog, button_func, button_label, button_style):
+        def __init__(self, base_cog, button_label, button_style):
             self.base_cog = base_cog
-            self.button_func = button_func
 
             super().__init__(label=button_label, style=button_style, custom_id=button_label)
 
-        async def callback(self, interaction):
+        async def callback(self, interaction: Interaction):
             msg = interaction.message
             embed = msg.embeds[0]
-            user = interaction.user
+
             gamestate = BlackjackState.from_embed(embed)
-            await self.button_func(gamestate)
+            gamestate.action(self.label)
+            new_embed = gamestate.to_embed()
+            
+            await interaction.response.edit_message(embed=new_embed)
 
     @commands.command(help="Starts a game of blackjack")
     async def blackjack(self, ctx, bet):
         user = ctx.author
         player_hand = Hand([Card(), Card()])
         dealer_hand = Hand([Card()])
-        gamestate = BlackjackState(bet, 1, [player_hand], dealer_hand)
+        
+        gamestate = BlackjackState(bet, [player_hand], dealer_hand)
         game_embed = gamestate.to_embed()
         await user.send(embed=game_embed, view=self.blackjack_view)
-
-    def deal(self, message):
-        new_card = Card()
-
 
 async def setup(client):
     await client.add_cog(Blackjack(client))
