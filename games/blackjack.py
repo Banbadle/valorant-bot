@@ -86,6 +86,11 @@ class Hand:
     def __getitem__(self, index):
         return self.cards[index]
     
+    def pop(self):
+        popped_card = self.cards.pop()
+        self.value -= int(popped_card)
+        return popped_card
+    
     @staticmethod
     def from_field(field):
         cards_string = field.value.split("\n")[0]
@@ -168,23 +173,34 @@ class BlackjackState:
         self.hand_num += 1
         
     def can_double(self):
-        return len(self.current_hand()) == 2
+        has_cards = len(self.current_hand()) == 2
+        return has_cards
         
     def double(self):
         self.hit()
-        # DOUBLE BET
         self.stand()
         
     def can_split(self):
         hand = self.current_hand()
-        return len(hand) == 2 and (int(hand[0]) == int(hand[1]))
+        has_cards = len(hand) == 2 and (int(hand[0]) == int(hand[1]))
+        return has_cards
     
     def split(self):
-        pass
+        card2 = self.current_hand().pop()
+        self.current_hand().hit()
+        new_hand = Hand([card2])
+        new_hand.hit()
+        self.player_hands.append(new_hand)
     
     def update(self):
         while self.current_hand() and self.current_hand().value >= 21:
             self.hand_num += 1
+        
+        if self.current_hand() == None:
+            self.finish()
+            
+    def finish(self):
+        self.dealer_hand.dealer_play()
     
     def action(self, string):
         if   string == "Hit": self.hit()
@@ -251,6 +267,7 @@ class Blackjack(CreditGame):
         dealer_hand = Hand([Card()])
         
         gamestate = BlackjackState(bet, [player_hand], dealer_hand)
+        gamestate.update()
         game_embed = gamestate.to_embed()
         await user.send(embed=game_embed, view=self.blackjack_view)
 
