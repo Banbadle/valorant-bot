@@ -155,38 +155,11 @@ class Blackjack(CreditGame):
     async def stand(self, message):
         self.get_state_from_msg(message)
 
-    def get_hand_values(self, string):
-        regex = self.hand_regex
-        match = re.search(regex, string)
-        if match:
-            value = match.group(2)
-            return value
-        return None, None
-
-    def get_base_embeds(self, bet):
-        # TITLE EMBED
-        new_embed = discord.Embed(title="__Welcome to KAsYn/O Blackjack__", color=0xFF0000)
-        new_embed.add_field(name=f"Initial Bet: {bet}", value="Current hand: 1", inline=False)
-        
-        # PLAYER EMBED        
-        player_card_1 = Card()
-        player_card_2 = Card()
-        player_score = player_card_1 + player_card_2
-        
-        player_value = f"{player_card_1}, {player_card_2}" + "\n" + f"Value: {player_score}"
-        new_embed.add_field(name="**Hand 1:**", value=player_value, inline=True)   
-        
-        # DEALER EMBED
-        dealer_card = Card()
-        dealer_value = str(dealer_card) + "\n" + f"Value: {int(dealer_card)}"
-        new_embed.add_field(name="**Dealer's Hand**", value=dealer_value, inline=True)
     async def double(self, message):
         self.hit(message)
         self.stand(message)
         pass  # DOUBLE BET
 
-        return new_embed
-    
     async def split(self, message):
         pass
 
@@ -225,8 +198,11 @@ class Blackjack(CreditGame):
     @commands.command(help="Starts a game of blackjack")
     async def blackjack(self, ctx, bet):
         user = ctx.author
-        game_embeds = self.get_base_embeds(bet)
-        await user.send(embed=game_embeds, view=self.blackjack_view)
+        player_hand = Hand([Card(), Card()])
+        dealer_hand = Hand([Card()])
+        gamestate = BlackjackState(bet, 1, [player_hand], dealer_hand)
+        game_embed = gamestate.to_embed()
+        await user.send(embed=game_embed, view=self.blackjack_view)
 
     def deal(self, message):
         new_card = Card()
