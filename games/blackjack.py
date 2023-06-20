@@ -255,6 +255,19 @@ class Blackjack(CreditGame):
 
     def __init__(self, client):
         self.client = client
+        
+    def make_credit_change(self, user, num, reason, msg_id):
+        event_name = f"{reason} (Blackjack)"
+        self.client.db.record_credit_change(
+            user, 
+            event_name, 
+            change_value=num,
+            cooldown=0, 
+            vote_msg_id=msg_id,
+            cause_user=user, 
+            processed=1)
+
+        self.client.db.add_social_credit(user, num)
 
     class BlackjackView(View):
         def __init__(self, base_cog):
