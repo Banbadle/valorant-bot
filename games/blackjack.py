@@ -323,6 +323,7 @@ class Blackjack(CreditGame):
 
         def __init__(self, base_cog, button_label, button_style):
             self.base_cog = base_cog
+            self.costs = True if button_label in ["Split", "Double"] else False
 
             super().__init__(label=button_label, style=button_style, custom_id=button_label)
 
