@@ -347,8 +347,7 @@ class Blackjack(CreditGame):
                 error_embed = discord.Embed(title=error_msg, color=0xFF0000)
                 embed_list.append(error_embed)
                 
-            # REPEATED SECTION
-            if self.costs:
+            if error_msg == None and self.costs:
                 self.base_cog.make_credit_change(user, -bet, self.label, msg.id)
                 
             await self.base_cog.update_message(user, gamestate, msg, embed_list)
@@ -404,7 +403,6 @@ class Blackjack(CreditGame):
         
         new_msg = await user.send("Shuffling cards...")
         
-        # REPEATED SECTION
         self.make_credit_change(user, -bet, "Bet", new_msg.id)
         
         await self.update_message(user, gamestate, new_msg, embed_list)
