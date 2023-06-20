@@ -36,9 +36,50 @@ class Card:
         if isinstance(other, Card):
             return int(self) + int(other)
         return NotImplemented
-
-class Blackjack(CreditGame):
     
+class Hand:
+    def __init__(self, cards):
+        self.cards = []
+        self.value = 0
+        self.is_soft = False
+        for c in cards:
+            self + c
+        
+    def __add__(self, card):
+        if not isinstance(card, Card):
+            return NotImplemented
+        
+        self.cards.append(card)
+        self.value += int(card)
+        
+        if self.value <= 11 and int(card) == 1:
+            self.value += 10
+            self.is_soft = True
+            
+        elif self.value > 21 and self.is_soft:
+            self.value -= 10
+            self.is_soft = False 
+            
+    def __radd__(self, card):
+        return self.__add__(card)
+
+    def __str__(self):
+        cards = ", ".join([str(c) for c in self.cards])
+        value = f"Value: " + "Soft "*self.is_soft + f"{self.value}"
+        hand_string = cards + "\n" + value
+        return hand_string
+    
+    def __int__(self):
+        return self.value
+    
+    def from_field(self, field):
+        cards_string = field.value.split("\n")[0]
+        card_str_list = cards_string.split(", ")
+        card_list = list([Card(rank=c) for c in card_str_list])
+        return Hand(card_list)
+        
+class Blackjack(CreditGame):
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.blackjack_view = self.BlackjackView(self)
@@ -80,6 +121,10 @@ class Blackjack(CreditGame):
         dealer_card = Card()
         dealer_value = str(dealer_card) + "\n" + f"Value: {int(dealer_card)}"
         new_embed.add_field(name="**Dealer's Hand**", value=dealer_value, inline=True)
+    async def double(self, message):
+        self.hit(message)
+        self.stand(message)
+        pass  # DOUBLE BET
 
         return new_embed
     
