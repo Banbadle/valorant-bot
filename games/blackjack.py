@@ -43,16 +43,19 @@ class Hand:
         self.value = 0
         self.is_soft = False
         for c in cards:
-            self + c
+            self.add(c)
             
     def dealer_play(self):
         while self.value < 17:
-            new_card = Card()
-            self + new_card
+            self.hit()
+            
+    def hit(self):
+        new_card = Card()
+        self.add(new_card)
         
-    def __add__(self, card):
+    def add(self, card):
         if not isinstance(card, Card):
-            return NotImplemented
+            raise TypeError(f"object of type 'Card' expected, {type(card)} was given")
         
         self.cards.append(card)
         self.value += int(card)
@@ -64,9 +67,6 @@ class Hand:
         elif self.value > 21 and self.is_soft:
             self.value -= 10
             self.is_soft = False 
-            
-    def __radd__(self, card):
-        return self.__add__(card)
 
     def __str__(self):
         cards = ", ".join([str(c) for c in self.cards])
@@ -144,15 +144,11 @@ class BlackjackState:
             
         return BlackjackState(bet, hand_num, player_hands, dealer_hand)
     
-    def __add__(self, card):
+    def add(self, card):
         if not isinstance(card, Card):
-            return NotImplemented
+            raise TypeError(f"object of type 'Card' expected, {type(card)} was given")
         
-        self.current_hand() + card
-        
-    def __radd__(self, card):
-        return self.__add__(card)
-        
+        self.current_hand().add(card)        
             
 class Blackjack(CreditGame):
 
