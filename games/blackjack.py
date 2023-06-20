@@ -70,10 +70,15 @@ class Hand:
             
     def is_blackjack(self):
         return len(self) == 2 and int(self) == 21
+    
+    def is_bust(self):
+        return int(self) > 21
 
     def __str__(self):
         cards = ", ".join([str(c) for c in self.cards])
         value = "Value: " + "Soft "*self.is_soft + f"{self.value}"
+        if self.is_blackjack():
+            value = "Value: Blackjack"
         hand_string = cards + "\n" + value
         return hand_string
     
@@ -109,6 +114,9 @@ class BlackjackState:
         if len(self.player_hands) < self.hand_num:
             return None
         return self.player_hands[self.hand_num-1]
+
+    def is_finished(self):
+        return self.current_hand() == None
     
     def to_embed(self):
         new_embed = discord.Embed(
@@ -172,22 +180,25 @@ class BlackjackState:
     def stand(self):
         self.hand_num += 1
         
-    def can_double(self):
-        has_cards = len(self.current_hand()) == 2
-        return has_cards
-        
     def double(self):
+        hand = self.current_hand()
+        has_cards = len(hand) == 2
+        if not has_cards:
+            return "You may only double a hand when it has exactly 2 cards"
         self.hit()
         self.stand()
-        
-    def can_split(self):
-        hand = self.current_hand()
-        has_cards = len(hand) == 2 and (int(hand[0]) == int(hand[1]))
-        return has_cards
     
     def split(self):
-        card2 = self.current_hand().pop()
-        self.current_hand().hit()
+        hand = self.current_hand()
+        has_cards = len(hand) == 2 and (int(hand[0]) == int(hand[1]))
+        if not has_cards:
+            return "You may only split when you have 2 cards of the same value"
+        
+        # CREDIT CHECK
+        
+        card2 = hand.pop()
+        hand.hit()
+        
         new_hand = Hand([card2])
         new_hand.hit()
         self.player_hands.append(new_hand)
@@ -203,10 +214,14 @@ class BlackjackState:
         self.dealer_hand.dealer_play()
     
     def action(self, string):
-        if   string == "Hit": self.hit()
-        elif string == "Stand": self.stand()
-        elif string == "Double": self.double()
-        elif string == "Split": self.split()
+        out = None
+        if   string == "Hit": out = self.hit()
+        elif string == "Stand": out = self.stand()
+        elif string == "Double": out = self.double()
+        elif string == "Split": out = self.split()
+        
+        if out: 
+            return out
         
         self.update()
             
