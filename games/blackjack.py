@@ -44,6 +44,11 @@ class Hand:
         self.is_soft = False
         for c in cards:
             self + c
+            
+    def dealer_play(self):
+        while self.value < 17:
+            new_card = Card()
+            self + new_card
         
     def __add__(self, card):
         if not isinstance(card, Card):
@@ -65,14 +70,15 @@ class Hand:
 
     def __str__(self):
         cards = ", ".join([str(c) for c in self.cards])
-        value = f"Value: " + "Soft "*self.is_soft + f"{self.value}"
+        value = "Value: " + "Soft "*self.is_soft + f"{self.value}"
         hand_string = cards + "\n" + value
         return hand_string
     
     def __int__(self):
         return self.value
     
-    def from_field(self, field):
+    @staticmethod
+    def from_field(field):
         cards_string = field.value.split("\n")[0]
         card_str_list = cards_string.split(", ")
         card_list = list([Card(rank=c) for c in card_str_list])
@@ -117,7 +123,8 @@ class BlackjackState:
 
         return new_embed
     
-    def from_embed(self, embed):
+    @staticmethod
+    def from_embed(embed):
         fields = embed.fields
         bet = re.search(r"Initial Bet: (\d+)", fields[0].name)
         bet = bet.group(1)
@@ -136,6 +143,16 @@ class BlackjackState:
             player_hands.append(new_hand)
             
         return BlackjackState(bet, hand_num, player_hands, dealer_hand)
+    
+    def __add__(self, card):
+        if not isinstance(card, Card):
+            return NotImplemented
+        
+        self.current_hand() + card
+        
+    def __radd__(self, card):
+        return self.__add__(card)
+        
             
 class Blackjack(CreditGame):
 
@@ -148,19 +165,19 @@ class Blackjack(CreditGame):
     def __init__(self, client):
         self.client = client
 
-    async def hit(self, message):
+    async def hit(self, gamestate):
         new_card = Card()
         pass
 
-    async def stand(self, message):
-        self.get_state_from_msg(message)
+    async def stand(self, gamestate):
+        pass
 
-    async def double(self, message):
-        self.hit(message)
-        self.stand(message)
+    async def double(self, gamestate):
+        self.hit(gamestate)
+        self.stand(gamestate)
         pass  # DOUBLE BET
 
-    async def split(self, message):
+    async def split(self, gamestate):
         pass
 
     class BlackjackView(View):
@@ -192,8 +209,10 @@ class Blackjack(CreditGame):
 
         async def callback(self, interaction):
             msg = interaction.message
+            embed = msg.embeds[0]
             user = interaction.user
-            await self.button_func(msg)
+            gamestate = BlackjackState.from_embed(embed)
+            await self.button_func(gamestate)
 
     @commands.command(help="Starts a game of blackjack")
     async def blackjack(self, ctx, bet):
