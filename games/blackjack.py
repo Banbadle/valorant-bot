@@ -214,7 +214,8 @@ class BlackjackState:
         if not has_cards:
             return "You may only split when you have 2 cards of the same value"
         
-        # CREDIT CHECK
+        if len(self.player_hands) > 18:
+            return "You may have a maximum of 18 hands"
         
         card2 = hand.pop()
         hand.hit()
@@ -227,12 +228,39 @@ class BlackjackState:
         while self.current_hand() and self.current_hand().value >= 21:
             self.hand_num += 1
         
-        if self.current_hand() == None:
+        if self.is_finished():
             self.finish()
             
     def finish(self):
         self.dealer_hand.dealer_play()
-    
+        dealer_hand = self.dealer_hand
+        
+        # Represent hands by integers:
+        # -1: dealer bust
+        # -2: player bust
+        # 4-21: scores
+        # 22: blackjack
+        dealer_int = int(dealer_hand) + dealer_hand.is_blackjack()
+        if dealer_hand.is_bust():
+            dealer_int = -1
+            
+        payouts = [0] * len(self.player_hands)
+        for i in range(len(self.player_hands)):
+            
+            hand = self.player_hands[i]
+            hand_int = int(hand) + hand.is_blackjack()
+            if hand.is_bust():
+                hand_int = -2
+                
+            if hand_int == dealer_int:
+                payouts[i] = hand.bet                           # Push
+                
+            elif hand_int > dealer_int:
+                payout_mult = (2 + 0.5*(hand_int==22)) 
+                payouts[i] = int(hand.bet *payout_mult)         # Win
+                
+        self.payouts = payouts
+                
     def action(self, string):
         out = None
         if   string == "Hit": out = self.hit()
@@ -318,15 +346,34 @@ class Blackjack(CreditGame):
                 error_embed = discord.Embed(title=error_msg, color=0xFF0000)
                 embed_list.append(error_embed)
                 
-            if gamestate.is_finished():
-                await interaction.response.edit_message(embeds=embed_list, view=None)
+            # REPEATED SECTION
+            if self.costs:
+                self.base_cog.make_credit_change(user, -bet, self.label, msg.id)
+                
+            await self.base_cog.update_message(user, gamestate, msg, embed_list)
+            await interaction.response.defer()
+            
     def check_credits(self, user, cost):
         creds = self.client.db.get_social_credit(user)
         if creds < cost:
             return "You do not have enough Social Credit to do this"
         
+    async def update_message(self, user, gamestate, message, embed_list):
+        if gamestate.is_finished():
+            winnings = sum(gamestate.payouts) 
+            self.make_credit_change(user, winnings, "Winnings", message.id)
+            new_creds = self.client.db.get_social_credit(user)
+            if winnings != 0:
+                win_title = f"You have won {winnings} Social Credits." +"\n" + f"You now have {new_creds} Social Credits"
+                win_embed = discord.Embed(title=win_title, colour=0x00FF00)
+                embed_list.append(win_embed)
             else:
-                await interaction.response.edit_message(embeds=embed_list)
+                lose_title = "You have lost." +"\n" + f"You now have {new_creds} Social Credits"
+                lose_embed = discord.Embed(title=lose_title, colour=0xFF0000)
+                embed_list.append(lose_embed)
+            await message.edit(content="", embeds=embed_list, view=None)
+        else:
+            await message.edit(content="", embeds=embed_list, view=self.blackjack_view)
 
     @commands.command(help="Starts a game of blackjack")
     async def blackjack(self, ctx, bet):
@@ -352,11 +399,14 @@ class Blackjack(CreditGame):
         
         gamestate = BlackjackState([player_hand], dealer_hand)
         gamestate.update()
-        game_embed = gamestate.to_embed()
-        if gamestate.is_finished():
-            await user.send(embed=game_embed)
-        else:
-            await user.send(embed=game_embed, view=self.blackjack_view)
+        embed_list = [gamestate.to_embed()]
+        
+        new_msg = await user.send("Shuffling cards...")
+        
+        # REPEATED SECTION
+        self.make_credit_change(user, -bet, "Bet", new_msg.id)
+        
+        await self.update_message(user, gamestate, new_msg, embed_list)
 
 async def setup(client):
     await client.add_cog(Blackjack(client))
