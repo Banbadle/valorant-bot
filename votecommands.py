@@ -141,7 +141,7 @@ class VoteCommands(commands.Cog):
             inv_num = -int(details['change_value'])
             
             result_msg = await interaction.channel.fetch_message(result_msg_id)
-            if result_msg:
+
             base_embed = result_msg.embeds[0]
             embed_dict = base_embed.to_dict()
             
