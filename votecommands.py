@@ -107,9 +107,6 @@ class VoteCommands(commands.Cog):
         
         message, _ = await cv.post_result(interaction, user, feat, value, 99, 0)
         base_embed = message.embeds[0]
-        base_embed.remove_field(-1)
-        base_embed.remove_field(-1)
-        base_embed.remove_field(-1)
 
         await message.edit(embed=base_embed)
         msg_id = message.id
@@ -144,6 +141,7 @@ class VoteCommands(commands.Cog):
             inv_num = -int(details['change_value'])
             
             result_msg = await interaction.channel.fetch_message(result_msg_id)
+            if result_msg:
             base_embed = result_msg.embeds[0]
             embed_dict = base_embed.to_dict()
             
