@@ -651,6 +651,23 @@ class Database():
     # CreditChanges table functions
 #------------------------------------------------------------------------------
 
+    def simple_credit_change(self, 
+                           user, 
+                           event_name, 
+                           change_value,
+                           vote_msg_id=None,
+                           cause_user=None):
+        
+        self.record_credit_change(
+            user, 
+            event_name, 
+            change_value,
+            cooldown=0, 
+            vote_msg_id=vote_msg_id,
+            cause_user=cause_user, 
+            processed=1)
+        self.add_social_credit(user, change_value)
+
     def record_credit_change(self, 
                              user, 
                              event_name, 
