@@ -56,6 +56,48 @@ class VoteCommands(commands.Cog):
     
         await ctx.reply(embed=new_embed)
         
+    @commands.command(help = "Pays a user social credit from your account")
+    async def pay(self, ctx, user_mention, amount):
+        try:
+            amount = int(amount)
+        except:
+            # If Amount cannot be cast to int
+            return ctx.reply("'amount' must be a number")
+        if amount <= 0:
+            # If amount is non-positive
+            return await ctx.reply("You must enter an integer greater than 0")
+            
+        recv_user_id = int(user_mention[2:-1])
+        recv_user = await self.client.fetch_user(recv_user_id)
+        if not recv_user:
+            # If payee is not found
+            return await ctx.reply(f"Could not find {user_mention}")
+        
+        send_user = ctx.author
+        if recv_user == send_user:
+            # If user tries to pay themselves
+            return await ctx.reply("You cannot pay yourself")
+        
+        send_user_sc = self.client.db.get_social_credit(send_user)
+        if send_user_sc < amount:
+            # If user has insufficient money
+            return await ctx.reply("You do not have enough social credit to do this")
+        
+        msg = await ctx.reply(f"Sending {amount} credits...")
+        
+        self.client.db.simple_credit_change(send_user, "Pay", -amount, vote_msg_id=msg.id, cause_user=recv_user)
+        self.client.db.simple_credit_change(recv_user, "Paid", amount, vote_msg_id=msg.id, cause_user=send_user)
+        
+        send_user_sc = self.client.db.get_social_credit(send_user)
+        recv_user_sc = self.client.db.get_social_credit(recv_user)
+        
+        send_str = "\n".join(
+            [f"{send_user.mention} has sent {amount} Social Credits to {recv_user.mention}.",
+            f"{send_user.mention} now has {send_user_sc} social credits.",
+            f"{recv_user.mention} now has {recv_user_sc} social credits."])
+        
+        await msg.edit(content=send_str)
+
     @app_commands.command(name="addevent")
     @app_commands.check(slash_is_admin)
     async def addevent(self, 
