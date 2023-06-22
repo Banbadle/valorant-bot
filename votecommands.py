@@ -67,7 +67,7 @@ class VoteCommands(commands.Cog):
             amount = int(amount)
         except:
             # If Amount cannot be cast to int
-            return ctx.reply("'amount' must be a number")
+            return await ctx.reply("'amount' must be a number")
         if amount <= 0:
             # If amount is non-positive
             return await ctx.reply("You must enter an integer greater than 0")
