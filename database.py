@@ -658,9 +658,10 @@ class Database():
             cursor.execute('''
                 UPDATE users as u
                 SET u.social_credit = (
-                   SELECT COALESCE(100+SUM(cc.change_value), 100)
-                   FROM creditchanges as cc
-                   WHERE cc.user_id = u.id)
+                	SELECT COALESCE(100+SUM(cc.change_value), 100)
+                	FROM creditchanges as cc
+                	WHERE cc.user_id = u.id
+                	AND cc.processed = 1)
             ''')
             self.connection.commit()
 
