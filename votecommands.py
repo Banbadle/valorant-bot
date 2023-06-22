@@ -1,6 +1,6 @@
 from discord.ext import commands
 from discord import app_commands, Interaction
-from checks import slash_is_admin
+from checks import slash_is_admin, is_admin
 import discord
 
 class VoteCommands(commands.Cog):
@@ -23,6 +23,7 @@ class VoteCommands(commands.Cog):
         else:
             await ctx.channel.send(f"I could not find a user in my database called {user_mention}")
             
+    @commands.check(is_admin)
     @commands.command(help = "Reconstructs social credits from creditchanges table")
     async def reconstructcredits(self, ctx):
         self.client.db.reconstruct_credits()
