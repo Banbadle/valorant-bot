@@ -23,6 +23,10 @@ class VoteCommands(commands.Cog):
         else:
             await ctx.channel.send(f"I could not find a user in my database called {user_mention}")
             
+    @commands.command(help = "Reconstructs social credits from creditchanges table")
+    async def reconstructcredits(self, ctx):
+        self.client.db.reconstruct_credits()
+            
     @commands.command(help = "Shows a snippet of the social credit standings")
     async def leaderboard(self, ctx):
         user_list = self.client.db.get_all_social_credits()

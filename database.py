@@ -651,6 +651,19 @@ class Database():
     # CreditChanges table functions
 #------------------------------------------------------------------------------
 
+    def reconstruct_credits(self):
+        self._refresh_connection()
+        
+        with self.connection.cursor() as cursor:
+            cursor.execute('''
+                UPDATE users as u
+                SET u.social_credit = (
+                   SELECT COALESCE(100+SUM(cc.change_value), 100)
+                   FROM creditchanges as cc
+                   WHERE cc.user_id = u.id)
+            ''')
+            self.connection.commit()
+
     def simple_credit_change(self, 
                            user, 
                            event_name, 
