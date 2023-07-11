@@ -208,7 +208,8 @@ class ValorantBot(commands.Cog):
         await interaction.response.send_message(content=f"You have responded with: {new_str}" + extra_string, ephemeral=True)
         
         nt = self.client.get_cog("Notifications")
-        await nt.notify_react(interaction.user.id, new_timestamp, message.id, message.guild.name)
+        if not (old_timestamp == None and new_timestamp in [-1, "-1"]):
+            await nt.notify_react(interaction.user.id, new_timestamp, message.id, message.guild.name)
         
         await self.update_request_embed(message)
     
