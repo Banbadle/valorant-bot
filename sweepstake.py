@@ -6,38 +6,32 @@ import asyncio
 
 num_teams = 24
 
-country_flag_map = {"Netherlands": ":flag_nl:",\
-"Ecuador": ":flag_ec:" ,\
-"Senegal": ":flag_sn:",\
-"Qatar": ":flag_qa:",\
-"England": ":england:",\
-"United-States": ":flag_us:",\
-"Iran": ":flag_ir:",\
-"Wales": ":wales:" ,\
-"Poland": ":flag_pl:",\
-"Argentina": ":flag_ar:",\
-"Mexico": ":flag_mx:",\
-"Saudi-Arabia": ":flag_sa:",\
-"France": ":flag_fr:",\
-"Denmark": ":flag_dk:",\
-"Tunisia": ":flag_tn:",\
-"Australia": ":flag_au:",\
-"Germany": ":flag_de:",\
-"Spain": ":flag_es:",\
-"Costa-Rica": ":flag_cr:",\
-"Japan": ":flag_jp:",\
-"Croatia": ":flag_hr:",\
-"Belgium": ":flag_be:",\
-"Canada": ":flag_ca:",\
-"Morocco": ":flag_ma:" ,\
-"Switzerland": ":flag_ch:",\
-"Serbia": ":flag_rs:",\
-"Brazil": ":flag_br:",\
-"Cameroon": ":flag_cm:",\
-"Portugal": ":flag_pt:",\
-"Uruguay": ":flag_uy:",\
-"Ghana": ":flag_gh:",\
-"South-Korea": ":flag_kr:"}
+country_flag_map = {
+    "Albania": ":flag_al:", \
+    "Austria": ":flag_at:", \
+    "Belgium": ":flag_be:", \
+    "Croatia": ":flag_hr:", \
+    "Czech-Republic": ":flag_cz:", \
+    "Denmark": ":flag_dk:", \
+    "England": ":england:", \
+    "France": ":flag_fr:", \
+    "Georgia": ":flag_ge:", \
+    "Germany": ":flag_de:", \
+    "Hungary": ":flag_hu:", \
+    "Italy": ":flag_it:", \
+    "Netherlands": ":flag_nl:", \
+    "Poland": ":flag_pl:", \
+    "Portugal": ":flag_pt:", \
+    "Romania": ":flag_ro:", \
+    "Scotland": ":scotland:", \
+    "Serbia": ":flag_rs:", \
+    "Slovakia": ":flag_sk:", \
+    "Slovenia": ":flag_si:", \
+    "Spain": ":flag_es:", \
+    "Switzerland": ":flag_ch:", \
+    "Turkey": ":flag_tr:", \
+    "Ukraine": ":flag_ua:"
+}
     
 class Sweepstake(commands.Cog):
         
