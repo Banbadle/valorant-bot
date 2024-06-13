@@ -81,7 +81,7 @@ class Sweepstake(commands.Cog):
             role = role_list[i]
             await user.add_roles(role)
             await ctx.channel.send(f"{user.mention} has been given: {self.get_flag(role.name)} {role.name}")
-            await asyncio.sleep(3*60)
+            await asyncio.sleep(5)
 
         new_embed = discord.Embed(title="__Initial Teams__", color=0x30cc74)
 
