@@ -102,7 +102,8 @@ async def load_cogs():
                  "stratroulette.py", 
                  "creditvoting.py",
                  "votecommands.py",
-                 "games.blackjack.py"]
+                 "games.blackjack.py",
+                 "sweepstake.py"]
     
     for filename in load_list:
         try:

@@ -4,6 +4,8 @@ import random
 from checks import is_admin
 import asyncio
 
+num_teams = 24
+
 country_flag_map = {"Netherlands": ":flag_nl:",\
 "Ecuador": ":flag_ec:" ,\
 "Senegal": ":flag_sn:",\
@@ -65,16 +67,16 @@ class Sweepstake(commands.Cog):
     async def startsweepstake(self, ctx):
         role_list = ctx.guild.roles
         role_list = list(role for role in role_list if role.name in country_flag_map)
-        if len(role_list) != 32:
-            await ctx.reply(f"{len(role_list)} country ranks found. Expected 32")
+        if len(role_list) != len(country_flag_map):
+            await ctx.reply(f"{len(role_list)} country ranks found. Expected {len(country_flag_map)}")
             return
         
         paid_role  = discord.utils.get(ctx.guild.roles,name="Paid")
         if paid_role == None:
             await ctx.reply("No 'Paid' rank found")
         paid_users = paid_role.members
-        if len(paid_users) != 32:
-            await ctx.reply(f"{len(paid_users)} users found with 'Paid' rank. Expected 32")
+        if len(paid_users) != len(country_flag_map):
+            await ctx.reply(f"{len(paid_users)} users found with 'Paid' rank. Expected {len(country_flag_map)}")
             return
         
         random.shuffle(paid_users)
@@ -85,7 +87,7 @@ class Sweepstake(commands.Cog):
             role = role_list[i]
             await user.add_roles(role)
             await ctx.channel.send(f"{user.mention} has been given: {self.get_flag(role.name)} {role.name}")
-            await asyncio.sleep(2*60)
+            await asyncio.sleep(3*60)
 
         new_embed = discord.Embed(title="__Initial Teams__", color=0x30cc74)
 
@@ -130,7 +132,7 @@ class Sweepstake(commands.Cog):
     async def addresult(self, ctx, team1, team2, games_played=3):
         games_played = int(games_played)
         i = games_played - 3
-        colour_list = [0xec1c68, 0xff5018, 0xfcad00, 0xf2fd0e, 0x9affa4]
+        colour_list = [0xec1c68, 0xff5018, 0xfcad00, 0xf2fd0e]
         loss_colour = discord.Colour(colour_list[i])
         
         role1 = discord.utils.get(ctx.guild.roles,name=team1)
@@ -141,15 +143,15 @@ class Sweepstake(commands.Cog):
                 await user.add_roles(role1)
             
         await role2.edit(colour=loss_colour)
-        await role1.edit(position=32)
+        await role1.edit(position=num_teams)
         
         return [role1, role2]
     
     @commands.command()
     @commands.check(is_admin)  
     async def postpotwins(self, ctx):
-        colour_list = [0x30cc74, 0xec1c68, 0xff5018, 0xfcad00, 0xf2fd0e, 0x9affa4]
-        prize_list  = [30,       20,       15,       10,       5,        0       ]
+        colour_list = [0x30cc74, 0xec1c68, 0xff5018, 0xfcad00, 0xf2fd0e]
+        prize_list  = [60,       30,       20,       10,       0       ]
         colour_dict = {}
         for k in range(len(colour_list)):
             colour = discord.Colour(colour_list[k])
@@ -201,8 +203,8 @@ class Sweepstake(commands.Cog):
     async def resetcolors(self, ctx):
         role_list = ctx.guild.roles
         role_list = list(role for role in role_list if role.name in country_flag_map)
-        if len(role_list) != 32:
-            await ctx.reply(f"{len(role_list)} country ranks found. Expected 32")
+        if len(role_list) != num_teams:
+            await ctx.reply(f"{len(role_list)} country ranks found. Expected {num_teams}")
             return
 
         for role in role_list:
