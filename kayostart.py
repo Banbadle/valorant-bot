@@ -48,7 +48,20 @@ async def setbotname(ctx, name):
 @client.command()
 @commands.check(is_admin)
 async def sendmsg(ctx, *, msg):
+    await ctx.message.delete()
     await ctx.send(msg)
+
+@client.command()
+@commands.check(is_admin)
+async def sendmsginchannel(ctx, channel_id, *, msg):
+    channel_id = int(channel_id)
+    channel = client.get_channel(channel_id)
+    if channel:
+        await channel.send(msg)
+        await ctx.send(f"Message sent to channel {channel.name}.")
+    else:
+        await ctx.send("Channel not found. Please check the ID.")
+
 
 @client.command()
 @commands.check(is_admin)
@@ -90,6 +103,8 @@ async def on_command_error(ctx, error):
 
 @client.event
 async def on_command_completion(ctx):
+    if (ctx.command.name == "sendmsg"):
+        return
     await ctx.message.add_reaction("✅")
 
 async def load_cogs():
