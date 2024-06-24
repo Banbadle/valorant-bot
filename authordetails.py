@@ -62,6 +62,15 @@ agent_details = {'Astra':       {'image': 'https://static.wikia.nocookie.net/val
                                  'role': "Controller"},\
                  'Gekko':       {'image': 'https://static.wikia.nocookie.net/valorant/images/6/66/Gekko_icon.png/',     
                                  'phrase': '"Run, little man."',
+                                 'role': "Controller"},
+                 'Deadlock':    {'image': 'https://static.wikia.nocookie.net/valorant/images/e/eb/Deadlock_icon.png/',
+                                 'phrase': '"It begins."',
+                                 'role': "Sentinel"},
+                 'Iso':         {'image': 'https://static.wikia.nocookie.net/valorant/images/b/b7/Iso_icon.png/',
+                                 'phrase': '"Time to gear up, right? I\'ve got a song for that actually."',
+                                 'role': "Duelist"},
+                 'Clove':       {'image': 'https://static.wikia.nocookie.net/valorant/images/3/30/Clove_icon.png/',
+                                 'phrase': '"Back like I never left!"',
                                  'role': "Controller"}}
     
 agent_roles = {"Controller":    {'image': 'https://static.wikia.nocookie.net/valorant/images/0/04/ControllerClassSymbol.png/',
@@ -73,7 +82,7 @@ agent_roles = {"Controller":    {'image': 'https://static.wikia.nocookie.net/val
                "Sentinel":      {'image': 'https://static.wikia.nocookie.net/valorant/images/4/43/SentinelClassSymbol.png/',
                                  'colour': 0x00ffff}}
 
-map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven", "Pearl", "Lotus")
+map_list = ("Ascent", "Split", "Fracture", "Bind", "Breeze", "Icebox", "Haven", "Pearl", "Lotus", "Sunset", "Abyss")
 
 def get_author_pair(agent=None):
     if agent==None:
