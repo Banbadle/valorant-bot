@@ -105,6 +105,7 @@ async def on_command_error(ctx, error):
 async def on_command_completion(ctx):
     if (ctx.command.name == "sendmsg"):
         return
+        
     await ctx.message.add_reaction("✅")
 
 async def load_cogs():
