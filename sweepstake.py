@@ -201,6 +201,7 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"{len(role_list)} country ranks found. Expected {num_teams}")
             return
 
+
         for role in role_list:
             await role.edit(colour=discord.Colour(0x30cc74))
 
