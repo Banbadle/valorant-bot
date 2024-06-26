@@ -154,22 +154,28 @@ class Sweepstake(commands.Cog):
         paid_role  = discord.utils.get(ctx.guild.roles,name="Paid")
         paid_users = paid_role.members
         
-        user_dict = {user.mention: [None,None] for user in paid_users}
+        user_dict = {user.mention: [[],None] for user in paid_users}
         for user in paid_users:
             for role in user.roles:
                 if role.colour == discord.Colour(0x30cc74):
-                    user_dict[user.mention][0] = role
+                    user_dict[user.mention][0].append(role)
 
                 if role.colour in colour_dict:
                     new_prize = colour_dict[role.colour]
                     old_prize = user_dict[user.mention][1]
                     if old_prize == None or new_prize < old_prize:
                         user_dict[user.mention][1] = new_prize
+
+        team_dict = dict()
+        for _, (teams, _) in user_dict.items():
+            for team in teams:
+                if team not in team_dict:
+                    team_dict[team] = []
                     
-        team_dict = {team: [] for user_mention, (team, prize) in user_dict.items()}
         print(user_dict)
-        for user_mention, (team, prize) in user_dict.items():
-            team_dict[team].append((prize, user_mention))
+        for user_mention, (teams, prize) in user_dict.items():
+            for team in teams:
+                team_dict[team].append((prize, user_mention))
 
         prize_str_list = []
         for team in team_dict:
