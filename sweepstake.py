@@ -123,7 +123,7 @@ class Sweepstake(commands.Cog):
 
     @commands.command()
     @commands.check(is_admin)  
-    async def addresult(self, ctx, team1, team2, games_played=3):
+    async def addresult(self, ctx, team1, team2, games_played=3, channel_id=None):
         games_played = int(games_played)
         i = games_played - 3
         colour_list = [0xec1c68, 0xff5018, 0xfcad00, 0xf2fd0e]
@@ -132,12 +132,23 @@ class Sweepstake(commands.Cog):
         role1 = discord.utils.get(ctx.guild.roles,name=team1)
         role2 = discord.utils.get(ctx.guild.roles,name=team2)
         
-        if i != 4:     # Do not reassign roles on final match
+        reassigned_users = []
+
+        if i != len(colour_list)-1:     # Do not reassign roles on final match
             for user in role2.members:
+                reassigned_users.append(user.mention)
                 await user.add_roles(role1)
             
         await role2.edit(colour=loss_colour)
         await role1.edit(position=num_teams)
+
+        if channel_id is not None:
+            channel_id = int(channel_id)
+            team_channel = self.client.get_channel(channel_id)
+
+            msg0 = f"{role2.mention} has been eliminated. The following people have been reassigned to {role1.mention}:\n > " + "\n >".join(reassigned_users)
+
+            await team_channel.send(msg0)
         
         return [role1, role2]
     
