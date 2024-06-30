@@ -146,7 +146,7 @@ class Sweepstake(commands.Cog):
             channel_id = int(channel_id)
             team_channel = self.client.get_channel(channel_id)
 
-            msg0 = f"{role2.mention} has been eliminated." + f"The following people have been reassigned to {role1.mention}:" + ("\n > ".join(reassigned_users))
+            msg0 = f"{role2.mention} has been eliminated.\n" + f"The following people have been reassigned to {role1.mention}: + \n > " + "\n > ".join(reassigned_users)
 
             await team_channel.send(msg0)
         
