@@ -282,7 +282,7 @@ class Sweepstake(commands.Cog):
             if new_nick is not None:
                 try:
                     await user.edit(nick=new_nick)
-                except discord.Forbidden:
+                except:
                     pass  # bot can't rename users above it in the role hierarchy
             await ctx.channel.send(f"{user.mention} has been given: {flag_mention(role)}")
             await asyncio.sleep(1.5 * 60)
@@ -347,19 +347,25 @@ class Sweepstake(commands.Cog):
                 await user.add_roles(role1)
 
         await role2.edit(colour=discord.Colour(rnd.loss_colour))
-        await role1.edit(position=NUM_TEAMS)
+        try:
+            await role1.edit(position=NUM_TEAMS)
+        except Exception as e:
+            await ctx.reply(f"Position edit failed ({type(e).__name__}: {e}): Continuing.")
 
         if channel_id is not None:
             team_channel = self.client.get_channel(int(channel_id))
-            if rnd.name == "Final":
-                msg0 = f"{flag_mention(role1)} has won the {TOURNAMENT_NAME}"
-            elif rnd.reassign_after and reassigned_users:
-                msg0 = (f"{flag_mention(role2)} has been eliminated.\n"
-                        f"The following people have been reassigned to {flag_mention(role1)}: \n> "
-                        + "\n> ".join(reassigned_users))
+            if team_channel is None:
+                await ctx.reply(f"Channel {channel_id} not found — skipping announcement.")
             else:
-                msg0 = f"{flag_mention(role2)} has been eliminated."
-            await team_channel.send(msg0)
+                if rnd.name == "Final":
+                    msg0 = f"{flag_mention(role1)} has won the {TOURNAMENT_NAME}"
+                elif rnd.reassign_after and reassigned_users:
+                    msg0 = (f"{flag_mention(role2)} has been eliminated.\n"
+                            f"The following people have been reassigned to {flag_mention(role1)}: \n> "
+                            + "\n> ".join(reassigned_users))
+                else:
+                    msg0 = f"{flag_mention(role2)} has been eliminated."
+                await team_channel.send(msg0)
 
         return [role1, role2]
 
@@ -376,6 +382,9 @@ class Sweepstake(commands.Cog):
         await role.edit(colour=discord.Colour(ROUNDS[0].loss_colour))
         if channel_id is not None:
             team_channel = self.client.get_channel(int(channel_id))
+            if team_channel is None:
+                await ctx.reply(f"Channel {channel_id} not found — skipping announcement.")
+                return
             await team_channel.send(f"{flag_mention(role)} has been eliminated at the group stage.")
 
     @commands.command()
@@ -449,6 +458,9 @@ class Sweepstake(commands.Cog):
                 f"{flag_mention(a)} vs {flag_mention(b)}"
             )
         team_channel = self.client.get_channel(int(channel_id))
+        if team_channel is None:
+            await ctx.reply(f"Channel {channel_id} not found — reassignments applied but no announcement posted.")
+            return
         await team_channel.send("**Group Stage Reassignments**\n\n" + "\n\n".join(lines))
 
     @commands.command()
@@ -501,7 +513,7 @@ class Sweepstake(commands.Cog):
             if stripped != member.display_name:
                 try:
                     await member.edit(nick=stripped)
-                except discord.Forbidden:
+                except :
                     pass
 
         await ctx.reply("Cleared country roles and stripped demonym prefixes from paid users.")
