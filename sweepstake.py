@@ -33,12 +33,12 @@ class Round:
 # Group Stage reassignment is handled by postgroupstagereassignment (random pairing),
 # not addresult, so reassign_after is False there (technically doesn't matter)
 ROUNDS = [
-    Round("Group Stage",   0xd60f0f, 40, reassign_after=False),  # TODO: pick final colour
-    Round("Round of 32",   0x6b0e3a, 50, reassign_after=True),   # TODO: pick final colour
-    Round("Round of 16",   0xec1c68, 30, reassign_after=True),
+    Round("Group Stage",   0xd60f0f, 40, reassign_after=False),
+    Round("Round of 32",   0xec1c68, 50, reassign_after=True),
+    Round("Round of 16",   0xd67676, 30, reassign_after=True),
     Round("Quarter Final", 0xff5018, 20, reassign_after=True),
     Round("Semi Final",    0xfcad00, 10, reassign_after=True),
-    Round("Final",         0xf2fd0e,  0, reassign_after=False),
+    Round("Final",         0xbfe57c,  0, reassign_after=False),
 ]
 
 ROUND_ALIASES = {
