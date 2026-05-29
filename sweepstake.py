@@ -185,6 +185,29 @@ def resolve_role_token(guild, token):
     return discord.utils.get(guild.roles, name=token)
 
 
+def resolve_user_token(guild, token):
+    """Resolve a single token to a discord.Member. Accepts:
+       - user mentions like '<@123456>' or '<@!123456>'
+       - raw user IDs
+       - exact display_name / username match
+    Returns None if not found."""
+    token = token.strip()
+    if token.startswith("<@") and token.endswith(">"):
+        inner = token[2:-1]
+        if inner.startswith("!"):
+            inner = inner[1:]
+        try:
+            return guild.get_member(int(inner))
+        except ValueError:
+            return None
+    try:
+        return guild.get_member(int(token))
+    except ValueError:
+        pass
+    return (discord.utils.get(guild.members, display_name=token)
+            or discord.utils.get(guild.members, name=token))
+
+
 def get_loss_round_index(role_colour):
     for i, rnd in enumerate(ROUNDS):
         if role_colour == discord.Colour(rnd.loss_colour):
@@ -298,6 +321,48 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"Could not find role: {role_token}")
             return
         await ctx.author.add_roles(role)
+
+    @commands.command()
+    @commands.check(is_admin)
+    async def adddemonym(self, ctx, user_token: str, role_token: str):
+        """Test: prefix the role's demonym onto the user's nickname.
+        Usage: ?adddemonym @user @CountryRole"""
+        member = resolve_user_token(ctx.guild, user_token)
+        if member is None:
+            await ctx.reply(f"Could not find user: {user_token}")
+            return
+        role = resolve_role_token(ctx.guild, role_token)
+        if role is None:
+            await ctx.reply(f"Could not find role: {role_token}")
+            return
+        if role.name not in COUNTRIES:
+            await ctx.reply(f"{role.name} is not a country role in COUNTRIES.")
+            return
+        new_nick = demonym_nickname(role.name, member.display_name)
+        try:
+            await member.edit(nick=new_nick)
+            await ctx.reply(f"{member.mention} -> `{new_nick}`")
+        except Exception as e:
+            await ctx.reply(f"Failed to rename {member.mention}: {type(e).__name__}: {e}")
+
+    @commands.command()
+    @commands.check(is_admin)
+    async def stripdemonym(self, ctx, user_token: str):
+        """Test: strip any known demonym prefix from the user's nickname.
+        Usage: ?stripdemonym @user"""
+        member = resolve_user_token(ctx.guild, user_token)
+        if member is None:
+            await ctx.reply(f"Could not find user: {user_token}")
+            return
+        stripped = strip_known_demonym(member.display_name)
+        if stripped == member.display_name:
+            await ctx.reply(f"No known demonym prefix on {member.mention}'s nickname.")
+            return
+        try:
+            await member.edit(nick=stripped)
+            await ctx.reply(f"{member.mention} -> `{stripped}`")
+        except Exception as e:
+            await ctx.reply(f"Failed to rename {member.mention}: {type(e).__name__}: {e}")
 
     @commands.command()
     @commands.check(is_admin)
