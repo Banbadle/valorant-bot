@@ -526,7 +526,15 @@ class Sweepstake(commands.Cog):
         if team_channel is None:
             await ctx.reply(f"Channel {channel_id} not found — reassignments applied but no announcement posted.")
             return
-        await team_channel.send("**Group Stage Reassignments**\n\n" + "\n\n".join(lines))
+
+        try:
+            await team_channel.send("**Group Stage Reassignments**")
+            for line in lines:
+                await asyncio.sleep(10)
+                await team_channel.send(line)
+            await ctx.reply(f"Posted {len(lines)} reassignment announcements to <#{channel_id}>.")
+        except Exception as e:
+            await ctx.reply(f"Reassignments applied but announcement failed: {type(e).__name__}: {e}")
 
     @commands.command()
     @commands.check(is_admin)
