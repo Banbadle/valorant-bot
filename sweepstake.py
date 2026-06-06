@@ -514,27 +514,27 @@ class Sweepstake(commands.Cog):
         random.shuffle(eliminated_roles)
         random.shuffle(matchups)
 
-        lines = []
-        for eliminated, (a, b) in zip(eliminated_roles, matchups):
-            for member in eliminated.members:
-                await member.add_roles(a, b)
-            lines.append(
-                f"{flag_mention(eliminated)} will be reassigned to the winner of:\n"
-                f"{flag_mention(a)} vs {flag_mention(b)}"
-            )
         team_channel = self.client.get_channel(int(channel_id))
         if team_channel is None:
-            await ctx.reply(f"Channel {channel_id} not found — reassignments applied but no announcement posted.")
+            await ctx.reply(f"Channel {channel_id} not found — nothing applied.")
             return
 
+        pairings = list(zip(eliminated_roles, matchups))
         try:
             await team_channel.send("**Group Stage Reassignments**")
-            for line in lines:
+            for eliminated, (a, b) in pairings:
                 await asyncio.sleep(10)
-                await team_channel.send(line)
-            await ctx.reply(f"Posted {len(lines)} reassignment announcements to <#{channel_id}>.")
+                # Add roles right before announcing so people can't peek at their
+                # role list and learn their pairing before the announcement.
+                for member in eliminated.members:
+                    await member.add_roles(a, b)
+                await team_channel.send(
+                    f"{flag_mention(eliminated)} will be reassigned to the winner of:\n"
+                    f"{flag_mention(a)} vs {flag_mention(b)}"
+                )
+            await ctx.reply(f"Posted {len(pairings)} reassignment announcements to <#{channel_id}>.")
         except Exception as e:
-            await ctx.reply(f"Reassignments applied but announcement failed: {type(e).__name__}: {e}")
+            await ctx.reply(f"Reassignment loop failed: {type(e).__name__}: {e}")
 
     @commands.command()
     @commands.check(is_admin)
