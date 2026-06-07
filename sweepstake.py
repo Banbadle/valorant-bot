@@ -308,7 +308,7 @@ class Sweepstake(commands.Cog):
                 except:
                     pass  # bot can't rename users above it in the role hierarchy
             await ctx.channel.send(f"{user.mention} has been given: {flag_mention(role)}")
-            await asyncio.sleep(1.5 * 60)
+            await asyncio.sleep(60)
 
         lines = [f"{flag_mention(role)}: {user.mention}" for user, role in zip(paid_users, role_list)]
         await ctx.channel.send("**Initial Teams**\n" + "\n".join(lines))
