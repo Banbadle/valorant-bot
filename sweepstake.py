@@ -436,6 +436,58 @@ class Sweepstake(commands.Cog):
 
     @commands.command()
     @commands.check(is_admin)
+    async def postresult(self, ctx, team1: str, team2: str, score: str, channel_id: str):
+        """Post a match result line to a channel:
+            @TeamA :flag: 1-1 :flag: @TeamB
+        Usage: ?postresult @TeamA @TeamB 1-1 channel_id"""
+        role1 = resolve_role_token(ctx.guild, team1)
+        role2 = resolve_role_token(ctx.guild, team2)
+        if role1 is None or role2 is None:
+            await ctx.reply(f"Could not find one of: {team1}, {team2}")
+            return
+        if role1.name not in COUNTRIES or role2.name not in COUNTRIES:
+            await ctx.reply(f"One of these isn't a country role: {role1.name}, {role2.name}")
+            return
+        team_channel = self.client.get_channel(int(channel_id))
+        if team_channel is None:
+            await ctx.reply(f"Channel {channel_id} not found.")
+            return
+        msg = (f"{role1.mention} {get_flag(role1.name)} "
+               f"{score} "
+               f"{get_flag(role2.name)} {role2.mention}")
+        try:
+            await team_channel.send(msg)
+            await ctx.reply(f"Posted to <#{channel_id}>.")
+        except Exception as e:
+            await ctx.reply(f"Send failed: {type(e).__name__}: {e}")
+
+    @commands.command()
+    @commands.check(is_admin)
+    async def postpenalties(self, ctx, team1: str, team2: str, score: str, channel_id: str):
+        """Post a penalty shootout line to a channel:
+            :flag: (3-4) :flag:
+        Usage: ?postpenalties @TeamA @TeamB 3-4 channel_id"""
+        role1 = resolve_role_token(ctx.guild, team1)
+        role2 = resolve_role_token(ctx.guild, team2)
+        if role1 is None or role2 is None:
+            await ctx.reply(f"Could not find one of: {team1}, {team2}")
+            return
+        if role1.name not in COUNTRIES or role2.name not in COUNTRIES:
+            await ctx.reply(f"One of these isn't a country role: {role1.name}, {role2.name}")
+            return
+        team_channel = self.client.get_channel(int(channel_id))
+        if team_channel is None:
+            await ctx.reply(f"Channel {channel_id} not found.")
+            return
+        msg = f"{get_flag(role1.name)} ({score}) {get_flag(role2.name)}"
+        try:
+            await team_channel.send(msg)
+            await ctx.reply(f"Posted to <#{channel_id}>.")
+        except Exception as e:
+            await ctx.reply(f"Send failed: {type(e).__name__}: {e}")
+
+    @commands.command()
+    @commands.check(is_admin)
     async def markgroupstageout(self, ctx, team_token: str, channel_id: str = None):
         """Mark a single team as eliminated at the group stage.
         team_token: @mention or plain role name (string).
@@ -562,8 +614,14 @@ class Sweepstake(commands.Cog):
             prize_str_list.append(f"{flag_mention(team)}:\n> " + "\n> ".join(user_prize_str_list))
 
         header = "Potential Prizes" if len(prize_str_list) != 1 else "Prizes"
-        msg = f"{header}:\n" + "\n".join(prize_str_list)
-        await ctx.send(msg)
+        full_msg = f"{header}:\n" + "\n".join(prize_str_list)
+
+        if len(full_msg) <= 1900:
+            await ctx.send(full_msg)
+        else:
+            mid = len(prize_str_list) // 2
+            await ctx.send(f"{header}:\n" + "\n".join(prize_str_list[:mid]))
+            await ctx.send("\n".join(prize_str_list[mid:]))
 
     @commands.command()
     @commands.check(is_admin)
