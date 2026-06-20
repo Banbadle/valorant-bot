@@ -528,6 +528,30 @@ class Sweepstake(commands.Cog):
 
     @commands.command()
     @commands.check(is_local_admin)
+    async def postknockoutqualify(self, ctx, team_token: str, channel_id: str = None):
+        """Post that a team has qualified for the knockout stage. No colour change.
+        team_token: @mention or plain role name (string).
+        channel_id: optional; if given, posts the announcement there."""
+        role = resolve_role_token(ctx.guild, team_token)
+        if role is None:
+            await ctx.reply(f"Could not find role: {team_token}")
+            return
+        msg = f"{flag_mention(role)} has qualified for the Knockout Stage."
+        if channel_id is None:
+            await ctx.reply(msg)
+            return
+        team_channel = self.client.get_channel(int(channel_id))
+        if team_channel is None:
+            await ctx.reply(f"Channel {channel_id} not found — skipping announcement.")
+            return
+        try:
+            await team_channel.send(msg)
+            await ctx.reply(f"Posted to <#{channel_id}>.")
+        except Exception as e:
+            await ctx.reply(f"Send failed: {type(e).__name__}: {e}")
+
+    @commands.command()
+    @commands.check(is_local_admin)
     async def postgroupstagereassignment(self, ctx, channel_id: str, *, matchups_text: str):
         """Randomly pair each group-stage-eliminated team with an R32 matchup
         and post the announcement to the given channel. Mark the 16 eliminated
