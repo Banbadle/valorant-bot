@@ -524,7 +524,7 @@ class Sweepstake(commands.Cog):
             if team_channel is None:
                 await ctx.reply(f"Channel {channel_id} not found — skipping announcement.")
                 return
-            await team_channel.send(f"{flag_mention(role)} has been eliminated at the group stage.")
+            await team_channel.send(f"{flag_mention(role)} has been eliminated at the Group Stage.")
 
     @commands.command()
     @commands.check(is_local_admin)
