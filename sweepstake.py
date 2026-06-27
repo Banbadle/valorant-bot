@@ -254,6 +254,72 @@ def potential_prize_for_user(user):
 
 
 # ---------------------------------------------------------------------------
+# Demonym picker UI (button -> ephemeral dropdown)
+# ---------------------------------------------------------------------------
+
+class DemonymSelect(discord.ui.Select):
+    def __init__(self, country_roles):
+        # Dedupe by country name in case of weird state, preserve order.
+        seen = set()
+        options = []
+        for r in country_roles:
+            if r.name in seen:
+                continue
+            seen.add(r.name)
+            options.append(discord.SelectOption(
+                label=COUNTRIES[r.name]["demonym"],
+                value=r.name,
+                description=r.name,
+            ))
+        super().__init__(placeholder="Choose a demonym…", options=options, min_values=1, max_values=1)
+
+    async def callback(self, interaction: discord.Interaction):
+        member = interaction.user
+        country = self.values[0]
+        new_nick = demonym_nickname(country, member.display_name)
+        if new_nick == member.display_name:
+            await interaction.response.send_message(
+                f"`{new_nick}` is already your nickname — no change made.",
+                ephemeral=True,
+            )
+            return
+        try:
+            await member.edit(nick=new_nick)
+            await interaction.response.send_message(
+                f"Nickname updated to `{new_nick}`.",
+                ephemeral=True,
+            )
+        except Exception as e:
+            await interaction.response.send_message(
+                f"Failed to rename: {type(e).__name__}: {e}",
+                ephemeral=True,
+            )
+
+
+class DemonymPickerView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Change my demonym", style=discord.ButtonStyle.primary,
+                       custom_id="sweepstake_demonym_pick")
+    async def pick(self, interaction: discord.Interaction, button: discord.ui.Button):
+        country_roles = [r for r in interaction.user.roles if r.name in COUNTRIES]
+        if not country_roles:
+            await interaction.response.send_message(
+                "You don't have any country roles to pick a demonym from.",
+                ephemeral=True,
+            )
+            return
+        view = discord.ui.View(timeout=60)
+        view.add_item(DemonymSelect(country_roles))
+        await interaction.response.send_message(
+            "Pick which demonym to use as your nickname prefix:",
+            view=view,
+            ephemeral=True,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Cog
 # ---------------------------------------------------------------------------
 
@@ -385,6 +451,28 @@ class Sweepstake(commands.Cog):
             await ctx.reply(f"{member.mention} -> `{stripped}`")
         except Exception as e:
             await ctx.reply(f"Failed to rename {member.mention}: {type(e).__name__}: {e}")
+
+    @commands.command()
+    @commands.check(is_local_admin)
+    async def changedemonym(self, ctx):
+        """Send an embed in this channel with a button. Clicking it opens an
+        ephemeral dropdown of the clicker's country demonyms, and selecting one
+        renames them with that demonym prefix. Only proceeds if all 48 country
+        roles exist."""
+        existing = {r.name for r in ctx.guild.roles}
+        missing = [c for c in COUNTRIES if c not in existing]
+        if missing:
+            preview = ", ".join(missing[:5])
+            extra = f" (+{len(missing) - 5} more)" if len(missing) > 5 else ""
+            await ctx.reply(f"Missing country roles: {preview}{extra}. Picker not sent.")
+            return
+        embed = discord.Embed(
+            title="Change your demonym",
+            description=("Click the button below to choose which of your country teams' "
+                         "demonyms to use as your nickname prefix."),
+            color=ACTIVE_COLOUR,
+        )
+        await ctx.send(embed=embed, view=DemonymPickerView())
 
     @commands.command()
     @commands.check(is_local_admin)
@@ -618,6 +706,21 @@ class Sweepstake(commands.Cog):
             return
 
         pairings = list(zip(eliminated_roles, matchups))
+
+        # Post the full mapping in the admin channel up-front, so if the
+        # drip-feed below crashes mid-way you still have the reference.
+        preview_lines = [
+            f"{flag_mention(e)} → winner of {flag_mention(a)} vs {flag_mention(b)}"
+            for e, (a, b) in pairings
+        ]
+        preview_full = "**Pairings (full reference, in case the drip-feed errors):**\n" + "\n".join(preview_lines)
+        if len(preview_full) <= 1900:
+            await ctx.send(preview_full)
+        else:
+            mid = len(preview_lines) // 2
+            await ctx.send("**Pairings (full reference, in case the drip-feed errors):**\n" + "\n".join(preview_lines[:mid]))
+            await ctx.send("\n".join(preview_lines[mid:]))
+
         try:
             await team_channel.send("**Group Stage Reassignments**")
             for eliminated, (a, b) in pairings:
