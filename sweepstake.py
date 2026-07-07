@@ -763,9 +763,19 @@ class Sweepstake(commands.Cog):
             prize_str_list.append(f"{flag_mention(team)}:\n> " + "\n> ".join(user_prize_str_list))
 
         header = "Potential Prizes" if len(prize_str_list) != 1 else "Prizes"
-        await ctx.send(f"**{header}:**")
-        for block in prize_str_list:
-            await ctx.send(block)
+
+        if len(prize_str_list) <= 16:
+            await ctx.send(f"**{header}:**")
+            for block in prize_str_list:
+                await ctx.send(block)
+        else:
+            full_msg = f"{header}:\n" + "\n".join(prize_str_list)
+            if len(full_msg) <= 1900:
+                await ctx.send(full_msg)
+            else:
+                mid = len(prize_str_list) // 2
+                await ctx.send(f"{header}:\n" + "\n".join(prize_str_list[:mid]))
+                await ctx.send("\n".join(prize_str_list[mid:]))
 
     @commands.command()
     @commands.check(is_local_admin)
